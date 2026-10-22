@@ -8,7 +8,28 @@ import {
   ShieldCheck,
   Video,
 } from "@/components/ui/Icons";
-import { CHAT_MESSAGES, ChatMessage } from "@/data/talentDashboardData";
+import { ChatMessage } from "@/types/candidate.types";
+
+const STATIC_CHAT_MESSAGES: ChatMessage[] = [
+  {
+    id: "MSG-01",
+    senderName: "Marcus Vance",
+    senderRole: "Engineering Pod Director",
+    avatarUrl: "MV",
+    isSelf: false,
+    timestamp: "10:14 AM",
+    content: "Hi! The client has reviewed your technical vetting submission and was very impressed with your distributed architecture.",
+  },
+  {
+    id: "MSG-02",
+    senderName: "You",
+    senderRole: "Candidate",
+    avatarUrl: "AM",
+    isSelf: true,
+    timestamp: "10:15 AM",
+    content: "Thank you! I am ready to start Sprint 1 onboarding whenever the contract escrow is confirmed.",
+  },
+];
 
 interface Thread {
   id: string;
@@ -61,7 +82,7 @@ export function CandidateMessagesView({
 }) {
   const [threads, setThreads] = useState<Thread[]>(initialThreads);
   const [selectedThread, setSelectedThread] = useState<Thread | null>(initialThreads[0] || null);
-  const [messages, setMessages] = useState<ChatMessage[]>(initialThreads.length > 0 ? CHAT_MESSAGES : []);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialThreads.length > 0 ? STATIC_CHAT_MESSAGES : []);
   const [replyText, setReplyText] = useState("");
 
   const handleSendReply = (e: React.FormEvent) => {

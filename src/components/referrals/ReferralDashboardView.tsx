@@ -13,14 +13,49 @@ import {
   Zap,
   Award,
 } from "@/components/ui/Icons";
-import {
-  REFERRAL_RECORDS,
-  BOUNTY_SUMMARY,
-  REFERRAL_LEADERBOARD,
-  ReferralRecord,
-  BountySummary,
-} from "@/data/mock";
+import { ReferralRecord, BountySummary, ReferralLeaderboardEntry } from "@/types/referral.types";
 import { submitDirectReferralAction } from "@/actions/referral.actions";
+
+export const STATIC_REFERRAL_LEADERBOARD: ReferralLeaderboardEntry[] = [
+  {
+    rank: 1,
+    referrerName: "David Sterling",
+    successfulDeployments: 12,
+    totalBounties: "$24,500",
+    badge: "Diamond Partner",
+  },
+  {
+    rank: 2,
+    referrerName: "Elena Rostova",
+    successfulDeployments: 9,
+    totalBounties: "$18,200",
+    badge: "Platinum Partner",
+  },
+  {
+    rank: 3,
+    referrerName: "Alex Morgan",
+    successfulDeployments: 4,
+    totalBounties: "$6,250",
+    badge: "Gold Referrer",
+  },
+  {
+    rank: 4,
+    referrerName: "Rachel Higgins",
+    successfulDeployments: 3,
+    totalBounties: "£4,500",
+    badge: "Silver Referrer",
+  },
+];
+
+const DEFAULT_BOUNTY_SUMMARY: BountySummary = {
+  totalEarned: "$0.00",
+  clearedPayout: "$0.00",
+  escrowLocked: "$0.00",
+  pendingPipeline: "$0.00",
+  referralLink: "",
+  totalReferrals: 0,
+  placedCount: 0,
+};
 
 interface ReferralDashboardViewProps {
   initialSummary?: BountySummary;
@@ -28,8 +63,8 @@ interface ReferralDashboardViewProps {
 }
 
 export function ReferralDashboardView({
-  initialSummary = BOUNTY_SUMMARY,
-  initialRecords = REFERRAL_RECORDS,
+  initialSummary = DEFAULT_BOUNTY_SUMMARY,
+  initialRecords = [],
 }: ReferralDashboardViewProps) {
   const [referrals, setReferrals] = useState<ReferralRecord[]>(initialRecords);
   const [summaryData, setSummaryData] = useState<BountySummary>(initialSummary);
@@ -434,7 +469,7 @@ export function ReferralDashboardView({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {REFERRAL_LEADERBOARD.map((leader) => (
+          {STATIC_REFERRAL_LEADERBOARD.map((leader) => (
             <div
               key={leader.rank}
               className="rounded-xl border border-[#bcd6fa] bg-canvas p-4 flex flex-col justify-between"

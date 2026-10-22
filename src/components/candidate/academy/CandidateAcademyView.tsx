@@ -14,12 +14,7 @@ import {
   X,
   FileText,
 } from "@/components/ui/Icons";
-import {
-  ACADEMY_COURSES,
-  TALENT_BADGES,
-  CURRENT_TALENT_PROFILE,
-  AcademyCourse,
-} from "@/data/talentDashboardData";
+import { AcademyCourse } from "@/types/candidate.types";
 import {
   getAcademyCoursesAction,
   enrollCourseAction,

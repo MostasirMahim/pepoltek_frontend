@@ -6,7 +6,7 @@ import {
   RecruiterPod,
   RecruiterCandidate,
   RecruiterInterview,
-} from "@/data/mock/recruiter.mock";
+} from "@/types/recruiter.types";
 
 export interface RecruiterAnalyticsData {
   activePodsCount: number;

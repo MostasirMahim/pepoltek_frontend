@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { RecruiterCandidate, RecruiterPod } from "@/data/mock";
+import { RecruiterCandidate, RecruiterPod } from "@/types/recruiter.types";
 import {
   createShortlistSubmissionAction,
   ShortlistSubmissionItemInput,

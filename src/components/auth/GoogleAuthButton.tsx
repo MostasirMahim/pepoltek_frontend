@@ -6,6 +6,7 @@ interface GoogleAuthButtonProps {
   label?: string;
   className?: string;
   variant?: "transparent" | "white";
+  previousEmail?: string;
   onClick?: () => void;
 }
 
@@ -13,13 +14,17 @@ export function GoogleAuthButton({
   label = "Continue with Google",
   className = "",
   variant = "transparent",
+  previousEmail,
   onClick,
 }: GoogleAuthButtonProps) {
   const handleGoogleClick = () => {
     if (onClick) {
       onClick();
     } else {
-      window.location.href = "http://localhost:8000/api/v1/auth/google/login";
+      const url = previousEmail
+        ? `http://localhost:8000/api/v1/auth/google/login?previous_email=${encodeURIComponent(previousEmail)}`
+        : "http://localhost:8000/api/v1/auth/google/login";
+      window.location.href = url;
     }
   };
 

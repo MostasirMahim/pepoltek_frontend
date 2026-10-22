@@ -20,7 +20,7 @@ import {
   AlertTriangle,
   Ban,
 } from "@/components/ui/Icons";
-import { ADMIN_USERS, AdminUserRecord, AdminRole } from "@/data/adminDashboardData";
+import { AdminUserRecord, AdminRole } from "@/types/admin.types";
 import {
   inviteStaffAction,
   updateUserRolesAction,

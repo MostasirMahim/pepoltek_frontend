@@ -6,7 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Flip } from "gsap/Flip";
 import SplitType from "@/lib/split-type";
-import { webProjects } from "@/data/projectsData";
+import { webProjects } from "./projects.data";
 import { Project } from "@/types/portfolio";
 import TargetCursor from "@/components/ui/TargetCursor";
 

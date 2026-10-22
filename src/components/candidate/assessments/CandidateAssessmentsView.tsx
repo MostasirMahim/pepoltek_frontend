@@ -10,10 +10,7 @@ import {
   ArrowRight,
   Award,
 } from "@/components/ui/Icons";
-import {
-  TALENT_ASSESSMENT_REPORT,
-  AssessmentReport,
-} from "@/data/talentDashboardData";
+
 
 import { useCandidatePersona } from "@/context/CandidatePersonaContext";
 

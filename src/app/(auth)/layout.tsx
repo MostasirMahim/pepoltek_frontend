@@ -9,7 +9,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative h-screen max-h-screen w-full flex flex-col justify-between overflow-hidden bg-[#050b17] bg-[url('/backgrounds/auth/auth_bg.png')] bg-cover bg-center bg-no-repeat text-white selection:bg-electric selection:text-white">
+    <div className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden bg-[#050b17] bg-[url('/backgrounds/auth/auth_bg.png')] bg-cover bg-center bg-no-repeat text-white selection:bg-electric selection:text-white">
       {/* High-tech Ambient Glow Overlays */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[350px] w-[600px] rounded-full bg-electric/20 blur-[130px]" />
@@ -42,8 +42,8 @@ export default function AuthLayout({
         </div>
       </header>
 
-      {/* Main Form Center (viewport fitted, max-h-screen) */}
-      <main className="flex-1 flex items-center justify-center p-3 sm:p-4 overflow-y-auto lg:overflow-hidden w-full max-w-6xl mx-auto z-10">
+      {/* Main Form Center (responsive scroll container, never clipped) */}
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-5 sm:py-6 overflow-y-auto w-full max-w-6xl mx-auto z-10 my-auto">
         <div className="w-full flex justify-center py-2">{children}</div>
       </main>
 

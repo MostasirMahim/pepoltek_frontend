@@ -13,11 +13,9 @@ import {
   ArrowRight,
 } from "@/components/ui/Icons";
 import {
-  ADMIN_PODS,
   AdminPodRecord,
-  ADMIN_JOB_REQUISITIONS,
   AdminJobRequisition,
-} from "@/data/adminDashboardData";
+} from "@/types/admin.types";
 
 const STAGES: AdminPodRecord["stage"][] = [
   "Sprint 1 Assembly",

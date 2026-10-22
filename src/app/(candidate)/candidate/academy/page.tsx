@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { CandidateAcademyView } from "@/components/candidate/academy/CandidateAcademyView";
 import { getAcademyCoursesAction } from "@/actions/academy.actions";
-import { ACADEMY_COURSES, AcademyCourse } from "@/data/talentDashboardData";
+import { AcademyCourse } from "@/types/candidate.types";
 
 export const metadata: Metadata = {
   title: "Talent Academy & Readiness | Pepoltek",

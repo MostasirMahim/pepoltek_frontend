@@ -5,7 +5,7 @@ import {
   getRecruiterCandidatesAction,
   getRecruiterAnalyticsAction,
 } from "@/actions/recruiter.actions";
-import { RecruiterShortlist } from "@/data/mock/recruiter.mock";
+import { RecruiterShortlist } from "@/types/recruiter.types";
 
 export const metadata: Metadata = {
   title: "Recruiter Cockpit & Pod Deployment Hub | Pepoltek",

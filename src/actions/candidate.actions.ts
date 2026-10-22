@@ -2,7 +2,13 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { apiGet, apiPatch, apiPost } from "@/lib/api";
+import { apiGet, apiPatch, apiPost, apiDelete, apiUpload } from "@/lib/api";
+import {
+  CandidateProfile,
+  CandidateDashboardTelemetry,
+  CandidateCredentialItem,
+  CandidateDocumentItem,
+} from "@/types/candidate.types";
 
 export interface CandidateProfilePayload {
   full_name?: string;
@@ -14,12 +20,14 @@ export interface CandidateProfilePayload {
   timezone?: string;
   work_auth?: string;
   engagement_prefs?: string[];
+  desired_hourly_rate?: string;
   expected_comp_min?: number;
   expected_comp_max?: number;
   open_to_work?: boolean;
   portfolio_url?: string;
   github_url?: string;
   linkedin_url?: string;
+  bio?: string;
   skills?: string[];
 }
 
@@ -41,6 +49,17 @@ export interface CandidateIntakePayload {
   resume_text?: string;
 }
 
+export interface CandidateCredentialPayload {
+  kind?: "license" | "certification" | string;
+  name: string;
+  license_number?: string;
+  jurisdiction?: string;
+  issuing_authority?: string;
+  issued_on?: string | null;
+  expires_on?: string | null;
+  expires_at?: string | null;
+}
+
 export interface CandidateActionResult<T = any> {
   success: boolean;
   data?: T;
@@ -52,9 +71,33 @@ export interface CandidateActionResult<T = any> {
 }
 
 /**
+ * Fetch aggregated dashboard telemetry, scores, and next action (SRS CAN-08).
+ */
+export async function getCandidateDashboardAction(): Promise<CandidateActionResult<CandidateDashboardTelemetry>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<CandidateDashboardTelemetry>("candidates/me/dashboard/", { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to load candidate dashboard.",
+      },
+    };
+  }
+}
+
+/**
  * Fetch authenticated candidate profile and readiness stats.
  */
-export async function getCandidateProfileAction(): Promise<CandidateActionResult> {
+export async function getCandidateProfileAction(): Promise<CandidateActionResult<any>> {
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
@@ -76,11 +119,11 @@ export async function getCandidateProfileAction(): Promise<CandidateActionResult
 }
 
 /**
- * Update candidate profile preferences and verified skills.
+ * Update candidate profile preferences and verified skills (SRS CAN-09).
  */
 export async function updateCandidateProfileAction(
   payload: CandidateProfilePayload
-): Promise<CandidateActionResult> {
+): Promise<CandidateActionResult<any>> {
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
@@ -99,6 +142,249 @@ export async function updateCandidateProfileAction(
       error: {
         code: "SERVER_EXCEPTION",
         message: err.message || "Failed to update profile.",
+      },
+    };
+  }
+}
+
+/**
+ * Fast toggle candidate open_to_work / pitch authorization status.
+ */
+export async function toggleCandidateOpenToWorkAction(
+  openToWork: boolean
+): Promise<CandidateActionResult<{ open_to_work: boolean }>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPatch<any>("candidates/pitch/", { authorized: openToWork }, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+
+    revalidatePath("/candidate/dashboard");
+    revalidatePath("/candidate/profile");
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to toggle pitch authorization.",
+      },
+    };
+  }
+}
+
+/**
+ * Fetch candidate professional licenses and certifications (SRS CAN-04, VET-04).
+ */
+export async function getCandidateCredentialsAction(): Promise<CandidateActionResult<CandidateCredentialItem[]>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<CandidateCredentialItem[]>("candidates/me/credentials/", { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    return { success: true, data: Array.isArray(response.data) ? response.data : [] };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to load credentials.",
+      },
+    };
+  }
+}
+
+/**
+ * Add a new candidate license or certification (SRS CAN-04).
+ */
+export async function createCandidateCredentialAction(
+  payload: CandidateCredentialPayload
+): Promise<CandidateActionResult<CandidateCredentialItem>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPost<CandidateCredentialItem>("candidates/me/credentials/", payload, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+
+    revalidatePath("/candidate/dashboard");
+    revalidatePath("/candidate/profile");
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to record credential.",
+      },
+    };
+  }
+}
+
+/**
+ * Delete a candidate license or certification.
+ */
+export async function deleteCandidateCredentialAction(
+  id: string
+): Promise<CandidateActionResult> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiDelete(`candidates/me/credentials/${id}/`, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+
+    revalidatePath("/candidate/dashboard");
+    revalidatePath("/candidate/profile");
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to delete credential.",
+      },
+    };
+  }
+}
+
+/**
+ * Fetch candidate documents and CV uploads (SRS CAN-09).
+ */
+export async function getCandidateDocumentsAction(): Promise<CandidateActionResult<CandidateDocumentItem[]>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<CandidateDocumentItem[]>("candidates/me/documents/", { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    return { success: true, data: Array.isArray(response.data) ? response.data : [] };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to load documents.",
+      },
+    };
+}
+}
+
+/**
+ * Upload a candidate CV, resume, or certification document (SRS CAN-09, PAR-01).
+ */
+export async function uploadCandidateDocumentAction(
+  formData: FormData
+): Promise<CandidateActionResult<CandidateDocumentItem>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiUpload<CandidateDocumentItem>("candidates/me/documents/", formData, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+
+    revalidatePath("/candidate/dashboard");
+    revalidatePath("/candidate/profile");
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to upload document.",
+      },
+    };
+  }
+}
+
+/**
+ * Delete a candidate document or old resume version.
+ */
+export async function deleteCandidateDocumentAction(
+  id: string
+): Promise<CandidateActionResult> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiDelete(`candidates/me/documents/${id}/`, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+
+    revalidatePath("/candidate/dashboard");
+    revalidatePath("/candidate/profile");
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to delete document.",
+      },
+    };
+  }
+}
+
+/**
+ * Export own candidate profile data under GDPR (SRS CAN-09).
+ */
+export async function exportCandidateDataAction(): Promise<CandidateActionResult<any>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPost("candidates/me/export/", {}, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to export data.",
+      },
+    };
+  }
+}
+
+/**
+ * Submit candidate account erasure request under GDPR (SRS CAN-09).
+ */
+export async function requestCandidateDeletionAction(
+  reason: string
+): Promise<CandidateActionResult> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPost("candidates/me/delete-request/", { reason }, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to submit deletion request.",
       },
     };
   }

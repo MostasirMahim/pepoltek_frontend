@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { CandidateApplicationsView } from "@/components/candidate/applications/CandidateApplicationsView";
 import { getCandidateApplicationsAction } from "@/actions/candidate.actions";
-import { ACTIVE_SPRINT_PIPELINES, SprintPipelineItem } from "@/data/talentDashboardData";
+import { SprintPipelineItem } from "@/types/candidate.types";
 
 export const metadata: Metadata = {
   title: "Sprint Application Pipelines | Pepoltek",

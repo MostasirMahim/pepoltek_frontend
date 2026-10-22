@@ -14,10 +14,7 @@ import {
   X,
   Zap,
 } from "@/components/ui/Icons";
-import {
-  ACTIVE_SPRINT_PIPELINES,
-  SprintPipelineItem,
-} from "@/data/talentDashboardData";
+import { SprintPipelineItem } from "@/types/candidate.types";
 import { getCandidateApplicationsAction } from "@/actions/candidate.actions";
 
 interface CandidateApplicationsViewProps {

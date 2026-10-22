@@ -225,7 +225,7 @@ export async function getCurrentUserAction(): Promise<AuthUser | null> {
 /**
  * Dispatch verification OTP to email address via SMTP.
  */
-export async function resendOtpAction(payload: { email: string; full_name?: string }): Promise<{ success: boolean; message?: string }> {
+export async function resendOtpAction(payload: { email: string; previous_email?: string; full_name?: string }): Promise<{ success: boolean; message?: string }> {
   try {
     const response = await apiPost<{ dispatched: boolean; message: string }>("auth/resend-otp", payload);
     if (response.data) {
@@ -234,6 +234,86 @@ export async function resendOtpAction(payload: { email: string; full_name?: stri
     return { success: false, message: response.error?.message || "Failed to dispatch verification email." };
   } catch (err: any) {
     return { success: false, message: err.message || "Failed to dispatch verification email." };
+  }
+}
+
+/**
+ * Verify 6-digit OTP code and activate candidate profile.
+ */
+export async function verifyOtpAction(payload: { email: string; otp: string }): Promise<{ success: boolean; message?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+    const response = await apiPost<{ user?: any; access_token?: string; refresh_token?: string; message?: string }>(
+      "auth/verify-otp",
+      payload,
+      { cookieHeader }
+    );
+
+    if (response.error) {
+      return { success: false, message: response.error.message || "Invalid or expired verification PIN." };
+    }
+
+    const data = response.data;
+    if (data?.access_token) {
+      cookieStore.set("access_token", data.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+
+      if (data.refresh_token) {
+        cookieStore.set("refresh_token", data.refresh_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30,
+        });
+      }
+
+      cookieStore.set("user_role", "CANDIDATE", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    revalidatePath("/");
+    return { success: true, message: data?.message || "Identity confirmed successfully." };
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to authenticate verification PIN." };
+  }
+}
+
+/**
+ * Update candidate email address prior to OTP verification.
+ */
+export async function changeVerificationEmailAction(payload: { currentEmail: string; newEmail: string }): Promise<{ success: boolean; email?: string; message?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+    const response = await apiPost<{ email: string; message: string }>(
+      "auth/change-email",
+      { current_email: payload.currentEmail, new_email: payload.newEmail },
+      { cookieHeader }
+    );
+
+    if (response.error) {
+      return { success: false, message: response.error.message || "Failed to update email address." };
+    }
+
+    return {
+      success: true,
+      email: response.data?.email || payload.newEmail,
+      message: response.data?.message || "Email address updated successfully.",
+    };
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to update email address." };
   }
 }
 

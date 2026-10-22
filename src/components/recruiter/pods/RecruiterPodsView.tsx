@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { RecruiterPod } from "@/data/mock/recruiter.mock";
+import { RecruiterPod } from "@/types/recruiter.types";
 import {
   createRecruiterPodAction,
   updateRecruiterPodAction,

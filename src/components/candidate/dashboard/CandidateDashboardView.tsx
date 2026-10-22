@@ -14,12 +14,35 @@ import {
   Briefcase,
   Users,
   CheckCircle,
+  Edit,
+  Upload,
+  AlertTriangle,
 } from "@/components/ui/Icons";
 import { useCandidatePersona } from "@/context/CandidatePersonaContext";
+import { CandidateProfileDrawer } from "./drawers/CandidateProfileDrawer";
+import { CandidateCredentialsDrawer } from "./drawers/CandidateCredentialsDrawer";
+import { CandidateDocumentsDrawer } from "./drawers/CandidateDocumentsDrawer";
+import { CandidateDataRightsDrawer } from "./drawers/CandidateDataRightsDrawer";
 
 export function CandidateDashboardView() {
-  const { currentProfile, pipelines, interviews, isLoading } = useCandidatePersona();
+  const {
+    currentProfile,
+    pipelines,
+    interviews,
+    telemetry,
+    credentials,
+    documents,
+    isOpenToPods,
+    toggleOpenToWork,
+    isLoading,
+  } = useCandidatePersona();
+
   const [activeTab, setActiveTab] = useState<"all" | "tech" | "health">("all");
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
+  const [isCredentialsDrawerOpen, setIsCredentialsDrawerOpen] = useState(false);
+  const [isDocumentsDrawerOpen, setIsDocumentsDrawerOpen] = useState(false);
+  const [isDataRightsDrawerOpen, setIsDataRightsDrawerOpen] = useState(false);
+  const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
 
   const filteredPipelines = pipelines.filter((pod) => {
     if (activeTab === "tech") return pod.sector?.toLowerCase() === "technology";
@@ -27,41 +50,129 @@ export function CandidateDashboardView() {
     return true;
   });
 
+  const nextAction = telemetry?.next_best_action;
+
+  const handleNextActionClick = () => {
+    if (!nextAction) return;
+    const url = nextAction.cta_url || nextAction.action_url || "";
+    if (url.includes("credentials")) {
+      setIsCredentialsDrawerOpen(true);
+    } else if (url.includes("resume") || url.includes("documents")) {
+      setIsDocumentsDrawerOpen(true);
+    } else if (url.includes("skills") || url.includes("profile")) {
+      setIsProfileDrawerOpen(true);
+    }
+  };
+
+  const handleToggleAvailability = async () => {
+    try {
+      setIsTogglingAvailability(true);
+      await toggleOpenToWork(!isOpenToPods);
+    } finally {
+      setIsTogglingAvailability(false);
+    }
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Top Welcome & Velocity Status */}
+      {/* Top Welcome & Velocity Status Banner */}
       <div className="relative overflow-hidden rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-6 sm:p-8 text-white shadow-md">
-        <div className="relative z-10 flex flex-col justify-between gap-5 md:flex-row md:items-center">
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-electric/40 bg-electric/20 px-3 py-0.5 text-[11px] font-mono text-electric-bright">
-              <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
-              <span>
-                STATUS: {currentProfile.readinessIndex > 0 ? "INTAKE VERIFIED" : "INTAKE SUBMITTED"}
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-electric/40 bg-electric/20 px-3 py-0.5 text-[11px] font-mono text-electric-bright">
+                <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
+                <span>
+                  STATUS: {currentProfile.readinessIndex > 0 ? "INTAKE VERIFIED" : "INTAKE SUBMITTED"}
+                </span>
+              </div>
+              <span className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[11px] font-mono text-gray-300">
+                {currentProfile.vettingTier}
               </span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+
+            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
               Welcome back, {currentProfile.fullName}
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-xl leading-relaxed">
               Your candidate profile is active in the Pepoltek talent network. Track your sprint pipelines, vetting telemetry, and role matches.
             </p>
+
+            {/* Quick Profile Drawer Trigger Button */}
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsProfileDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all cursor-pointer backdrop-blur-xs"
+              >
+                <Edit size={13} />
+                <span>Quick Edit Profile</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCredentialsDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all cursor-pointer backdrop-blur-xs"
+              >
+                <ShieldCheck size={13} className="text-signal" />
+                <span>Licenses ({credentials.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsDocumentsDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all cursor-pointer backdrop-blur-xs"
+              >
+                <FileText size={13} className="text-electric-bright" />
+                <span>Documents ({documents.length})</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap gap-2.5">
-            <Link
-              href="/candidate/applications"
-              className="inline-flex items-center gap-2 justify-center rounded-xl bg-electric px-4.5 py-2.5 font-display text-xs sm:text-sm font-semibold text-white shadow-xs transition-all hover:bg-electric-bright"
-            >
-              <span>View Sprint Pipelines</span>
-              <ArrowRight size={14} />
-            </Link>
-            <Link
-              href="/candidate/reverse-search"
-              className="inline-flex items-center gap-2 justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 font-display text-xs sm:text-sm font-semibold text-white backdrop-blur-xs transition-all hover:bg-white/20"
-            >
-              <Compass size={14} />
-              <span>Reverse Search</span>
-            </Link>
+          <div className="flex shrink-0 flex-col sm:flex-row md:flex-col items-start md:items-end gap-3.5">
+            {/* Open to Work Switch (SRS CAN-09) */}
+            <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 backdrop-blur-xs">
+              <div className="text-left">
+                <div className="text-[11px] font-mono uppercase tracking-wider text-gray-300">
+                  Open to Opportunities
+                </div>
+                <div className="text-xs font-bold text-white">
+                  {isOpenToPods ? "Active in Match Pool" : "Hidden from Reverse Search"}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isTogglingAvailability}
+                onClick={handleToggleAvailability}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                  isOpenToPods ? "bg-signal" : "bg-gray-600"
+                }`}
+                aria-label="Toggle Open to Work"
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    isOpenToPods ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/candidate/applications"
+                className="inline-flex items-center gap-2 justify-center rounded-xl bg-electric px-4 py-2 font-display text-xs sm:text-sm font-semibold text-white shadow-xs transition-all hover:bg-electric-bright"
+              >
+                <span>Sprint Pipelines</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                href="/candidate/reverse-search"
+                className="inline-flex items-center gap-2 justify-center rounded-xl border border-white/25 bg-white/10 px-3.5 py-2 font-display text-xs sm:text-sm font-semibold text-white backdrop-blur-xs transition-all hover:bg-white/20"
+              >
+                <Compass size={14} />
+                <span>Reverse Search</span>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -75,7 +186,52 @@ export function CandidateDashboardView() {
         />
       </div>
 
-      {/* Metrics & Telemetry Row */}
+      {/* Next Best Action Banner (SRS CAN-08) */}
+      {nextAction && (
+        <div className="rounded-3xl border border-electric/40 bg-gradient-to-r from-electric/10 via-electric/5 to-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-electric px-2 py-0.5 font-mono text-[10px] font-bold text-white uppercase tracking-wider">
+                {nextAction.urgency === "HIGH" || nextAction.priority === "high" ? "Priority Recommendation" : "Profile Boost"}
+              </span>
+              {nextAction.target_metric && (
+                <span className="font-mono text-xs font-bold text-electric">
+                  Target Gain: {nextAction.target_metric}
+                </span>
+              )}
+            </div>
+            <h3 className="font-display text-base font-bold text-ink">
+              {nextAction.title}
+            </h3>
+            <p className="text-xs text-ink-soft max-w-2xl leading-relaxed">
+              {nextAction.description}
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            {(nextAction.cta_url || nextAction.action_url || "").startsWith("/") ? (
+              <Link
+                href={nextAction.cta_url || nextAction.action_url || "/candidate/profile"}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-ink px-4 py-2 font-display text-xs font-semibold text-white shadow-xs hover:bg-electric transition-colors"
+              >
+                <span>{nextAction.cta_label || nextAction.action_label || "Take Action"}</span>
+                <ArrowRight size={13} />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={handleNextActionClick}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-ink px-4 py-2 font-display text-xs font-semibold text-white shadow-xs hover:bg-electric transition-colors cursor-pointer"
+              >
+                <span>{nextAction.cta_label || nextAction.action_label || "Take Action"}</span>
+                <ArrowRight size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Metrics & Telemetry Row (SRS CAN-08) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Profile Readiness */}
         <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs flex items-center justify-between">
@@ -85,7 +241,7 @@ export function CandidateDashboardView() {
               {currentProfile.readinessIndex > 0 ? `${currentProfile.readinessIndex}%` : "In Review"}
             </div>
             <div className="mt-1 text-[11px] text-signal font-semibold">
-              {currentProfile.readinessIndex > 0 ? "Priority Match Ready" : "Intake Completed"}
+              {currentProfile.readinessIndex >= 70 ? "Priority Match Ready" : "Intake Completed"}
             </div>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-electric/10 text-electric border border-electric/25 shadow-2xs">
@@ -139,7 +295,7 @@ export function CandidateDashboardView() {
         <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-semibold text-mist uppercase tracking-wider">Target Rate Bracket</div>
-            <div className="mt-1 font-display text-lg sm:text-xl font-bold text-ink">
+            <div className="mt-1 font-display text-lg sm:text-xl font-bold text-ink truncate max-w-[150px]">
               {currentProfile.desiredHourlyRate && currentProfile.desiredHourlyRate !== "Specified in Intake"
                 ? currentProfile.desiredHourlyRate
                 : "Intake Specified"}
@@ -315,14 +471,14 @@ export function CandidateDashboardView() {
           )}
         </div>
 
-        {/* Right 4 Cols: Live Schedule & Fast Navigation */}
+        {/* Right 4 Cols: Live Schedule & Interactive Management Hub */}
         <div className="lg:col-span-4 space-y-6">
           {/* Upcoming Schedule */}
           <div className="rounded-3xl border border-[#bcd6fa] bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-electric" />
-                <h3 className="font-display text-sm font-bold text-ink">Upcoming Sprints & Calls</h3>
+                <h3 className="font-display text-sm font-bold text-ink">Upcoming Sprints &amp; Calls</h3>
               </div>
               <span className="font-mono text-[10px] uppercase tracking-wider text-mist">Live Schedule</span>
             </div>
@@ -361,7 +517,7 @@ export function CandidateDashboardView() {
                       rel="noopener noreferrer"
                       className="mt-2 block w-full rounded-xl bg-ink py-2 text-center font-display text-xs font-semibold text-white hover:bg-electric transition-colors shadow-2xs"
                     >
-                      Join Video Meeting Room →
+                      Join Video Meeting Room &rarr;
                     </a>
                   </div>
                 ))}
@@ -369,42 +525,61 @@ export function CandidateDashboardView() {
             )}
           </div>
 
-          {/* Quick Ecosystem Hub Links */}
+          {/* Interactive Management Drawers Hub */}
           <div className="rounded-3xl border border-[#bcd6fa] bg-white p-5 sm:p-6 shadow-xs space-y-3">
-            <h3 className="font-display text-sm font-bold text-ink">Talent Ecosystem Fast Access</h3>
+            <h3 className="font-display text-sm font-bold text-ink">Profile &amp; Record Management</h3>
             
             <div className="space-y-2">
-              <Link
-                href="/candidate/resume-upload"
-                className="group flex items-center justify-between rounded-xl border border-[#bcd6fa]/60 bg-canvas/30 p-3 text-xs font-semibold text-ink hover:border-electric hover:bg-white transition-all"
+              <button
+                type="button"
+                onClick={() => setIsCredentialsDrawerOpen(true)}
+                className="w-full text-left group flex items-center justify-between rounded-xl border border-[#bcd6fa]/60 bg-canvas/30 p-3 text-xs font-semibold text-ink hover:border-electric hover:bg-white transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-signal/10 text-signal">
+                    <ShieldCheck size={16} />
+                  </div>
+                  <div>
+                    <div className="font-display font-bold">Licenses &amp; Certifications</div>
+                    <div className="text-[10.5px] text-mist">{credentials.length} credentials recorded</div>
+                  </div>
+                </div>
+                <ArrowRight size={14} className="text-mist group-hover:text-signal transition-colors" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsDocumentsDrawerOpen(true)}
+                className="w-full text-left group flex items-center justify-between rounded-xl border border-[#bcd6fa]/60 bg-canvas/30 p-3 text-xs font-semibold text-ink hover:border-electric hover:bg-white transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-electric/10 text-electric">
                     <FileText size={16} />
                   </div>
                   <div>
-                    <div className="font-display font-bold">AI Resume Parser</div>
-                    <div className="text-[10.5px] text-mist">Update credentials and skills</div>
+                    <div className="font-display font-bold">CV Versions &amp; Uploads</div>
+                    <div className="text-[10.5px] text-mist">{documents.length} documents on file</div>
                   </div>
                 </div>
                 <ArrowRight size={14} className="text-mist group-hover:text-electric transition-colors" />
-              </Link>
+              </button>
 
-              <Link
-                href="/candidate/academy"
-                className="group flex items-center justify-between rounded-xl border border-[#bcd6fa]/60 bg-canvas/30 p-3 text-xs font-semibold text-ink hover:border-electric hover:bg-white transition-all"
+              <button
+                type="button"
+                onClick={() => setIsDataRightsDrawerOpen(true)}
+                className="w-full text-left group flex items-center justify-between rounded-xl border border-[#bcd6fa]/60 bg-canvas/30 p-3 text-xs font-semibold text-ink hover:border-electric hover:bg-white transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-electric/10 text-electric">
-                    <Award size={16} />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <ShieldCheck size={16} />
                   </div>
                   <div>
-                    <div className="font-display font-bold">Talent Academy</div>
-                    <div className="text-[10.5px] text-mist">Unlock Tier 1 billing badges</div>
+                    <div className="font-display font-bold">Data Rights &amp; Privacy</div>
+                    <div className="text-[10.5px] text-mist">GDPR export &amp; erasure controls</div>
                   </div>
                 </div>
-                <ArrowRight size={14} className="text-mist group-hover:text-electric transition-colors" />
-              </Link>
+                <ArrowRight size={14} className="text-mist group-hover:text-indigo-600 transition-colors" />
+              </button>
 
               <Link
                 href="/referrals/dashboard"
@@ -425,6 +600,27 @@ export function CandidateDashboardView() {
           </div>
         </div>
       </div>
+
+      {/* Slide-Over Drawers (UX Invariant: Right-Side Sheets) */}
+      <CandidateProfileDrawer
+        isOpen={isProfileDrawerOpen}
+        onClose={() => setIsProfileDrawerOpen(false)}
+      />
+
+      <CandidateCredentialsDrawer
+        isOpen={isCredentialsDrawerOpen}
+        onClose={() => setIsCredentialsDrawerOpen(false)}
+      />
+
+      <CandidateDocumentsDrawer
+        isOpen={isDocumentsDrawerOpen}
+        onClose={() => setIsDocumentsDrawerOpen(false)}
+      />
+
+      <CandidateDataRightsDrawer
+        isOpen={isDataRightsDrawerOpen}
+        onClose={() => setIsDataRightsDrawerOpen(false)}
+      />
     </div>
   );
 }

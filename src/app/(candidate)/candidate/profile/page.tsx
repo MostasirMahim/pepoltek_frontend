@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { CandidateProfileView } from "@/components/candidate/profile/CandidateProfileView";
 import { getCandidateProfileAction } from "@/actions/candidate.actions";
 import { getCurrentUserAction } from "@/actions/auth.actions";
-import { CandidateProfile } from "@/data/talentDashboardData";
+import { CandidateProfile } from "@/types/candidate.types";
 
 export const metadata: Metadata = {
   title: "Candidate Master Profile | Pepoltek",

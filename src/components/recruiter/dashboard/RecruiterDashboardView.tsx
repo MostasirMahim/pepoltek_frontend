@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { RecruiterPod, RecruiterShortlist } from "@/data/mock/recruiter.mock";
+import { RecruiterPod, RecruiterShortlist } from "@/types/recruiter.types";
 import { RecruiterAnalyticsData } from "@/actions/recruiter.actions";
 
 interface RecruiterDashboardViewProps {

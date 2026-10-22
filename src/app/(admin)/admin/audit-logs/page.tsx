@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { AdminAuditLogsView } from "@/components/admin/audit-logs/AdminAuditLogsView";
-import { ADMIN_AUDIT_LOGS } from "@/data/adminDashboardData";
 
 export const metadata: Metadata = {
   title: "System Action & Audit Logs | Pepoltek Admin",

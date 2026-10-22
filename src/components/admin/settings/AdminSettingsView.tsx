@@ -8,17 +8,25 @@ import {
   Zap,
   DollarSign,
 } from "@/components/ui/Icons";
-import {
-  ADMIN_SYSTEM_SETTINGS,
-  AdminSystemSettings,
-} from "@/data/adminDashboardData";
+import { AdminSystemSettings } from "@/types/admin.types";
+
+export const DEFAULT_ADMIN_SYSTEM_SETTINGS: AdminSystemSettings = {
+  directHirePlacementFeePercent: 15,
+  riskFreeTrialDurationWeeks: 2,
+  guaranteedSprintLatencyDaysMin: 5,
+  guaranteedSprintLatencyDaysMax: 7,
+  minimumTimezoneOverlapHours: 4,
+  referralBountyRewardAmount: 2500,
+  escrowHoldbackDays: 30,
+  autoVettingPassingScore: 85,
+};
 
 interface AdminSettingsViewProps {
   initialSettings?: AdminSystemSettings;
 }
 
 export function AdminSettingsView({
-  initialSettings = ADMIN_SYSTEM_SETTINGS,
+  initialSettings = DEFAULT_ADMIN_SYSTEM_SETTINGS,
 }: AdminSettingsViewProps) {
   const [settings, setSettings] = useState<AdminSystemSettings>(initialSettings);
   const [notification, setNotification] = useState<string | null>(null);

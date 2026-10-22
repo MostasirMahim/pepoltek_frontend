@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { ReferralDashboardView } from "@/components/referrals/ReferralDashboardView";
 import { getUserReferralSummaryAction } from "@/actions/referral.actions";
-import { BountySummary, ReferralRecord } from "@/data/talentDashboardData";
+import { BountySummary, ReferralRecord } from "@/types/referral.types";
 
 export const metadata: Metadata = {
   title: "Candidate Referral Program | Pepoltek",

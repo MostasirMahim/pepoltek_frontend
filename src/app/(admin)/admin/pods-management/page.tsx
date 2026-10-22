@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { AdminPodsView } from "@/components/admin/pods/AdminPodsView";
-import { ADMIN_PODS, ADMIN_JOB_REQUISITIONS } from "@/data/adminDashboardData";
 
 export const metadata: Metadata = {
   title: "Global Requisition Registry & SLAs | Pepoltek Admin",

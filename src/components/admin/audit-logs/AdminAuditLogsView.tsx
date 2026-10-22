@@ -9,7 +9,7 @@ import {
   Lock,
   X,
 } from "@/components/ui/Icons";
-import { ADMIN_AUDIT_LOGS, AdminAuditLogRecord } from "@/data/adminDashboardData";
+import { AdminAuditLogRecord } from "@/types/admin.types";
 
 interface AdminAuditLogsViewProps {
   initialLogs?: AdminAuditLogRecord[];

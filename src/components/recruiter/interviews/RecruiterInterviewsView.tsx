@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RecruiterInterview } from "@/data/mock/recruiter.mock";
+import { RecruiterInterview } from "@/types/recruiter.types";
 import { scheduleInterviewAction } from "@/actions/recruiter.actions";
 
 interface RecruiterInterviewsViewProps {

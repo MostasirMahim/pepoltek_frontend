@@ -3,28 +3,24 @@
 import { cookies } from "next/headers";
 import { apiGet, apiPost } from "@/lib/api";
 import {
-  INTAKE_SECTORS,
-  INTAKE_DOMAINS,
-  INTAKE_SKILLS,
-  INTAKE_SENIORITIES,
-  INTAKE_WORK_AUTH,
-  INTAKE_ENGAGEMENT_PREFS,
+  TaxonomyMatrix,
   SectorOption,
   DomainOption,
   SkillOption,
   SeniorityOption,
   WorkAuthOption,
   EngagementOption,
-} from "@/data/intakeOptions";
+} from "@/types/taxonomy.types";
 
-export interface TaxonomyMatrix {
-  sectors: SectorOption[];
-  domains: DomainOption[];
-  skills: SkillOption[];
-  seniorities: SeniorityOption[];
-  workAuths: WorkAuthOption[];
-  engagements: EngagementOption[];
-}
+export type {
+  TaxonomyMatrix,
+  SectorOption,
+  DomainOption,
+  SkillOption,
+  SeniorityOption,
+  WorkAuthOption,
+  EngagementOption,
+};
 
 export interface TaxonomyResponse {
   version: number;
@@ -35,12 +31,12 @@ export interface TaxonomyResponse {
 }
 
 const FALLBACK_TAXONOMY_MATRIX: TaxonomyMatrix = {
-  sectors: INTAKE_SECTORS,
-  domains: INTAKE_DOMAINS,
-  skills: INTAKE_SKILLS,
-  seniorities: INTAKE_SENIORITIES,
-  workAuths: INTAKE_WORK_AUTH,
-  engagements: INTAKE_ENGAGEMENT_PREFS,
+  sectors: [],
+  domains: [],
+  skills: [],
+  seniorities: [],
+  workAuths: [],
+  engagements: [],
 };
 
 export async function getTaxonomiesAction(): Promise<{

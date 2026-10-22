@@ -56,9 +56,11 @@ export async function apiRequest<T = any>(
   const { cookieHeader, params, headers, ...restOptions } = options;
   const url = buildUrl(endpoint, params);
 
+  const isFormData = typeof FormData !== "undefined" && restOptions.body instanceof FormData;
+
   const requestHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
     Accept: "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(cookieHeader ? { Cookie: cookieHeader } : {}),
     ...(headers as Record<string, string>),
   };
@@ -155,4 +157,16 @@ export async function apiDelete<T = any>(
   options: RequestOptions = {}
 ): Promise<ApiResponse<T>> {
   return apiRequest<T>(endpoint, { ...options, method: "DELETE" });
+}
+
+export async function apiUpload<T = any>(
+  endpoint: string,
+  formData: FormData,
+  options: RequestOptions = {}
+): Promise<ApiResponse<T>> {
+  return apiRequest<T>(endpoint, {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
 }

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { CandidateReverseSearchView } from "@/components/candidate/reverse-search/CandidateReverseSearchView";
 import { getReverseSearchMatchesAction } from "@/actions/matching.actions";
-import { REVERSE_SEARCH_MATCHES, ReverseSearchMatch } from "@/data/talentDashboardData";
+import { ReverseSearchMatch } from "@/types/candidate.types";
 
 export const metadata: Metadata = {
   title: "Reverse Job Search Engine | Pepoltek",

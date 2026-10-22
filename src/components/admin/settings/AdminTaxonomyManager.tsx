@@ -26,7 +26,7 @@ import {
   SeniorityOption,
   WorkAuthOption,
   EngagementOption,
-} from "@/data/intakeOptions";
+} from "@/types/taxonomy.types";
 
 interface AdminTaxonomyManagerProps {
   initialVersion: number;

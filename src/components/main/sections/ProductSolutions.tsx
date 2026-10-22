@@ -6,7 +6,7 @@ import { ProjectOverviewModal } from "./ProjectOverviewModal";
 import { ProjectModal } from "./ProjectModal";
 import { CardTopRightShape } from "@/components/ui/CardCornerShapes";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
-import { projectsData } from "@/data/projectsData";
+import { projectsData } from "./projects.data";
 import { Project } from "@/types/portfolio";
 import { getCaseStudiesAction } from "@/actions/cms.actions";
 

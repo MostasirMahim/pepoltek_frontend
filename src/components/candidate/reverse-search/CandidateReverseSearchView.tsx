@@ -15,7 +15,7 @@ import {
   CheckCircle,
   AlertTriangle,
 } from "@/components/ui/Icons";
-import { REVERSE_SEARCH_MATCHES, ReverseSearchMatch } from "@/data/talentDashboardData";
+import { ReverseSearchMatch } from "@/types/candidate.types";
 import {
   getReverseSearchMatchesAction,
   authorizePitchAction,

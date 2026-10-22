@@ -17,9 +17,10 @@ import {
   FileText,
   AlertTriangle,
 } from "@/components/ui/Icons";
-import { CandidateProfile } from "@/data/talentDashboardData";
+import { CandidateProfile } from "@/types/candidate.types";
 import { useCandidatePersona } from "@/context/CandidatePersonaContext";
 import { updateCandidateProfileAction } from "@/actions/candidate.actions";
+import { CandidateDataRightsDrawer } from "@/components/candidate/dashboard/drawers/CandidateDataRightsDrawer";
 
 const TECH_DOMAINS = [
   "Full Stack Systems & Real-Time Data Pipelines",
@@ -588,77 +589,11 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
         </form>
       )}
 
-      {/* Data Rights & GDPR/CCPA Modal */}
-      {isDataRightsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 backdrop-blur-xs p-4 animate-in fade-in-0 duration-150">
-          <div
-            className="w-full max-w-lg rounded-3xl border border-[#bcd6fa] bg-white p-6 sm:p-7 shadow-2xl space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between border-b border-[#bcd6fa]/40 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-electric/15 text-electric">
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <h3 className="font-display text-base font-bold text-ink">Data Rights &amp; Privacy Center</h3>
-                  <p className="text-xs text-ink-soft">GDPR, CCPA &amp; SOC 2 Compliance Controls</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsDataRightsModalOpen(false)}
-                className="rounded-xl p-1.5 text-ink-soft hover:bg-canvas cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/30 p-4 space-y-2">
-                <div className="font-display font-bold text-ink">Export Personal Data Dossier</div>
-                <p className="text-ink-soft text-[11px] leading-relaxed">
-                  Request an immutable cryptographic archive of your candidate record, including all submitted documents, interview feedback, and reverse search logs.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleRequestDataExport}
-                  className="rounded-xl bg-ink px-4 py-2 font-display text-xs font-semibold text-white hover:bg-electric transition-all cursor-pointer shadow-xs"
-                >
-                  Generate Data Export Bundle
-                </button>
-              </div>
-
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 space-y-2">
-                <div className="font-display font-bold text-rose-800">Right to be Forgotten (Account Deletion)</div>
-                <p className="text-rose-700 text-[11px] leading-relaxed">
-                  Permanently purge your candidate profile, unenroll from active talent academy courses, and remove all reverse search indexing.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDataRightsModalOpen(false);
-                    setDataRightsSuccessMessage("Account closure request registered with Pepoltek Data Protection Officer. Audit confirmation sent.");
-                  }}
-                  className="rounded-xl border border-rose-300 bg-white px-4 py-2 font-display text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all cursor-pointer shadow-xs"
-                >
-                  Request Account &amp; Record Deletion
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-[#bcd6fa]/40 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsDataRightsModalOpen(false)}
-                className="rounded-xl px-4 py-2 font-display text-xs font-semibold text-ink-soft hover:bg-canvas cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Data Rights & GDPR/CCPA Right-Side Sheet (UX Rule: slide-over drawer) */}
+      <CandidateDataRightsDrawer
+        isOpen={isDataRightsModalOpen}
+        onClose={() => setIsDataRightsModalOpen(false)}
+      />
     </div>
   );
 }

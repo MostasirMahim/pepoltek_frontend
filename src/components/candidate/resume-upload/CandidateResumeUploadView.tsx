@@ -12,16 +12,31 @@ import {
   ShieldCheck,
   Zap,
 } from "@/components/ui/Icons";
-import { INITIAL_PARSED_RESUME, ParsedResumePayload } from "@/data/talentDashboardData";
+import { ParsedResumePayload } from "@/types/candidate.types";
 import { submitCandidateIntakeAction } from "@/actions/candidate.actions";
 
 type Sector = "technology" | "healthcare";
+
+const EMPTY_PARSED_RESUME: ParsedResumePayload = {
+  fullName: "",
+  email: "",
+  phone: "",
+  sector: "technology",
+  primaryDomain: "",
+  experienceLevel: "",
+  skills: "",
+  visaStatus: "",
+  hourlyExpectation: "",
+  extractedYears: 0,
+  missingFields: [],
+  warnings: [],
+};
 
 export function CandidateResumeUploadView() {
   const [sector, setSector] = useState<Sector>("technology");
   const [file, setFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
-  const [parsedData, setParsedData] = useState<ParsedResumePayload>(INITIAL_PARSED_RESUME);
+  const [parsedData, setParsedData] = useState<ParsedResumePayload>(EMPTY_PARSED_RESUME);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -40,7 +55,7 @@ export function CandidateResumeUploadView() {
         setIsParsing(false);
         if (sector === "technology") {
           setParsedData({
-            ...INITIAL_PARSED_RESUME,
+            ...EMPTY_PARSED_RESUME,
             sector: "technology",
             fullName: "Alex Morgan",
             email: "alex.morgan@engineer.com",
