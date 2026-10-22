@@ -10,6 +10,10 @@ import {
   SprintPipelineItem,
   UpcomingInterview,
 } from "@/data/talentDashboardData";
+import {
+  getCandidateProfileAction,
+  updateCandidateProfileAction,
+} from "@/actions/candidate.actions";
 
 export type PersonaType = "alex" | "rachel";
 
@@ -34,12 +38,41 @@ export function CandidatePersonaProvider({ children }: { children: React.ReactNo
   const currentProfile = activePersona === "alex" ? alexProfile : rachelProfile;
   const [isOpenToPods, setIsOpenToPods] = useState(currentProfile.isOpenToPods);
 
+  // Synchronize with live backend profile if authenticated
+  useEffect(() => {
+    async function loadBackendData() {
+      const res = await getCandidateProfileAction();
+      if (res.success && res.data) {
+        const be = res.data;
+        if (be.full_name) {
+          setAlexProfile((prev) => ({
+            ...prev,
+            fullName: be.full_name || prev.fullName,
+            primaryTrack: be.sector || prev.primaryTrack,
+            skills: be.skills || prev.skills,
+            readinessIndex: be.profile_strength || prev.readinessIndex,
+            isOpenToPods: be.open_to_work ?? prev.isOpenToPods,
+          }));
+        }
+      }
+    }
+    loadBackendData();
+  }, []);
+
   const updateCurrentProfile = (updated: Partial<CandidateProfile>) => {
     if (activePersona === "alex") {
       setAlexProfile((prev) => ({ ...prev, ...updated }));
     } else {
       setRachelProfile((prev) => ({ ...prev, ...updated }));
     }
+
+    // Fire background mutation to live backend
+    updateCandidateProfileAction({
+      full_name: updated.fullName,
+      sector: updated.primaryTrack,
+      skills: updated.skills,
+      open_to_work: updated.isOpenToPods,
+    }).catch(() => {});
   };
 
   // Prioritize pipelines based on active persona

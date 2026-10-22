@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /**
- * ScrollAnimator — cinematic GSAP scroll entrance animations.
+ * ScrollAnimator - cinematic GSAP scroll entrance animations.
  * Every section gets a bold, unmistakably distinct motion signature.
  * Targets sections by ID. Zero JSX changes to any section component.
  */
@@ -32,7 +32,7 @@ export default function ScrollAnimator() {
     });
 
     // ─────────────────────────────────────────────────────────────────
-    // 1. HERO — on-load entrance: left copy rises, right globe punches in
+    // 1. HERO - on-load entrance: left copy rises, right globe punches in
     // ─────────────────────────────────────────────────────────────────
     const hero = document.getElementById("hero-section");
     if (hero) {
@@ -75,7 +75,7 @@ export default function ScrollAnimator() {
     // ─────────────────────────────────────────────────────────────────
     // 2. SPECIALIST DELIVERY TRACKS
     //    VIBE: Rises from deep below with a hard spring overshoot
-    //    The entire section lifts from y:160 — unmistakably coming up from below the fold
+    //    The entire section lifts from y:160 - unmistakably coming up from below the fold
     // ─────────────────────────────────────────────────────────────────
     const tracks = document.getElementById("specialist-tracks");
     if (tracks) {
@@ -171,7 +171,7 @@ export default function ScrollAnimator() {
 
     // ─────────────────────────────────────────────────────────────────
     // 4. HIRING VELOCITY / CALCULATOR SECTION
-    //    VIBE: 3D perspective flip — section tilts in from far away
+    //    VIBE: 3D perspective flip - section tilts in from far away
     //    rotateX: -22 = section starts tilted like a table seen from above, then flips flat
     // ─────────────────────────────────────────────────────────────────
     const calc = document.getElementById("calculator-section");
@@ -267,7 +267,7 @@ export default function ScrollAnimator() {
 
     // ─────────────────────────────────────────────────────────────────
     // 5. COMMERCIAL TERMS
-    //    VIBE: Blur-to-sharp focus snap + scale — enters out-of-focus, snaps crisp
+    //    VIBE: Blur-to-sharp focus snap + scale - enters out-of-focus, snaps crisp
     //    Like a camera lens pulling focus from blur to sharp clarity
     // ─────────────────────────────────────────────────────────────────
     const commercial = document.getElementById("commercial-terms");
@@ -384,7 +384,7 @@ export default function ScrollAnimator() {
 
     // ─────────────────────────────────────────────────────────────────
     // 7. PRODUCT SOLUTIONS
-    //    VIBE: Skew-slide from right — section enters with a horizontal shear
+    //    VIBE: Skew-slide from right - section enters with a horizontal shear
     //    skewX: -6 + x: 120 gives it a dramatic lean as it slides in
     // ─────────────────────────────────────────────────────────────────
     const portfolio = document.getElementById("case-studies-section");
@@ -446,7 +446,7 @@ export default function ScrollAnimator() {
 
     // ─────────────────────────────────────────────────────────────────
     // 8. TALENT ECOSYSTEM
-    //    VIBE: Drops from above — section descends from y:-120 like a ceiling dropping
+    //    VIBE: Drops from above - section descends from y:-120 like a ceiling dropping
     //    Combined with scale(1.08) → 1 gives weight and mass to the landing
     // ─────────────────────────────────────────────────────────────────
     const talent = document.getElementById("talent-ecosystem");

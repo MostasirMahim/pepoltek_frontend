@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ProjectOverviewModal } from "./ProjectOverviewModal";
 import { ProjectModal } from "./ProjectModal";
@@ -8,6 +8,7 @@ import { CardTopRightShape } from "@/components/ui/CardCornerShapes";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
 import { projectsData } from "@/data/projectsData";
 import { Project } from "@/types/portfolio";
+import { getCaseStudiesAction } from "@/actions/cms.actions";
 
 interface CaseStudyCard {
   id: string;
@@ -131,11 +132,52 @@ export default function ProductSolutions() {
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [overviewProject, setOverviewProject] = useState<Project | null>(null);
   const [selectedCaseStudy, setSelectedCaseStudy] = useState<Project | null>(null);
+  const [dynamicStudies, setDynamicStudies] = useState<CaseStudyCard[]>(CASE_STUDIES);
+
+  useEffect(() => {
+    async function loadCaseStudies() {
+      const sectorParam =
+        activeFilter === "all"
+          ? "all"
+          : activeFilter === "healthtech"
+          ? "healthcare"
+          : "tech";
+      const res = await getCaseStudiesAction(sectorParam);
+      if (res.success && res.data && res.data.length > 0) {
+        const mapped: CaseStudyCard[] = res.data.map((item, idx) => ({
+          id: item.slug,
+          projectSlug: item.slug,
+          category: item.sector === "healthcare" ? "healthtech" : "enterprise",
+          indexStr: `0${idx + 1}`,
+          badge: item.sectorLabel,
+          title: item.title,
+          type: item.client,
+          endpoint: `pepoltek.com / ${item.slug}`,
+          status: "Verified",
+          image:
+            idx === 0
+              ? "/project_images/pepoltek-hrm.png"
+              : idx === 1
+              ? "/project_images/erp-suite.png"
+              : "/project_images/Autonomous_AI_Software_Engineer1.png",
+          description: item.summary,
+          techStack: ["Next.js", "Python", "Kubernetes", "Redis"],
+          impact: item.metrics?.[0]
+            ? `${item.metrics[0].label}: ${item.metrics[0].value}`
+            : "Verified enterprise deployment.",
+          metric: item.metrics?.[0]?.value || "100%",
+          metricLabel: item.metrics?.[0]?.label || "Clearance",
+        }));
+        setDynamicStudies(mapped);
+      }
+    }
+    loadCaseStudies();
+  }, [activeFilter]);
 
   const displayedStudies =
     activeFilter === "all"
-      ? CASE_STUDIES.slice(0, 3)
-      : CASE_STUDIES.filter((s) => s.category === activeFilter);
+      ? dynamicStudies.slice(0, 3)
+      : dynamicStudies.filter((s) => s.category === activeFilter);
 
   return (
     <section

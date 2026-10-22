@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
+import { submitLeadAction } from "@/actions/leads.actions";
 
 /* ==========================================================================
    WIDGET 2: EXHAUSTIVE STACK & TECHNOLOGY MASTER LIST
@@ -265,6 +266,44 @@ export default function RpoCalculator() {
 
   /* Proposal Modal state */
   const [isProposalOpen, setIsProposalOpen] = useState<boolean>(false);
+  const [leadForm, setLeadForm] = useState({ name: "", email: "", company: "" });
+  const [isSubmittingLead, setIsSubmittingLead] = useState<boolean>(false);
+  const [leadSubmitSuccess, setLeadSubmitSuccess] = useState<string | null>(null);
+  const [leadSubmitError, setLeadSubmitError] = useState<string | null>(null);
+
+  const handleProposalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadForm.name || !leadForm.email || !leadForm.company) {
+      setLeadSubmitError("Please provide your name, work email, and company.");
+      return;
+    }
+    setIsSubmittingLead(true);
+    setLeadSubmitError(null);
+    const res = await submitLeadAction({
+      contact_name: leadForm.name,
+      work_email: leadForm.email,
+      company: leadForm.company,
+      source: "calculator",
+      headcount: calc.totalHeadcount,
+      calculator_snapshot: {
+        monthlyDeploymentCost: calc.monthlyDeploymentCost,
+        traditionalAgencyPlacementFee: calc.traditionalAgencyPlacementFee,
+        netFirstMonthSavings: calc.netFirstMonthSavings,
+        savingsPercent: calc.savingsPercent,
+        commitmentTerm,
+        roles: activeRoles,
+      },
+    });
+
+    setIsSubmittingLead(false);
+    if (res.success) {
+      setLeadSubmitSuccess(
+        `Proposal locked and requisition registered successfully! Requisition ID: ${res.leadId?.slice(0, 8)}`
+      );
+    } else {
+      setLeadSubmitError(res.error?.message || "Failed to submit proposal request.");
+    }
+  };
 
   /* Close modal on ESC */
   useEffect(() => {
@@ -943,33 +982,101 @@ export default function RpoCalculator() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-2">
-              <a
-                href="/contact"
-                className="w-full text-center rounded-xl bg-electric py-2.5 font-display text-xs sm:text-sm font-bold text-white shadow-md hover:bg-electric-bright transition-colors"
-              >
-                Schedule Executive Review Call
-              </a>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="rounded-xl border border-electric/40 bg-electric/[0.06] py-2 font-display text-xs font-semibold text-electric hover:bg-electric/15 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                  </svg>
-                  <span>Export SOW (PDF)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsProposalOpen(false)}
-                  className="rounded-xl border border-[#bcd6fa] py-2 font-display text-xs font-semibold text-ink hover:bg-canvas cursor-pointer transition-colors"
-                >
-                  Modify Configuration
-                </button>
+            {leadSubmitSuccess ? (
+              <div className="mt-4 rounded-xl border border-signal/40 bg-signal/10 p-4 text-center space-y-2">
+                <div className="inline-flex items-center gap-1.5 text-signal font-bold text-sm">
+                  <span>✓</span>
+                  <span>{leadSubmitSuccess}</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Our Enterprise RPO Lead will reach out to schedule your executive discovery sprint.
+                </p>
+                <div className="pt-2 flex justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="rounded-xl bg-electric px-4 py-2 font-display text-xs font-semibold text-white shadow-sm hover:bg-electric-bright"
+                  >
+                    Print / Save Proposal SOW
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLeadSubmitSuccess(null);
+                      setIsProposalOpen(false);
+                    }}
+                    className="rounded-xl border border-[#bcd6fa] px-4 py-2 font-display text-xs font-semibold text-ink hover:bg-canvas"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <form onSubmit={handleProposalSubmit} className="mt-3.5 space-y-2.5">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Register Requisition &amp; Request SOW
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Your Name *"
+                    value={leadForm.name}
+                    onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
+                    className="rounded-lg border border-[#bcd6fa] bg-canvas px-2.5 py-1.5 text-xs text-ink focus:border-electric focus:outline-none"
+                  />
+                  <input
+                    type="email"
+                    required
+                    placeholder="Work Email *"
+                    value={leadForm.email}
+                    onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+                    className="rounded-lg border border-[#bcd6fa] bg-canvas px-2.5 py-1.5 text-xs text-ink focus:border-electric focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Company Name *"
+                    value={leadForm.company}
+                    onChange={(e) => setLeadForm({ ...leadForm, company: e.target.value })}
+                    className="rounded-lg border border-[#bcd6fa] bg-canvas px-2.5 py-1.5 text-xs text-ink focus:border-electric focus:outline-none"
+                  />
+                </div>
+
+                {leadSubmitError && (
+                  <p className="text-xs text-rose-500 font-medium">{leadSubmitError}</p>
+                )}
+
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingLead}
+                    className="w-full text-center rounded-xl bg-electric py-2.5 font-display text-xs sm:text-sm font-bold text-white shadow-md hover:bg-electric-bright transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmittingLead ? "Submitting Requisition..." : "Submit Proposal Requisition to BD Team"}
+                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="rounded-xl border border-electric/40 bg-electric/[0.06] py-2 font-display text-xs font-semibold text-electric hover:bg-electric/15 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                      </svg>
+                      <span>Export SOW (PDF)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsProposalOpen(false)}
+                      className="rounded-xl border border-[#bcd6fa] py-2 font-display text-xs font-semibold text-ink hover:bg-canvas cursor-pointer transition-colors"
+                    >
+                      Modify Configuration
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

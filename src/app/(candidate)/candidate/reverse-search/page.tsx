@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Compass,
   ShieldCheck,
@@ -15,6 +15,10 @@ import {
   CheckCircle,
 } from "@/components/ui/Icons";
 import { REVERSE_SEARCH_MATCHES, ReverseSearchMatch } from "@/data/talentDashboardData";
+import {
+  getReverseSearchMatchesAction,
+  authorizePitchAction,
+} from "@/actions/matching.actions";
 
 export default function CandidateReverseSearchPage() {
   const [matches, setMatches] = useState<ReverseSearchMatch[]>(REVERSE_SEARCH_MATCHES);
@@ -24,17 +28,38 @@ export default function CandidateReverseSearchPage() {
   const [lastScanned, setLastScanned] = useState("Just now");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const handleAuthorizePitch = (id: string) => {
+  useEffect(() => {
+    async function loadBackendMatches() {
+      const res = await getReverseSearchMatchesAction();
+      if (res.success && res.data && res.data.length > 0) {
+        const mapped: ReverseSearchMatch[] = res.data.map((item, idx) => ({
+          id: item.id || `MATCH-BE-${idx}`,
+          clientOrgAnonymized: item.company_masked || "Enterprise Client (Confidential)",
+          role: item.title,
+          sector: item.sector === "healthcare" ? "Healthcare & Med-Tech" : "Enterprise IT",
+          matchScore: item.match_score || 95,
+          skillOverlap: item.skills || ["Next.js", "TypeScript", "Node.js"],
+          timezoneOverlap: item.timezone_overlap || "4h guaranteed live overlap",
+          compensation: item.rate_range || "$85 - $110 / hr",
+          engagement: "C2C",
+          sprintVelocity: "7-Day Sprint Ready",
+          authorized: item.pitch_status === "authorized",
+          authorizedAt: item.pitch_status === "authorized" ? "Verified" : undefined,
+          description: "Matched based on verified skills, timezone alignment, and work authorization.",
+        }));
+        setMatches(mapped);
+      }
+    }
+    loadBackendMatches();
+  }, []);
+
+  const handleAuthorizePitch = async (id: string) => {
+    const current = matches.find((m) => m.id === id);
+    const nextState = !current?.authorized;
+
     setMatches((prev) =>
       prev.map((m) => {
         if (m.id === id) {
-          const nextState = !m.authorized;
-          setToastMessage(
-            nextState
-              ? `Authorized 1-Click Pitch for ${m.clientOrgAnonymized}. Dossier presented privately.`
-              : `Revoked pitch authorization for ${m.clientOrgAnonymized}.`
-          );
-          setTimeout(() => setToastMessage(null), 3500);
           return {
             ...m,
             authorized: nextState,
@@ -44,16 +69,29 @@ export default function CandidateReverseSearchPage() {
         return m;
       })
     );
+
+    setToastMessage(
+      nextState
+        ? `Authorized 1-Click Pitch for ${current?.clientOrgAnonymized}. Dossier presented privately.`
+        : `Revoked pitch authorization for ${current?.clientOrgAnonymized}.`
+    );
+    setTimeout(() => setToastMessage(null), 3500);
+
+    // Call live server action
+    await authorizePitchAction(id, nextState);
   };
 
-  const handleTriggerRescan = () => {
+  const handleTriggerRescan = async () => {
     setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      setLastScanned("Just now");
-      setToastMessage("Reverse search pipeline rescan complete. All 4 active client matches refreshed.");
-      setTimeout(() => setToastMessage(null), 3500);
-    }, 800);
+    const res = await getReverseSearchMatchesAction();
+    setIsScanning(false);
+    setLastScanned("Just now");
+    if (res.success && res.data && res.data.length > 0) {
+      setToastMessage("Reverse search pipeline rescan complete. Live client matches refreshed.");
+    } else {
+      setToastMessage("Reverse search pipeline rescan complete.");
+    }
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const filteredMatches = matches.filter((m) => {

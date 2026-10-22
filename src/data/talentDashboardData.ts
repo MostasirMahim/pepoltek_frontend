@@ -194,6 +194,7 @@ export interface ParsedResumePayload {
   clinicalRegNumber?: string;
   hourlyExpectation: string;
   extractedYears: number;
+  githubUrl?: string;
   missingFields: string[];
   warnings: string[];
 }

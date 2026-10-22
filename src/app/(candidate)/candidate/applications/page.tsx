@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Briefcase,
@@ -18,16 +18,56 @@ import {
   ACTIVE_SPRINT_PIPELINES,
   SprintPipelineItem,
 } from "@/data/talentDashboardData";
+import { getCandidateApplicationsAction } from "@/actions/candidate.actions";
 
 export default function CandidateApplicationsPage() {
   const [filter, setFilter] = useState<string>("All");
+  const [appsList, setAppsList] = useState<SprintPipelineItem[]>(ACTIVE_SPRINT_PIPELINES);
   const [selectedApp, setSelectedApp] = useState<SprintPipelineItem | null>(null);
   const [isVirtualRoomOpen, setIsVirtualRoomOpen] = useState(false);
   const [callActive, setCallActive] = useState(false);
 
+  useEffect(() => {
+    async function loadApplications() {
+      const res = await getCandidateApplicationsAction();
+      if (res.success && res.data && res.data.length > 0) {
+        const stageMap: Record<string, "Submitted" | "Screened" | "Technical Vetting" | "Client Panel" | "Deployed"> = {
+          discovery: "Submitted",
+          market_mapping: "Screened",
+          technical_vetting: "Technical Vetting",
+          interview: "Client Panel",
+          closed: "Deployed",
+        };
+
+        const mapped: SprintPipelineItem[] = res.data.map((item: any, idx: number) => ({
+          id: item.id || `APP-${idx}`,
+          podName: item.requisition_title || "Enterprise Sprint Pod",
+          clientName: item.client_name || "Enterprise Partner",
+          clientIndustry: item.sector === "healthcare" ? "Healthcare Systems" : "FinTech & Cloud",
+          role: item.requisition_title || "Full Stack Lead",
+          sector: item.sector === "healthcare" ? "Healthcare" : "Technology",
+          appliedDate: item.applied_at ? new Date(item.applied_at).toLocaleDateString() : "Active Sprint",
+          currentStage: stageMap[item.stage] || "Submitted",
+          stageIndex: item.stage === "closed" ? 5 : item.stage === "interview" ? 4 : item.stage === "technical_vetting" ? 3 : item.stage === "market_mapping" ? 2 : 1,
+          totalStages: 5,
+          rate: "$95 / hr",
+          duration: "3-Month Sprint",
+          startDate: "Immediate",
+          matchScore: 98,
+          tag: "Active",
+          timezone: "4h Live Overlap",
+          requiredSkills: ["Next.js", "TypeScript", "Python"],
+          podLeadName: "Alex Morgan",
+        }));
+        setAppsList(mapped);
+      }
+    }
+    loadApplications();
+  }, []);
+
   const filtered = filter === "All"
-    ? ACTIVE_SPRINT_PIPELINES
-    : ACTIVE_SPRINT_PIPELINES.filter((a) =>
+    ? appsList
+    : appsList.filter((a) =>
         a.currentStage === filter || a.sector === filter
       );
 

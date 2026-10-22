@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Award,
   Zap,
@@ -20,6 +20,10 @@ import {
   CURRENT_TALENT_PROFILE,
   AcademyCourse,
 } from "@/data/talentDashboardData";
+import {
+  getAcademyCoursesAction,
+  enrollCourseAction,
+} from "@/actions/academy.actions";
 
 export default function CandidateAcademyPage() {
   const [courses, setCourses] = useState<AcademyCourse[]>(ACADEMY_COURSES);
@@ -33,12 +37,36 @@ export default function CandidateAcademyPage() {
   const [examScore, setExamScore] = useState(0);
   const [readinessScore, setReadinessScore] = useState(CURRENT_TALENT_PROFILE.readinessIndex);
 
+  useEffect(() => {
+    async function loadCourses() {
+      const res = await getAcademyCoursesAction();
+      if (res.success && res.data && res.data.length > 0) {
+        const mapped: AcademyCourse[] = res.data.map((item, idx) => ({
+          id: item.id || `CRS-${idx}`,
+          title: item.title,
+          category: item.sector === "healthcare" ? "Healthcare Compliance" : "Software Architecture",
+          duration: `${item.estimated_hours || 4} Hours`,
+          modulesCount: item.modules_count || 6,
+          completedModules: Math.round(((item.progress_pct || 0) / 100) * (item.modules_count || 6)),
+          progressPercentage: item.progress_pct || 0,
+          status: item.progress_pct === 100 ? "Completed" : item.is_enrolled ? "In Progress" : "Available",
+          badgeName: item.badge_unlocked ? "Verified Specialist" : "Course Badge",
+          tierUnlockText: "Unlocks Tier 1 Squad Rate & Direct Client Match Flags",
+          instructor: "Pepoltek Technical Lead",
+          syllabus: ["Architecture Foundations", "Security & Compliance", "Deployment Sprints"],
+        }));
+        setCourses(mapped);
+      }
+    }
+    loadCourses();
+  }, []);
+
   const filteredCourses = courses.filter((c) => {
     if (activeCategory === "all") return true;
     return c.category === activeCategory;
   });
 
-  const handleStartResume = (courseId: string) => {
+  const handleStartResume = async (courseId: string) => {
     setCourses((prev) =>
       prev.map((c) => {
         if (c.id === courseId) {
@@ -54,6 +82,9 @@ export default function CandidateAcademyPage() {
         return c;
       })
     );
+
+    // Call live enrollment server action
+    await enrollCourseAction(courseId);
     setSelectedCourse(null);
   };
 

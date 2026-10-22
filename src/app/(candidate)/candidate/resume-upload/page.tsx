@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from "@/components/ui/Icons";
 import { INITIAL_PARSED_RESUME, ParsedResumePayload } from "@/data/talentDashboardData";
+import { submitCandidateIntakeAction } from "@/actions/candidate.actions";
 
 type Sector = "technology" | "healthcare";
 
@@ -20,6 +21,8 @@ export default function CandidateResumeUploadPage() {
   const [isParsing, setIsParsing] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedResumePayload>(INITIAL_PARSED_RESUME);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Missing fields tracking
   const [governmentDocUploaded, setGovernmentDocUploaded] = useState(false);
@@ -71,10 +74,39 @@ export default function CandidateResumeUploadPage() {
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    const skillsArray = parsedData.skills
+      ? parsedData.skills.split(",").map((s) => s.trim())
+      : [];
+
+    const res = await submitCandidateIntakeAction({
+      email: parsedData.email,
+      full_name: parsedData.fullName,
+      phone: parsedData.phone,
+      sector: sector,
+      domain: parsedData.primaryDomain,
+      level: parsedData.experienceLevel.toLowerCase().includes("lead")
+        ? "lead"
+        : parsedData.experienceLevel.toLowerCase().includes("director")
+        ? "director"
+        : "senior",
+      work_auth: parsedData.visaStatus.toLowerCase().includes("citizen") ? "us_citizen" : "opt",
+      skills: skillsArray,
+      portfolio_url: parsedData.githubUrl || "",
+      github_url: parsedData.githubUrl || "",
+    });
+
+    setIsSubmitting(false);
+    if (res.success) {
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setSubmitError(res.error?.message || "Failed to register candidate intake.");
+    }
   };
 
   return (

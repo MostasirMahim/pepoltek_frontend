@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import PageHero from "@/components/main/PageHero";
+import { submitLeadAction } from "@/actions/leads.actions";
 import {
   Clock,
   Zap,
@@ -29,15 +30,31 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setErrorMessage(null);
 
-    setTimeout(() => {
-      setSubmitting(false);
+    const res = await submitLeadAction({
+      contact_name: clientName,
+      work_email: clientEmail,
+      company: clientCompany,
+      phone: clientPhone,
+      sector: sector === "Technology & SDLC" ? "technology" : "healthcare",
+      engagement_model: engagement,
+      roles_needed: squadSize,
+      notes: message,
+      source: "contact_form",
+    });
+
+    setSubmitting(false);
+    if (res.success) {
       setSubmitted(true);
-    }, 800);
+    } else {
+      setErrorMessage(res.error?.message || "Failed to submit request.");
+    }
   };
 
   return (

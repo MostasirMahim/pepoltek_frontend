@@ -59,8 +59,8 @@ export default function AuthLayout({
       </header>
 
       {/* Main Form Center */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-md">{children}</div>
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8 w-full max-w-6xl mx-auto">
+        <div className="w-full flex justify-center">{children}</div>
       </main>
 
       {/* Bottom Footer */}
