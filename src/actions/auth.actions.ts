@@ -9,6 +9,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: string;
+  roles?: string[];
   referralCode?: string;
   mfaEnabled?: boolean;
 }
@@ -20,6 +21,19 @@ export interface AuthActionResult {
     code: string;
     message: string;
     fields?: Record<string, string[]>;
+  };
+}
+
+function formatAuthUser(u: any): AuthUser {
+  const roles = Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : ["CANDIDATE"]);
+  return {
+    id: u?.id || "",
+    email: u?.email || "",
+    fullName: u?.full_name || u?.fullName || u?.email?.split("@")[0] || "Candidate",
+    role: roles[0] || "CANDIDATE",
+    roles: roles,
+    referralCode: u?.referral_code,
+    mfaEnabled: u?.mfa_enabled,
   };
 }
 
@@ -70,10 +84,24 @@ export async function loginAction(formData: FormData | Record<string, any>): Pro
           maxAge: 60 * 60 * 24 * 30, // 30 days
         });
       }
+
+      const roleStr = (
+        data.user?.roles?.[0] ||
+        data.user?.role ||
+        "CANDIDATE"
+      ).toUpperCase();
+
+      cookieStore.set("user_role", roleStr, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
     }
 
     revalidatePath("/");
-    return { success: true, user: data?.user };
+    return { success: true, user: data?.user ? formatAuthUser(data.user) : undefined };
   } catch (err: any) {
     return {
       success: false,
@@ -90,7 +118,7 @@ export async function loginAction(formData: FormData | Record<string, any>): Pro
  */
 export async function registerAction(payload: Record<string, any>): Promise<AuthActionResult> {
   try {
-    const response = await apiPost<{ user: AuthUser; access_token?: string; refresh_token?: string }>(
+    const response = await apiPost<{ user: any; access_token?: string; refresh_token?: string }>(
       "auth/register",
       payload
     );
@@ -119,10 +147,24 @@ export async function registerAction(payload: Record<string, any>): Promise<Auth
           maxAge: 60 * 60 * 24 * 30,
         });
       }
+
+      const roleStr = (
+        data.user?.roles?.[0] ||
+        data.user?.role ||
+        "CANDIDATE"
+      ).toUpperCase();
+
+      cookieStore.set("user_role", roleStr, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
     }
 
     revalidatePath("/");
-    return { success: true, user: data?.user };
+    return { success: true, user: data?.user ? formatAuthUser(data.user) : undefined };
   } catch (err: any) {
     return {
       success: false,
@@ -141,10 +183,12 @@ export async function logoutAction(): Promise<{ success: boolean }> {
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
+    const refreshToken = cookieStore.get("refresh_token")?.value;
 
-    await apiPost("auth/logout", {}, { cookieHeader });
+    await apiPost("auth/logout", { refresh_token: refreshToken }, { cookieHeader });
     cookieStore.delete("access_token");
     cookieStore.delete("refresh_token");
+    cookieStore.delete("user_role");
 
     revalidatePath("/");
     return { success: true };
@@ -152,6 +196,7 @@ export async function logoutAction(): Promise<{ success: boolean }> {
     const cookieStore = await cookies();
     cookieStore.delete("access_token");
     cookieStore.delete("refresh_token");
+    cookieStore.delete("user_role");
     return { success: true };
   }
 }
@@ -164,12 +209,31 @@ export async function getCurrentUserAction(): Promise<AuthUser | null> {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
 
-    const response = await apiGet<{ user: AuthUser }>("auth/me", { cookieHeader });
-    if (response.data?.user) {
-      return response.data.user;
+    const response = await apiGet<any>("auth/me", { cookieHeader });
+    if (response.data) {
+      const u = response.data.user || response.data;
+      if (u && (u.id || u.email)) {
+        return formatAuthUser(u);
+      }
     }
     return null;
   } catch {
     return null;
   }
 }
+
+/**
+ * Dispatch verification OTP to email address via SMTP.
+ */
+export async function resendOtpAction(payload: { email: string; full_name?: string }): Promise<{ success: boolean; message?: string }> {
+  try {
+    const response = await apiPost<{ dispatched: boolean; message: string }>("auth/resend-otp", payload);
+    if (response.data) {
+      return { success: true, message: response.data.message };
+    }
+    return { success: false, message: response.error?.message || "Failed to dispatch verification email." };
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to dispatch verification email." };
+  }
+}
+

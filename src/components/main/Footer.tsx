@@ -6,25 +6,27 @@ import Link from "next/link";
 
 const SOLUTIONS_LINKS = [
   { label: "IT Staff Augmentation", href: "/services" },
-  { label: "Dedicated Engineering Pods", href: "/services" },
+  { label: "Multi-Seat Engineering Teams", href: "/services" },
   { label: "Employer of Record (EOR)", href: "/services" },
   { label: "Healthcare & Clinical Staffing", href: "/services" },
   { label: "Direct Hire Executive Search", href: "/services" },
 ];
 
 const COMPANY_LINKS = [
+  { label: "Careers & Open Jobs", href: "/jobs" },
   { label: "About In-House Delivery Engine", href: "/about" },
   { label: "Leadership & Track Record", href: "/about" },
   { label: "Technical Case Studies", href: "/case-studies" },
-  { label: "Contact Execution Pod", href: "/contact" },
+  { label: "Contact Execution Team", href: "/contact" },
   { label: "Hiring Velocity Calculator", href: "/#hiring" },
 ];
 
 const ECOSYSTEM_LINKS = [
+  { label: "Browse Job Board & Gigs", href: "/jobs" },
   { label: "Upload Your CV & AI Parse", href: "/career/upload_cv" },
   { label: "Talent Academy Bootcamps", href: "/ecosystem/academy" },
   { label: "Reverse Job Sourcing Search", href: "/talents/reverse-search" },
-  { label: "Refer & Earn ($500 Bounty)", href: "/ecosystem/referrals" },
+  { label: "Refer & Earn Bounty Network", href: "/ecosystem/referrals" },
   { label: "Candidate Portal Access", href: "/login" },
 ];
 
@@ -80,7 +82,7 @@ export default function Footer() {
             </Link>
             <p className="mt-5 max-w-lg text-[14.5px] leading-relaxed text-[#8ca1c2]">
               Precision workforce delivery engine for regulated technology &amp; healthcare enterprises.
-              We assemble, vet in house, and deploy high velocity engineering pods and clinical informatics specialists in 7 day sprints.
+              We assemble, vet in house, and deploy high velocity engineering teams and clinical informatics specialists in 7 day sprints.
             </p>
 
             {/* Global delivery live indicator */}
@@ -90,7 +92,7 @@ export default function Footer() {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-electric" />
               </span>
               <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-white">
-                Live Pod Delivery Hubs: Americas · UK · Europe · GCC
+                Live Delivery Hubs: Americas · UK · Europe · GCC
               </span>
             </div>
 
@@ -118,7 +120,7 @@ export default function Footer() {
               Stay ahead of talent velocity benchmarks.
             </h3>
             <p className="mt-1.5 text-[13px] leading-relaxed text-[#879cb8]">
-              Bi-weekly briefings on engineering rate indexes, clinical IT compliance frameworks, and pod orchestration strategies.
+              Bi-weekly briefings on engineering rate indexes, clinical IT compliance frameworks, and specialist staffing strategies.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-2.5 sm:flex-row">
@@ -224,7 +226,7 @@ export default function Footer() {
               &copy; {new Date().getFullYear()} Pepoltek Limited. All rights reserved.
             </p>
             <p className="text-[11px] text-[#4f6485]">
-              Regulated workforce infrastructure. Dedicated healthcare pod deployments strictly adhere to HIPAA Title II and BAA standards.
+              Regulated workforce infrastructure. Dedicated healthcare specialist deployments strictly adhere to HIPAA Title II and BAA standards.
             </p>
           </div>
 

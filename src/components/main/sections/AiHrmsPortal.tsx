@@ -145,13 +145,23 @@ const PILL = {
   gr: "border-signal/30 bg-signal/10 text-signal",
 } as const;
 
-export default function AiHrmsPortal() {
+export interface AiHrmsPortalContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+export default function AiHrmsPortal({ content }: { content?: AiHrmsPortalContent } = {}) {
   const [tab, setTab] = useState(0);
   const [ref, inView] = useInView<HTMLDivElement>(0.25);
   const [typed, setTyped] = useState(0);
   const [visibleRows, setVisibleRows] = useState(0);
   const [termLines, setTermLines] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  const eyebrow = content?.eyebrow ?? "Proprietary HR Technology";
+  const title = content?.title ?? "Ask for the shortlist in plain language.";
+  const subtitle = content?.subtitle ?? "Our AI-HRMS portal translates natural language queries into instant, verified talent pipelines with match score, work authorization, timezone overlap, and hard-coded engineering audits.";
 
   const QUERY = "Filter software engineers with 5+ years in Node.js and C2C readiness";
 
@@ -214,13 +224,13 @@ export default function AiHrmsPortal() {
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/20 bg-electric/[0.07] px-4 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-electric backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric" />
-            Proprietary HR Technology
+            {eyebrow}
           </div>
           <h2 className="mt-4 font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-ink sm:text-4xl lg:text-[42px] line-clamp-2 text-balance">
-            Ask for the shortlist in <span className="text-electric">plain language.</span>
+            {title}
           </h2>
           <p className="mt-4 max-w-lg text-base leading-relaxed text-ink-soft sm:text-lg">
-            Our AI-HRMS portal translates natural language queries into instant, verified talent pipelines with match score, work authorization, timezone overlap, and hard-coded engineering audits.
+            {subtitle}
           </p>
 
           {/* features */}

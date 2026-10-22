@@ -24,7 +24,7 @@ const COMMERCIAL_MODELS = [
     tag: "02",
     name: "Staff Augmentation",
     category: "Turnkey Dedicated Squads",
-    desc: "Dedicated engineering and healthcare pods embedded in your sprint workflow.",
+    desc: "Dedicated engineering and healthcare teams embedded in your sprint workflow.",
     metric: "2 wk",
     metricLabel: "Trial Period",
     rateTerms: "Transparent monthly or hourly sprint billing",
@@ -53,7 +53,30 @@ const COMMERCIAL_MODELS = [
   },
 ];
 
-export default function CommercialTerms() {
+export interface CommercialTermsContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  models?: Array<{
+    tag: string;
+    name: string;
+    category: string;
+    desc: string;
+    metric: string;
+    metricLabel: string;
+    rateTerms?: string;
+    guarantee: string;
+    featured?: boolean;
+    bullets: string[];
+  }>;
+}
+
+export default function CommercialTerms({ content }: { content?: CommercialTermsContent } = {}) {
+  const eyebrow = content?.eyebrow ?? "Commercial Engagement Terms";
+  const title = content?.title ?? "Flexible Commercial Models & Risk-Free Guarantees";
+  const subtitle = content?.subtitle ?? "Terms engineered to de-risk every hire. Three transparent engagement models with backed replacement and trial guarantees.";
+  const models = content?.models && content.models.length > 0 ? content.models : COMMERCIAL_MODELS;
+
   return (
     <section
       id="commercial-terms"
@@ -71,21 +94,21 @@ export default function CommercialTerms() {
           <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90 backdrop-blur-sm">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric-bright" />
-              Commercial Engagement Terms
+              {eyebrow}
             </div>
 
             <h2 className="mt-2.5 font-display text-2xl sm:text-3xl lg:text-[34px] font-extrabold tracking-tight text-white leading-[1.15] line-clamp-2 text-balance">
-              Flexible Commercial Models &amp; Risk-Free Guarantees
+              {title}
             </h2>
 
             <p className="mt-1.5 text-xs sm:text-sm text-white/80 leading-relaxed max-w-2xl">
-              Terms engineered to de-risk every hire. Three transparent engagement models with backed replacement and trial guarantees.
+              {subtitle}
             </p>
           </div>
 
           {/* 3-Column Compact Grid */}
           <div className="relative z-10 mt-6 sm:mt-7 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-3 items-stretch">
-            {COMMERCIAL_MODELS.map((model) => (
+            {models.map((model) => (
               <div
                 key={model.tag}
                 className={`relative flex flex-col justify-between rounded-2xl p-4 sm:p-5 backdrop-blur-md transition-all duration-300 ${

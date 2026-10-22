@@ -46,8 +46,8 @@ const NAV_DATA: NavSection[] = [
         ),
       },
       {
-        title: "Offshore Engineering Pods",
-        desc: "Autonomous cross-functional software pods managed by in-house leads.",
+        title: "Multi-Seat Engineering Teams",
+        desc: "Autonomous cross-functional delivery teams managed by in-house leads.",
         href: "/services",
         badge: "Turnkey",
         icon: (
@@ -110,14 +110,14 @@ const NAV_DATA: NavSection[] = [
   },
   {
     label: "Healthcare & Compliance",
-    href: "/services#healthcare-staffing",
+    href: "/healthcare",
     eyebrow: "02 · Regulated Clinical & Med-Tech",
     layout: "dual",
     items: [
       {
         title: "Clinical Medical Staffing",
         desc: "Licensed physicians, registered nurses for emergency, outpatient, and ICU.",
-        href: "/services#healthcare-staffing",
+        href: "/healthcare",
         badge: "Clinical",
         icon: (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -128,7 +128,7 @@ const NAV_DATA: NavSection[] = [
       {
         title: "Non-Clinical Healthcare Staffing",
         desc: "Healthcare administrators, EMR and EHR directors, medical billing and coding.",
-        href: "/services#healthcare-staffing",
+        href: "/healthcare",
         badge: "Operations",
         icon: (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -150,7 +150,7 @@ const NAV_DATA: NavSection[] = [
       {
         title: "HIPAA & PCI DSS Frameworks",
         desc: "Institutional data handling, encrypted remote setups, and signed BAA agreements.",
-        href: "/case-studies",
+        href: "/healthcare",
         badge: "Audited",
         icon: (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -163,13 +163,71 @@ const NAV_DATA: NavSection[] = [
       headline: "100% HIPAA-Compliant Delivery",
       sub: "Pre-vetted clinical personnel and health-tech squads ready for hospital networks.",
       cta: "Explore Healthcare Practice",
-      href: "/services#healthcare-staffing",
+      href: "/healthcare",
+    },
+  },
+  {
+    label: "Careers & Jobs",
+    href: "/jobs",
+    eyebrow: "03 · Live Opportunities & Openings",
+    layout: "single",
+    items: [
+      {
+        title: "Browse Open Positions",
+        desc: "Explore live software engineering pods, clinical staffing squads, and contract gigs.",
+        href: "/jobs",
+        badge: "Live Reqs",
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        ),
+      },
+      {
+        title: "Careers Overview",
+        desc: "Discover our remote-first culture, deployment standards, and guaranteed rates.",
+        href: "/career",
+        badge: "Culture",
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        ),
+      },
+      {
+        title: "Refer & Earn Bounty Network",
+        desc: "Refer talented peers and earn cash bounties up to $3,500 upon placement.",
+        href: "/ecosystem/referrals",
+        badge: "Up to $3,500",
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
+      },
+      {
+        title: "Upload Your CV",
+        desc: "Instant automated AI resume parsing and candidate telemetry profiling.",
+        href: "/career/upload_cv",
+        badge: "Intake",
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+        ),
+      },
+    ],
+    spotlight: {
+      headline: "7-Day Sprint Deployment SLA",
+      sub: "Explore verified enterprise openings with transparent hourly rates and escrow protection.",
+      cta: "Explore Open Jobs",
+      href: "/jobs",
     },
   },
   {
     label: "About Us",
     href: "/about",
-    eyebrow: "03 · Core Infrastructure",
+    eyebrow: "04 · Core Infrastructure",
     layout: "single",
     items: [
       {
@@ -207,7 +265,7 @@ const NAV_DATA: NavSection[] = [
       },
       {
         title: "SOC 2 & HIPAA Governance",
-        desc: "Institutional data security and BAA compliance across all pods.",
+        desc: "Institutional data security and BAA compliance across all client deployments.",
         href: "/about",
         badge: "Certified",
         icon: (
@@ -227,9 +285,20 @@ const NAV_DATA: NavSection[] = [
   {
     label: "For Talent",
     href: "/career/upload_cv",
-    eyebrow: "04 · Global Talent Network",
+    eyebrow: "05 · Global Talent Network",
     layout: "single",
     items: [
+      {
+        title: "Browse Open Positions",
+        desc: "Live software engineering pods and clinical staffing squads with transparent pay.",
+        href: "/jobs",
+        badge: "Live Reqs",
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        ),
+      },
       {
         title: "Upload Your CV",
         desc: "Instant AI resume parsing and candidate telemetry profile builder.",
@@ -243,7 +312,7 @@ const NAV_DATA: NavSection[] = [
       },
       {
         title: "Reverse Job Sourcing Search",
-        desc: "Let venture-backed employers and delivery pods apply to hire you.",
+        desc: "Let venture-backed employers and hiring managers apply to hire you.",
         href: "/talents/reverse-search",
         badge: "Zero Exposure",
         icon: (
@@ -301,6 +370,25 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<number | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ fullName: string; role: string } | null>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { getCurrentUserAction } = await import("@/actions/auth.actions");
+        const user = await getCurrentUserAction();
+        if (user) {
+          setCurrentUser({
+            fullName: user.fullName || "Candidate",
+            role: user.role || "CANDIDATE",
+          });
+        }
+      } catch {
+        // Guest user
+      }
+    }
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -478,12 +566,28 @@ export default function Header() {
 
         {/* Right: Auth buttons & Mobile Hamburger */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
-          <Link
-            href="/login"
-            className="hidden items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-4 py-2 font-display text-xs sm:text-sm font-semibold text-[#0a1428] shadow-[0_2px_8px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric sm:inline-flex"
-          >
-            Log in
-          </Link>
+          {currentUser ? (
+            <Link
+              href={
+                currentUser.role === "SUPER_ADMIN" || currentUser.role === "ADMIN"
+                  ? "/admin/dashboard"
+                  : currentUser.role === "RECRUITER"
+                  ? "/recruiter/dashboard"
+                  : "/candidate/dashboard"
+              }
+              className="hidden items-center gap-1.5 justify-center whitespace-nowrap rounded-xl border border-electric/40 bg-electric/10 px-4 py-2 font-display text-xs sm:text-sm font-semibold text-electric shadow-xs backdrop-blur-sm transition-all duration-200 hover:bg-electric hover:text-white sm:inline-flex"
+            >
+              <span>{currentUser.fullName.split(" ")[0]}&apos;s Dashboard</span>
+              <span className="font-mono text-[10px]">→</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-4 py-2 font-display text-xs sm:text-sm font-semibold text-[#0a1428] shadow-[0_2px_8px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric sm:inline-flex"
+            >
+              Log in
+            </Link>
+          )}
           <Link
             href="/contact"
             className="group inline-flex items-center gap-2 justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-4.5 py-2 font-display text-xs sm:text-sm font-semibold text-white shadow-[0_6px_16px_-4px_rgba(10,20,40,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)] cursor-pointer"
@@ -562,13 +666,29 @@ export default function Header() {
 
             {/* Mobile CTAs */}
             <div className="mt-4 flex flex-col gap-2.5 pt-2 border-t border-[#bcd6fa]/40">
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center rounded-xl border border-[#bcd6fa] bg-white py-2.5 font-display text-xs font-semibold text-[#0a1428]"
-              >
-                Log in
-              </Link>
+              {currentUser ? (
+                <Link
+                  href={
+                    currentUser.role === "SUPER_ADMIN" || currentUser.role === "ADMIN"
+                      ? "/admin/dashboard"
+                      : currentUser.role === "RECRUITER"
+                      ? "/recruiter/dashboard"
+                      : "/candidate/dashboard"
+                  }
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center rounded-xl bg-electric py-2.5 font-display text-xs font-semibold text-white shadow-xs"
+                >
+                  My Dashboard ({currentUser.fullName.split(" ")[0]}) →
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center rounded-xl border border-[#bcd6fa] bg-white py-2.5 font-display text-xs font-semibold text-[#0a1428]"
+                >
+                  Log in
+                </Link>
+              )}
               <Link
                 href="/contact"
                 onClick={() => setMobileOpen(false)}

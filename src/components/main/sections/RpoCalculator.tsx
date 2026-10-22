@@ -297,8 +297,9 @@ export default function RpoCalculator() {
 
     setIsSubmittingLead(false);
     if (res.success) {
+      const cleanLeadId = res.leadId ? String(res.leadId).replace(/-/g, "").slice(-6).toUpperCase() : "";
       setLeadSubmitSuccess(
-        `Proposal locked and requisition registered successfully! Requisition ID: ${res.leadId?.slice(0, 8)}`
+        `Proposal locked and requisition registered successfully! Requisition ID: ${cleanLeadId}`
       );
     } else {
       setLeadSubmitError(res.error?.message || "Failed to submit proposal request.");
@@ -781,7 +782,7 @@ export default function RpoCalculator() {
                   </span>
                   <div className="min-w-0">
                     <div className="font-display text-xs font-bold uppercase tracking-tight text-ink truncate">
-                      Dedicated Virtual Sourcer Pod
+                      Dedicated Virtual Sourcer
                     </div>
                     <div className="font-sans text-[11px] text-slate-500 truncate">
                       Full candidate pipeline, vetting, and HR operations ($8/hr)
@@ -924,7 +925,7 @@ export default function RpoCalculator() {
               </div>
               {calc.configuredRolesCount > 0 && (
                 <div className="flex justify-between text-slate-500">
-                  <span>Dedicated Recruiter Pod:</span>
+                  <span>Dedicated Sourcer:</span>
                   <span className="font-medium text-slate-700">$1,280 / mo included</span>
                 </div>
               )}

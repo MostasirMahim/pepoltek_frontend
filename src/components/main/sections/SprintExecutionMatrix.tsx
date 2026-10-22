@@ -130,10 +130,36 @@ const CYCLE_MS = 14000;
 /* fraction of cycle when comet hits each box center (box 0 at rail start, box 4 at rail end) */
 const HIT_FRACS = [0.07, 0.30, 0.53, 0.76, 0.97];
 
-export default function SprintExecutionMatrix() {
+export interface SprintExecutionMatrixContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  steps?: Array<{
+    num: string;
+    days: string;
+    title: string;
+    sub: string;
+    sla: string;
+    deliverables: string[];
+  }>;
+}
+
+export default function SprintExecutionMatrix({ content }: { content?: SprintExecutionMatrixContent } = {}) {
   const { ref: sectionRef, seen } = useInView<HTMLDivElement>();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [activeStep, setActiveStep] = useState(0);
+
+  const eyebrow = content?.eyebrow ?? "7-Day RPO Deployment Sprint Workflow";
+  const title = content?.title ?? "From Technical Brief to Deployed Specialist";
+  const subtitle = content?.subtitle ?? "A transparent 5-stage orchestration workflow powered by AI video screening and domain specialist verification. Frictionless, interactive, and built for rapid enterprise execution.";
+
+  const steps: MatrixStep[] =
+    content?.steps && content.steps.length > 0
+      ? content.steps.map((st, i) => ({
+          ...STEPS[i % STEPS.length],
+          ...st,
+        }))
+      : STEPS;
 
   /* Sync activeStep to comet position using rAF for perfect timing */
   useEffect(() => {
@@ -186,13 +212,13 @@ export default function SprintExecutionMatrix() {
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/25 bg-electric/[0.08] px-4 py-1 font-mono text-[10.5px] font-semibold tracking-[0.16em] uppercase text-electric shadow-sm backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_6px_rgba(10,132,255,0.6)]" />
-            7-Day RPO Deployment Sprint Workflow
+            {eyebrow}
           </div>
           <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-[40px] leading-[1.14] line-clamp-2 text-balance">
-            From Technical Brief to Deployed Specialist
+            {title}
           </h2>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-ink-soft max-w-xl">
-            A transparent 5-stage orchestration workflow powered by AI video screening and domain specialist verification. Frictionless, interactive, and built for rapid enterprise execution.
+            {subtitle}
           </p>
         </div>
 
@@ -251,7 +277,7 @@ export default function SprintExecutionMatrix() {
 
             {/* ---- 5 Icon Box Nodes on the rail ---- */}
             <div className="relative z-10 flex items-start justify-between">
-              {STEPS.map((step, i) => {
+              {steps.map((step, i) => {
                 const Ico = ICONS[i];
                 const active = isActive(i);
                 return (
@@ -333,7 +359,7 @@ export default function SprintExecutionMatrix() {
 
         {/* 5-Column Card Grid */}
         <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 sm:gap-5">
-          {STEPS.map((step, idx) => {
+          {steps.map((step, idx) => {
             const Ico = ICONS[idx];
             const active = isActive(idx);
             return (

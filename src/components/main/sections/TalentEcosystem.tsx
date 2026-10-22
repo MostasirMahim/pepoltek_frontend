@@ -379,9 +379,19 @@ function EcosystemCard({ stage, index }: { stage: Stage; index: number }) {
 /* 4. Main Section Component with 3D Globe & 4 Orbital Action Nodes          */
 /* ========================================================================= */
 
-export default function TalentEcosystem() {
+export interface TalentEcosystemContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+export default function TalentEcosystem({ content }: { content?: TalentEcosystemContent } = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  const eyebrow = content?.eyebrow ?? "The Global Talent Ecosystem";
+  const title = content?.title ?? "The Global Talent Ecosystem";
+  const subtitle = content?.subtitle ?? "Upload your resume, leverage AI to build an ATS-ready profile, and let enterprise opportunities find you.";
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -419,13 +429,13 @@ export default function TalentEcosystem() {
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/25 bg-electric/[0.08] px-4 py-1 font-mono text-[10.5px] font-semibold tracking-[0.16em] uppercase text-electric shadow-sm backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_6px_rgba(10,132,255,0.6)]" />
-            The Global Talent Ecosystem
+            {eyebrow}
           </div>
           <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-[#0a1428] sm:text-3xl lg:text-[36px] leading-[1.15]">
-            The Global Talent Ecosystem
+            {title}
           </h2>
           <p className="mt-2.5 max-w-[62ch] text-xs sm:text-[14px] leading-relaxed text-[#4b5b78]">
-            Upload your resume, leverage AI to build an ATS-ready profile, and let enterprise opportunities find you.
+            {subtitle}
           </p>
         </div>
 

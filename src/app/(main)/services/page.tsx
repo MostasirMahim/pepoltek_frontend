@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   ArrowRight,
 } from "@/components/ui/Icons";
+import { renderDynamicIcon } from "@/components/ui/DynamicIcon";
+import { getContentBlockDetailAction } from "@/actions/content.actions";
 
 export const metadata = {
   title: "Services & Solutions | Pepoltek Limited Workforce",
@@ -20,12 +22,33 @@ export const metadata = {
     "Explore IT staff augmentation, dedicated engineering pods, Employer of Record (EOR), direct hire, and clinical healthcare staffing from Pepoltek.",
 };
 
-const SERVICES = [
+const DEFAULT_HEADER = {
+  eyebrow: "Commercial Solutions Suite",
+  title: "Workforce Solutions Tailored",
+  highlightedText: "for Speed and Precision",
+  description:
+    "From flexible contractor bandwidth to fully autonomous engineering squads and clinical rotas, Pepoltek provides transparent commercial models backed by performance guarantees.",
+  stats: [
+    { value: "2 to 7 Days", label: "Sprint Shortlist Velocity" },
+    { value: "2 Weeks", label: "Risk-Free Trial Period" },
+    { value: "15+ Countries", label: "Global EOR & Payroll Hubs" },
+  ],
+  specs: [
+    "W2 & C2C Compliant",
+    "4 to 8 Hrs Live Overlap",
+    "90-Day Placement Guarantee",
+    "HIPAA Title II Certified",
+  ],
+  primaryCta: { label: "Request Workforce Quote", href: "/contact" },
+  secondaryCta: { label: "Launch Velocity Calculator", href: "/#hiring" },
+};
+
+const FALLBACK_SERVICES = [
   {
     id: "staff-augmentation",
     title: "IT Staff Augmentation",
     badge: "Elastic Bandwidth",
-    icon: <Zap size={22} />,
+    iconName: "Zap",
     desc: "Seamlessly embed senior software engineers into your sprint cycles. Billed hourly or monthly with complete flexibility.",
     guarantee: "2-week risk-free trial + 10% rate discount on 6-month squad commitments.",
     features: [
@@ -39,7 +62,7 @@ const SERVICES = [
     id: "offshore-pods",
     title: "Dedicated Engineering Pods",
     badge: "Turnkey Squads",
-    icon: <Cpu size={22} />,
+    iconName: "Cpu",
     desc: "Autonomous, cross-functional software pods managed by in-house architects and agile project managers.",
     guarantee: "SLA-governed sprint velocity and weekly delivery burn-down charts.",
     features: [
@@ -53,7 +76,7 @@ const SERVICES = [
     id: "eor-services",
     title: "Employer of Record (EOR)",
     badge: "Global Compliance",
-    icon: <Globe size={22} />,
+    iconName: "Globe",
     desc: "Hire international talent anywhere without incorporating local entities. We handle global payroll, taxes, and legal labor laws.",
     guarantee: "Compliant payroll distribution across 15+ countries.",
     features: [
@@ -67,7 +90,7 @@ const SERVICES = [
     id: "direct-hire",
     title: "Direct Hire & Executive Search",
     badge: "Permanent Placement",
-    icon: <Users size={22} />,
+    iconName: "Users",
     desc: "Contingent and retained search for full-time staff, specialized engineering leads, and C-level technology executives.",
     guarantee: "90-day replacement guarantee + competitive market-entry rates.",
     features: [
@@ -81,7 +104,7 @@ const SERVICES = [
     id: "healthcare-staffing",
     title: "Healthcare & Clinical Staffing",
     badge: "HIPAA Compliant",
-    icon: <Stethoscope size={22} />,
+    iconName: "Stethoscope",
     desc: "Vetted healthcare professionals and health-tech engineers ready for hospital rotas, clinics, and digital health platforms.",
     guarantee: "Clinical credentialing audits with continuous license verification.",
     features: [
@@ -95,7 +118,7 @@ const SERVICES = [
     id: "workforce-readiness",
     title: "Workforce Readiness & Academy",
     badge: "Talent Upskilling",
-    icon: <Award size={22} />,
+    iconName: "Award",
     desc: "Targeted pre-deployment training for candidates to eliminate skill gaps and ensure instant productivity on day one.",
     guarantee: "Verified competency badges and enterprise communication alignment.",
     features: [
@@ -107,65 +130,73 @@ const SERVICES = [
   },
 ];
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  // Fetch live CMS published data
+  let header = DEFAULT_HEADER;
+  let servicesList = FALLBACK_SERVICES;
+
+  try {
+    const detail = await getContentBlockDetailAction("services_list");
+    const liveData = (detail.data?.published?.data ?? detail.data?.latest?.data ?? {}) as {
+      header?: typeof DEFAULT_HEADER;
+      services?: typeof FALLBACK_SERVICES;
+    };
+
+    if (liveData.header) {
+      header = {
+        ...DEFAULT_HEADER,
+        ...liveData.header,
+      };
+    }
+
+    if (liveData.services && Array.isArray(liveData.services) && liveData.services.length > 0) {
+      servicesList = liveData.services;
+    }
+  } catch {
+    // Fall back to defaults
+  }
+
   return (
     <div className="relative min-h-screen bg-canvas">
-      {/* Hero Header crafted in Homepage Hero style */}
+      {/* Hero Header crafted in Homepage Hero style dynamically powered by CMS */}
       <PageHero
-        eyebrow="Commercial Solutions Suite"
-        title="Workforce Solutions Tailored"
-        highlightedText="for Speed and Precision"
-        description="From flexible contractor bandwidth to fully autonomous engineering squads and clinical rotas, Pepoltek provides transparent commercial models backed by performance guarantees."
-        stats={[
-          {
-            value: "2 to 7 Days",
-            label: "Sprint Shortlist Velocity",
-            icon: <Clock size={20} />,
-          },
-          {
-            value: "2 Weeks",
-            label: "Risk-Free Trial Period",
-            icon: <ShieldCheck size={20} />,
-          },
-          {
-            value: "15+ Countries",
-            label: "Global EOR & Payroll Hubs",
-            icon: <Globe size={20} />,
-          },
-        ]}
+        eyebrow={header.eyebrow}
+        title={header.title}
+        highlightedText={header.highlightedText}
+        description={header.description}
+        stats={(header.stats || DEFAULT_HEADER.stats).map((s, idx) => ({
+          value: s.value,
+          label: s.label,
+          icon: idx === 0 ? <Clock size={20} /> : idx === 1 ? <ShieldCheck size={20} /> : <Globe size={20} />,
+        }))}
         actions={[
           {
-            label: "Request Workforce Quote",
-            href: "/contact",
+            label: header.primaryCta?.label || "Request Workforce Quote",
+            href: header.primaryCta?.href || "/contact",
             primary: true,
           },
           {
-            label: "Launch Velocity Calculator",
-            href: "/#hiring",
+            label: header.secondaryCta?.label || "Launch Velocity Calculator",
+            href: header.secondaryCta?.href || "/#hiring",
           },
         ]}
-        proofPills={[
-          "W2 & C2C Compliant",
-          "4 to 8 Hrs Live Overlap",
-          "90-Day Placement Guarantee",
-          "HIPAA Title II Certified",
-        ]}
+        proofPills={header.specs || DEFAULT_HEADER.specs}
       />
 
       {/* Main Content Area */}
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        {/* Services Grid */}
+        {/* Services Grid dynamically rendered from CMS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-          {SERVICES.map((srv) => (
+          {servicesList.map((srv) => (
             <div
               key={srv.id}
               className="group flex flex-col justify-between rounded-3xl border border-[#bcd6fa] bg-white p-7 sm:p-8 shadow-xs hover:border-electric/60 hover:shadow-lg transition-all duration-200"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  {/* Prominent Lucide Icon Container */}
+                  {/* Dynamic Icon Container */}
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-electric/10 text-electric border border-electric/25 shadow-2xs group-hover:scale-105 group-hover:bg-electric group-hover:text-white transition-all duration-200">
-                    {srv.icon}
+                    {renderDynamicIcon(srv.iconName, 22)}
                   </div>
                   <span className="rounded-md border border-electric/30 bg-electric/10 px-2.5 py-1 font-mono text-[10px] font-bold text-electric uppercase tracking-wider">
                     {srv.badge}
@@ -176,32 +207,36 @@ export default function ServicesPage() {
                   {srv.title}
                 </h3>
 
-                {/* Clean, readable Inter body text */}
+                {/* Clean, readable body text */}
                 <p className="mt-2.5 text-xs sm:text-sm text-ink-soft font-normal leading-relaxed">
                   {srv.desc}
                 </p>
 
                 {/* Guarantee Pill */}
-                <div className="mt-5 rounded-xl border border-signal/30 bg-signal/5 p-3.5">
-                  <span className="font-mono text-[10px] font-bold text-signal uppercase tracking-wider block">
-                    Performance Guarantee
-                  </span>
-                  <p className="mt-1 text-xs text-ink-soft font-medium leading-relaxed">
-                    {srv.guarantee}
-                  </p>
-                </div>
+                {srv.guarantee && (
+                  <div className="mt-5 rounded-xl border border-signal/30 bg-signal/5 p-3.5">
+                    <span className="font-mono text-[10px] font-bold text-signal uppercase tracking-wider block">
+                      Performance Guarantee
+                    </span>
+                    <p className="mt-1 text-xs text-ink-soft font-medium leading-relaxed">
+                      {srv.guarantee}
+                    </p>
+                  </div>
+                )}
 
-                {/* Feature Bullet Points: using clean font-sans (Inter) instead of thick monospace */}
-                <ul className="mt-5 space-y-2.5">
-                  {srv.features.map((feat, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-ink-soft font-normal leading-relaxed">
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-electric/10 text-electric mt-0.5">
-                        <Check size={11} />
-                      </span>
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Feature Bullet Points */}
+                {srv.features && srv.features.length > 0 && (
+                  <ul className="mt-5 space-y-2.5">
+                    {srv.features.map((feat, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-ink-soft font-normal leading-relaxed">
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-electric/10 text-electric mt-0.5">
+                          <Check size={11} />
+                        </span>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="mt-8 pt-5 border-t border-[#bcd6fa]/50">

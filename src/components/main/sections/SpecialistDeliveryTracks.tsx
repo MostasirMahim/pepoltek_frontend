@@ -853,8 +853,17 @@ function HealthHorizontalBanner() {
   );
 }
 
-export default function SpecialistDeliveryTracks() {
+export interface SpecialistDeliveryTracksContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+export default function SpecialistDeliveryTracks({ content }: { content?: SpecialistDeliveryTracksContent } = {}) {
   const statsView = useInView<HTMLDivElement>();
+  const eyebrow = content?.eyebrow ?? "Specialist-Led RPO & AI-Driven Talent Acquisition";
+  const title = content?.title ?? "Enterprise RPO Powered by AI Interviewing and Domain Specialists";
+  const subtitle = content?.subtitle ?? "Move beyond generalist recruiters. Pepoltek pairs AI-driven video interviewing and automated skill evaluation with dedicated teams of software engineers, medical specialists, and HR strategists to hand-vet every candidate.";
 
   return (
     <section
@@ -869,15 +878,15 @@ export default function SpecialistDeliveryTracks() {
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/25 bg-electric/[0.08] px-4 py-1 font-mono text-[10.5px] font-semibold tracking-[0.16em] uppercase text-electric shadow-sm backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_6px_rgba(10,132,255,0.6)]" />
-            Specialist-Led RPO &amp; AI-Driven Talent Acquisition
+            {eyebrow}
           </div>
 
           <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-[40px] leading-[1.14] line-clamp-2 text-balance">
-            Enterprise RPO Powered by AI Interviewing and Domain Specialists
+            {title}
           </h2>
 
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-ink-soft max-w-2xl">
-            Move beyond generalist recruiters. Pepoltek pairs AI-driven video interviewing and automated skill evaluation with dedicated teams of software engineers, medical specialists, and HR strategists to hand-vet every candidate.
+            {subtitle}
           </p>
         </div>
 

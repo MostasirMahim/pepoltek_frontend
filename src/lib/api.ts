@@ -63,6 +63,13 @@ export async function apiRequest<T = any>(
     ...(headers as Record<string, string>),
   };
 
+  if (!requestHeaders["Authorization"] && cookieHeader) {
+    const match = cookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
+    if (match && match[1]) {
+      requestHeaders["Authorization"] = `Bearer ${match[1]}`;
+    }
+  }
+
   try {
     const response = await fetch(url, {
       ...restOptions,

@@ -2,18 +2,16 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
-  CURRENT_TALENT_PROFILE,
-  RACHEL_HIGGINS_PROFILE,
-  ACTIVE_SPRINT_PIPELINES,
-  UPCOMING_INTERVIEWS,
   CandidateProfile,
   SprintPipelineItem,
   UpcomingInterview,
 } from "@/data/talentDashboardData";
 import {
   getCandidateProfileAction,
+  getCandidateApplicationsAction,
   updateCandidateProfileAction,
 } from "@/actions/candidate.actions";
+import { getCurrentUserAction } from "@/actions/auth.actions";
 
 export type PersonaType = "alex" | "rachel";
 
@@ -26,45 +24,110 @@ interface CandidatePersonaContextType {
   setIsOpenToPods: (val: boolean) => void;
   pipelines: SprintPipelineItem[];
   interviews: UpcomingInterview[];
+  isLoading: boolean;
 }
+
+const CLEAN_CANDIDATE_PROFILE: CandidateProfile = {
+  id: "CAND-VERIFIED",
+  fullName: "Talent Candidate",
+  avatarUrl: "",
+  email: "",
+  phone: "",
+  location: "Remote / Hybrid",
+  primaryTrack: "technology",
+  title: "Candidate Specialist",
+  seniority: "Intake Pending",
+  primaryDomain: "Full-Stack & Cloud Systems",
+  yearsExperience: 0,
+  skills: [],
+  visaStatus: "Verified at Intake",
+  engagementPreference: "Sprint Contracting / Direct",
+  desiredHourlyRate: "Specified in Intake",
+  readinessIndex: 0,
+  atsCompatibilityScore: 0,
+  technicalVettingScore: 0,
+  vettingTier: "Tier 3: General Talent",
+  isOpenToPods: true,
+  sprintAvailability: "Immediate Availability",
+  timezoneOverlapHours: 5,
+  bio: "Candidate profile registered on the Pepoltek talent network. Vetting and assessment in progress.",
+};
 
 const CandidatePersonaContext = createContext<CandidatePersonaContextType | undefined>(undefined);
 
 export function CandidatePersonaProvider({ children }: { children: React.ReactNode }) {
   const [activePersona, setActivePersona] = useState<PersonaType>("alex");
-  const [alexProfile, setAlexProfile] = useState<CandidateProfile>(CURRENT_TALENT_PROFILE);
-  const [rachelProfile, setRachelProfile] = useState<CandidateProfile>(RACHEL_HIGGINS_PROFILE);
+  const [currentProfile, setCurrentProfile] = useState<CandidateProfile>(CLEAN_CANDIDATE_PROFILE);
+  const [isOpenToPods, setIsOpenToPods] = useState(true);
+  const [pipelines, setPipelines] = useState<SprintPipelineItem[]>([]);
+  const [interviews, setInterviews] = useState<UpcomingInterview[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const currentProfile = activePersona === "alex" ? alexProfile : rachelProfile;
-  const [isOpenToPods, setIsOpenToPods] = useState(currentProfile.isOpenToPods);
-
-  // Synchronize with live backend profile if authenticated
+  // Synchronize with live backend profile and authenticated user
   useEffect(() => {
+    let isMounted = true;
+
     async function loadBackendData() {
-      const res = await getCandidateProfileAction();
-      if (res.success && res.data) {
-        const be = res.data;
-        if (be.full_name) {
-          setAlexProfile((prev) => ({
+      try {
+        setIsLoading(true);
+        const [user, profileRes, appRes] = await Promise.all([
+          getCurrentUserAction(),
+          getCandidateProfileAction(),
+          getCandidateApplicationsAction(),
+        ]);
+
+        if (!isMounted) return;
+
+        if (user) {
+          setCurrentProfile((prev) => ({
             ...prev,
-            fullName: be.full_name || prev.fullName,
-            primaryTrack: be.sector || prev.primaryTrack,
-            skills: be.skills || prev.skills,
-            readinessIndex: be.profile_strength || prev.readinessIndex,
-            isOpenToPods: be.open_to_work ?? prev.isOpenToPods,
+            fullName: user.fullName || prev.fullName,
+            email: user.email || prev.email,
           }));
         }
+
+        if (profileRes.success && profileRes.data) {
+          const be = profileRes.data;
+          setCurrentProfile((prev) => ({
+            ...prev,
+            fullName: be.full_name || prev.fullName,
+            primaryTrack: (be.sector as "technology" | "healthcare") || prev.primaryTrack,
+            skills: Array.isArray(be.skills) && be.skills.length > 0 ? be.skills : prev.skills,
+            readinessIndex: typeof be.profile_strength === "number" ? be.profile_strength : prev.readinessIndex,
+            isOpenToPods: be.open_to_work ?? prev.isOpenToPods,
+            desiredHourlyRate: be.desired_hourly_rate || prev.desiredHourlyRate,
+            title: be.domain || prev.title,
+            seniority: be.level || prev.seniority,
+          }));
+          if (typeof be.open_to_work === "boolean") {
+            setIsOpenToPods(be.open_to_work);
+          }
+        }
+
+        if (appRes.success && Array.isArray(appRes.data) && appRes.data.length > 0) {
+          setPipelines(appRes.data);
+        } else {
+          setPipelines([]);
+        }
+
+        // Live candidate starts with empty interviews until scheduled
+        setInterviews([]);
+      } catch {
+        // Fallback gracefully
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     }
+
     loadBackendData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const updateCurrentProfile = (updated: Partial<CandidateProfile>) => {
-    if (activePersona === "alex") {
-      setAlexProfile((prev) => ({ ...prev, ...updated }));
-    } else {
-      setRachelProfile((prev) => ({ ...prev, ...updated }));
-    }
+    setCurrentProfile((prev) => ({ ...prev, ...updated }));
 
     // Fire background mutation to live backend
     updateCandidateProfileAction({
@@ -74,19 +137,6 @@ export function CandidatePersonaProvider({ children }: { children: React.ReactNo
       open_to_work: updated.isOpenToPods,
     }).catch(() => {});
   };
-
-  // Prioritize pipelines based on active persona
-  const pipelines = activePersona === "alex"
-    ? ACTIVE_SPRINT_PIPELINES
-    : [ACTIVE_SPRINT_PIPELINES[1], ACTIVE_SPRINT_PIPELINES[0], ACTIVE_SPRINT_PIPELINES[2]];
-
-  const interviews = activePersona === "alex"
-    ? UPCOMING_INTERVIEWS
-    : [UPCOMING_INTERVIEWS[1], UPCOMING_INTERVIEWS[0]];
-
-  useEffect(() => {
-    setIsOpenToPods(currentProfile.isOpenToPods);
-  }, [currentProfile]);
 
   return (
     <CandidatePersonaContext.Provider
@@ -99,6 +149,7 @@ export function CandidatePersonaProvider({ children }: { children: React.ReactNo
         setIsOpenToPods,
         pipelines,
         interviews,
+        isLoading,
       }}
     >
       {children}

@@ -1,9 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { logoutAction } from "@/actions/auth.actions";
+import {
+  Layout,
+  Zap,
+  Briefcase,
+  Users,
+  Clock,
+  BarChart2,
+  DollarSign,
+  Search,
+  LogOut,
+  ChevronDown,
+} from "@/components/ui/Icons";
 
 interface NavItem {
   label: string;
@@ -16,59 +29,37 @@ const RECRUITER_NAV: NavItem[] = [
   {
     label: "Hiring Cockpit",
     href: "/recruiter/dashboard",
-    icon: (
-      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
+    icon: <Layout size={18} />,
   },
   {
     label: "AI-HRMS Search & Audits",
     href: "/recruiter/ai-search",
-    badge: "NLP Demo",
-    icon: (
-      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
+    icon: <Zap size={18} />,
   },
   {
-    label: "Pod Management",
-    href: "/recruiter/pods",
-    badge: "4 Pods",
-    icon: (
-      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
+    label: "Requisitions & Jobs",
+    href: "/recruiter/requisitions",
+    icon: <Briefcase size={18} />,
   },
   {
     label: "Vetted Talent Pool",
     href: "/recruiter/candidates",
-    icon: (
-      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
+    icon: <Users size={18} />,
   },
   {
     label: "Sprint Interviews",
     href: "/recruiter/interviews",
-    badge: "5 Today",
-    icon: (
-      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
+    icon: <Clock size={18} />,
+  },
+  {
+    label: "Referral Network",
+    href: "/recruiter/referrals",
+    icon: <DollarSign size={18} />,
   },
   {
     label: "Hiring Analytics",
     href: "/recruiter/analytics",
-    icon: (
-      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
+    icon: <BarChart2 size={18} />,
   },
 ];
 
@@ -78,118 +69,251 @@ export default function RecruiterDashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState("Apex Global Technologies");
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const [recruiterUser, setRecruiterUser] = useState({
+    fullName: "Talent Operations",
+    email: "recruiter@pepoltek.com",
+    role: "Senior Recruiter",
+  });
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const { getCurrentUserAction } = await import("@/actions/auth.actions");
+        const u = await getCurrentUserAction();
+        if (u) {
+          setRecruiterUser({
+            fullName: u.fullName || "Talent Operations",
+            email: u.email || "recruiter@pepoltek.com",
+            role: u.role === "RECRUITER" ? "Senior Recruiter" : u.role || "Recruiter",
+          });
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+    loadUser();
+  }, []);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const avatarInitials =
+    recruiterUser.fullName
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "MI";
 
   return (
-    <div className="min-h-screen bg-canvas text-ink flex flex-col antialiased">
-      {/* Top Enterprise Bar */}
-      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-[#bcd6fa]/60 bg-white/95 px-4 sm:px-6 lg:px-8 backdrop-blur-md shadow-xs">
-        <div className="flex items-center gap-4">
+    <div className="h-screen overflow-hidden bg-canvas text-ink flex flex-col antialiased">
+      {/* Permanent Static Top Navbar (h-16 shrink-0, Solid White, Proportional Spacing, Zero Overlap) */}
+      <header className="h-16 shrink-0 z-40 flex w-full items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 sm:px-6 lg:px-8 backdrop-blur-md shadow-2xs select-none relative">
+        {/* Left: Mobile Toggle, Brand Logo & Left-Aligned Search Bar */}
+        <div className="flex items-center gap-3 sm:gap-5 min-w-0">
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-1.5 text-ink-soft hover:bg-canvas lg:hidden"
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-ink lg:hidden cursor-pointer transition-colors shrink-0"
+            aria-label="Toggle navigation"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
 
-          <Link href="/" className="group flex items-center gap-2.5 transition-transform hover:opacity-90">
+          <Link href="/" className="group flex items-center gap-2.5 transition-transform hover:opacity-95 shrink-0">
             <Image
               src="/assets/pepoltek/black_logo.png"
               alt="Pepoltek Limited"
-              width={130}
-              height={32}
-              className="h-7 w-auto object-contain"
+              width={120}
+              height={30}
+              className="h-6.5 w-auto object-contain"
+              priority
             />
-            <span className="hidden sm:inline-block rounded-md bg-ink px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-white">
-              Recruiter Cockpit
+            <div className="h-4 w-[1px] bg-slate-200 hidden sm:block" />
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-electric/25 bg-electric/10 px-2 py-0.5 text-[10px] font-mono font-semibold text-electric uppercase tracking-wider">
+              Recruiter ATS
             </span>
           </Link>
+
+          {/* Left-Aligned Search Bar */}
+          <div className="relative hidden md:flex items-center w-64 lg:w-80 shrink-0">
+            <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search talent, requisitions, jobs..."
+              className="w-full rounded-full border border-slate-200/80 bg-slate-50/70 hover:bg-white hover:border-slate-300 focus:bg-white focus:border-electric focus:ring-2 focus:ring-electric/15 py-1.5 pl-9 pr-14 text-xs text-ink placeholder-slate-400 transition-all font-mono outline-hidden"
+            />
+            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[9.5px] font-mono text-slate-400 shadow-2xs font-semibold">
+              Ctrl K
+            </kbd>
+          </div>
         </div>
 
-        {/* Center/Right Org Selector & Quick Deploy Action */}
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Org Selector */}
-          <div className="hidden md:flex items-center gap-2 rounded-xl border border-[#bcd6fa] bg-canvas/40 px-3 py-1.5 text-xs">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-mist">Org:</span>
-            <span className="font-display font-semibold text-ink">{selectedOrg}</span>
-          </div>
+        {/* Right: Refined Profile Menu */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Interactive Profile Dropdown Menu */}
+          <div className="relative" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="group flex items-center gap-2 rounded-2xl p-1 transition-all hover:bg-slate-50 cursor-pointer"
+              aria-expanded={profileMenuOpen}
+              aria-haspopup="true"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-ink to-ink-soft font-display text-xs font-bold text-white shadow-2xs">
+                {avatarInitials}
+              </div>
+              <div className="hidden text-left xl:block pr-0.5">
+                <div className="font-display text-xs font-bold text-ink truncate max-w-[110px]">
+                  {recruiterUser.fullName}
+                </div>
+                <div className="font-mono text-[10px] text-slate-400 leading-tight">
+                  {recruiterUser.role}
+                </div>
+              </div>
+              <ChevronDown
+                size={13}
+                className={`text-slate-400 transition-transform duration-200 ${
+                  profileMenuOpen ? "rotate-180 text-ink" : "group-hover:text-ink"
+                }`}
+              />
+            </button>
 
-          {/* Velocity Badge */}
-          <div className="hidden xl:flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-xs font-mono text-signal font-semibold">
-            <span className="h-2 w-2 rounded-full bg-signal animate-ping" />
-            <span>Avg 7-Day Pod SLA: 6.8 Days</span>
-          </div>
+            {/* Elevated Recruiter Profile Menu */}
+            {profileMenuOpen && (
+              <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-[#bcd6fa] bg-white p-3.5 shadow-xl backdrop-blur-md animate-in fade-in-0 zoom-in-95 duration-150">
+                <div className="flex items-center gap-2.5 border-b border-[#bcd6fa]/40 pb-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink font-display text-xs font-bold text-white shadow-xs shrink-0">
+                    {avatarInitials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-display text-xs font-bold text-ink truncate">
+                      {recruiterUser.fullName}
+                    </h4>
+                    <p className="text-[11px] text-ink-soft truncate font-medium">
+                      {recruiterUser.email}
+                    </p>
+                    <span className="text-[10px] text-electric font-mono font-semibold block mt-0.5">
+                      Senior Staff Recruiter
+                    </span>
+                  </div>
+                </div>
 
-          {/* Deploy Pod CTA Button */}
-          <Link
-            href="/recruiter/pods"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-electric px-3.5 py-2 font-display text-xs font-semibold text-white shadow-xs transition-all hover:bg-electric-bright hover:shadow-sm"
-          >
-            <span>+ Deploy New Pod</span>
-          </Link>
+                {/* Quick Cockpit Shortcuts */}
+                <div className="my-2 space-y-0.5 text-xs font-medium text-ink-soft">
+                  <Link
+                    href="/recruiter/requisitions"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-canvas hover:text-ink"
+                  >
+                    <Briefcase size={14} className="text-mist" />
+                    <span>Active Requisitions &amp; Gigs</span>
+                  </Link>
+                  <Link
+                    href="/recruiter/candidates"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-canvas hover:text-ink"
+                  >
+                    <Users size={14} className="text-mist" />
+                    <span>Pre-Vetted Talent Directory</span>
+                  </Link>
+                  <Link
+                    href="/recruiter/interviews"
+                    onClick={() => setProfileMenuOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-canvas hover:text-ink"
+                  >
+                    <Clock size={14} className="text-mist" />
+                    <span>Sprint Panel Interviews</span>
+                  </Link>
+                </div>
 
-          {/* Recruiter Avatar */}
-          <div className="flex items-center gap-2 border-l border-[#bcd6fa]/50 pl-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink font-display text-xs font-bold text-white shadow-xs">
-              HR
-            </div>
-            <div className="hidden text-left xl:block">
-              <div className="font-display text-xs font-bold text-ink">Elena Rostova</div>
-              <div className="font-mono text-[10px] text-mist">VP Engineering Talent</div>
-            </div>
+                {/* Sign Out Action */}
+                <div className="pt-2 border-t border-[#bcd6fa]/40">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setProfileMenuOpen(false);
+                      await logoutAction();
+                      router.push("/login");
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <LogOut size={13} />
+                      <span>Sign Out</span>
+                    </div>
+                    <span className="font-mono text-[10px] text-mist">RecruiterOS</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="flex flex-1">
-        {/* Left Navigation */}
-        <aside
-          className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white border-r border-[#bcd6fa]/50 p-4 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
-            mobileMenuOpen ? "translate-x-0 top-16" : "-translate-x-full lg:translate-x-0"
-          }`}
-        >
-          {/* Pod Deployment Velocity Card */}
-          <div className="mb-5 rounded-xl border border-electric/30 bg-canvas p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-mist">ACTIVE CAPACITY</span>
-              <span className="text-electric font-bold">4 / 6 Pods</span>
+      {/* Main Shell: Sidebar Pinned to Left, Only Main Body Scrolls */}
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        {/* Desktop Left Sidebar: Pinned and Scrollable */}
+        <aside className="hidden lg:flex w-72 shrink-0 h-full border-r border-[#bcd6fa]/50 bg-white p-4 pb-5 flex-col overflow-hidden">
+          {/* Top Platform Status Card (shrink-0) */}
+          <div className="shrink-0 mb-4 rounded-2xl border border-electric/25 bg-gradient-to-br from-electric/5 to-canvas p-3.5 shadow-2xs">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-ink font-display">Sprint Capacity</span>
+              <span className="font-mono text-xs font-bold text-electric">4 Active Requisitions</span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-white overflow-hidden border border-[#bcd6fa]/50">
-              <div className="h-full rounded-full bg-electric w-[66%]" />
+            <div className="mt-2 h-1.5 w-full rounded-full bg-canvas overflow-hidden border border-[#bcd6fa]/40">
+              <div className="h-full rounded-full bg-gradient-to-r from-electric to-cyan-500 w-[75%]" />
             </div>
-            <p className="text-[10px] text-ink-soft pt-1">
-              Pod #5 ready for technical sprint validation.
-            </p>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-ink-soft">
+              <span>7-Day Deployment SLA</span>
+              <span className="font-semibold text-signal">On-Track</span>
+            </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="space-y-0.5">
+          {/* Middle Nav Items: Only this container scrolls if menu is long */}
+          <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 thin-scrollbar">
             {RECRUITER_NAV.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                  className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all select-none cursor-pointer ${
                     active
                       ? "bg-ink text-white shadow-xs"
                       : "text-ink-soft hover:bg-canvas hover:text-ink"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className={active ? "text-electric-bright" : "text-mist group-hover:text-electric transition-colors"}>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className={`shrink-0 transition-colors ${
+                        active ? "text-electric-bright" : "text-mist group-hover:text-electric"
+                      }`}
+                    >
                       {item.icon}
                     </span>
-                    <span>{item.label}</span>
+                    <span className="whitespace-nowrap truncate">{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-mono font-bold ${
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold ${
                         active
                           ? "bg-electric text-white"
                           : "bg-canvas text-ink-soft border border-[#bcd6fa]/50"
@@ -203,28 +327,93 @@ export default function RecruiterDashboardLayout({
             })}
           </nav>
 
-          {/* Bottom Enterprise Escrow info */}
-          <div className="mt-auto pt-4 border-t border-[#bcd6fa]/40">
-            <div className="rounded-xl border border-[#bcd6fa]/60 bg-canvas/40 p-3 text-xs">
-              <div className="font-mono text-[10px] uppercase tracking-wider text-mist">Escrow Balance</div>
+          {/* Bottom Static Escrow and Sign Out Box (shrink-0) */}
+          <div className="shrink-0 pt-3 border-t border-[#bcd6fa]/40 mt-3">
+            <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/60 p-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-mist">Escrow Balance</span>
+                <span className="font-mono text-[9px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.2 rounded border border-emerald-200">
+                  FDIC
+                </span>
+              </div>
               <div className="font-display text-sm font-bold text-ink mt-0.5">$48,500.00</div>
-              <p className="text-[10px] text-ink-soft mt-1">
-                4 Active Pod sprints covered by guarantee.
+              <p className="text-[10.5px] text-ink-soft mt-1 leading-snug">
+                4 Active Requisition sprints covered by guarantee.
               </p>
             </div>
 
-            <div className="mt-3 flex items-center justify-between px-1 text-[11px] text-mist font-mono">
+            <div className="mt-2.5 flex items-center justify-between px-1 text-[11px] text-mist font-medium">
               <span>Enterprise SLA 99.8%</span>
-              <Link href="/login" className="hover:text-ink transition-colors">
-                Sign Out
-              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  await logoutAction();
+                  router.push("/login");
+                }}
+                className="hover:text-ink transition-colors cursor-pointer inline-flex items-center gap-1 font-semibold text-rose-600 hover:text-rose-700"
+              >
+                <LogOut size={12} />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
         </aside>
 
-        {/* Content Body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
-          {children}
+        {/* Mobile Slide-over Drawer & Backdrop */}
+        {mobileMenuOpen && (
+          <>
+            <div
+              className="fixed inset-0 top-16 z-40 bg-ink/30 backdrop-blur-xs lg:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <aside className="fixed inset-y-0 left-0 top-16 z-50 w-72 border-r border-[#bcd6fa]/50 bg-white p-4 flex flex-col justify-between overflow-hidden lg:hidden shadow-xl animate-in slide-in-from-left duration-200">
+              <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 thin-scrollbar">
+                {RECRUITER_NAV.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                        active
+                          ? "bg-ink text-white shadow-xs"
+                          : "text-ink-soft hover:bg-canvas hover:text-ink"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={active ? "text-electric-bright" : "text-mist"}>
+                          {item.icon}
+                        </span>
+                        <span>{item.label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              <div className="pt-3 border-t border-[#bcd6fa]/40">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logoutAction();
+                    router.push("/login");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </aside>
+          </>
+        )}
+
+        {/* Main Content: Only this container scrolls */}
+        <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

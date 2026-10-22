@@ -4,8 +4,16 @@ import React from "react";
 import GlobalDeliveryMatrix from "./GlobalDeliveryMatrix";
 import RpoCalculator from "./RpoCalculator";
 
-export default function HiringVelocity() {
+export interface HiringVelocityContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}
 
+export default function HiringVelocity({ content }: { content?: HiringVelocityContent } = {}) {
+  const eyebrow = content?.eyebrow ?? "Flexible Global RPO & Staffing Calculator";
+  const title = content?.title ?? "Deploy Locally, Source Globally: 24/7 Timezone Coverage & RPO Cost Engine";
+  const subtitle = content?.subtitle ?? "Guaranteed daily operational overlap across global hubs. Configure your custom squad across stacks, seniority tiers, and regions to compare real-time savings against traditional recruiting agencies.";
 
   return (
     <section
@@ -20,15 +28,15 @@ export default function HiringVelocity() {
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/25 bg-electric/[0.08] px-4 py-1 font-mono text-[10.5px] font-semibold tracking-[0.16em] uppercase text-electric shadow-sm backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_6px_rgba(10,132,255,0.6)]" />
-            Flexible Global RPO &amp; Staffing Calculator
+            {eyebrow}
           </div>
 
           <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-ink sm:text-3xl lg:text-[36px] leading-[1.15] text-balance">
-            Deploy Locally, Source Globally: 24/7 Timezone Coverage &amp; RPO Cost Engine
+            {title}
           </h2>
 
           <p className="mt-2 text-xs sm:text-sm leading-relaxed text-ink-soft max-w-2xl">
-            Guaranteed daily operational overlap across global hubs. Configure your custom squad across stacks, seniority tiers, and regions to compare real-time savings against traditional recruiting agencies.
+            {subtitle}
           </p>
         </div>
 

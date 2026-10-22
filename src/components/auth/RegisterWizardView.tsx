@@ -6,26 +6,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
-  CheckCircle,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Check,
+  UploadCloud,
   FileText,
-  ShieldCheck,
-  Zap,
-  Users,
-  Clock,
-  Award,
-  Compass,
-} from "@/components/ui/Icons";
-import {
-  INTAKE_SECTORS,
-  INTAKE_DOMAINS,
-  INTAKE_SKILLS,
-  INTAKE_SENIORITIES,
-  INTAKE_WORK_AUTH,
-  INTAKE_ENGAGEMENT_PREFS,
-  getDomainsForSector,
-  getSkillsForSector,
-  getSenioritiesForSector,
-} from "@/data/intakeOptions";
+  AlertCircle,
+  X,
+} from "lucide-react";
+import { getTaxonomiesAction, TaxonomyMatrix } from "@/actions/taxonomy.actions";
 import { registerAction } from "@/actions/auth.actions";
 
 type SectorCode = "technology" | "healthcare";
@@ -35,57 +25,49 @@ export function RegisterWizardView() {
   const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Stepper state: 1 to 5
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  // Progressive disclosure stages: 1, 2, or 3 unlocked
+  const [unlockedStage, setUnlockedStage] = useState<1 | 2 | 3>(1);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Form State
-  const [sector, setSector] = useState<SectorCode>("technology");
-  const [domainId, setDomainId] = useState<string>("dom-tech-fullstack");
-  const [seniorityId, setSeniorityId] = useState<string>("lvl-tech-senior");
+  // ---------- STAGE 01: Candidate Information (ZERO auto-selects) ----------
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [sector, setSector] = useState<SectorCode | "">("");
+  const [stage1Errors, setStage1Errors] = useState<Record<string, string>>({});
 
-  // Skills & Comp
-  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([
-    "sk-react",
-    "sk-nextjs",
-    "sk-typescript",
-    "sk-nodejs",
-  ]);
+  // ---------- STAGE 02: Professional Details (ZERO auto-selects) ----------
+  const [domainId, setDomainId] = useState<string>("");
+  const [seniorityId, setSeniorityId] = useState<string>("");
+  const [workAuthId, setWorkAuthId] = useState<string>("");
+  const [engagementType, setEngagementType] = useState<string>("");
+  const [compRate, setCompRate] = useState<string>("");
+  const [timezone, setTimezone] = useState<string>("");
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const [skillSearchQuery, setSkillSearchQuery] = useState("");
-  const [workAuthId, setWorkAuthId] = useState<string>("auth-us-citizen");
-  const [engagementIds, setEngagementIds] = useState<string[]>(["eng-w2", "eng-c2c"]);
-  const [compMin, setCompMin] = useState<string>("85");
-  const [compMax, setCompMax] = useState<string>("115");
-  const [compType, setCompType] = useState<"hourly" | "annual">("hourly");
-  const [timezone, setTimezone] = useState<string>("EST (UTC-5)");
-
-  // Documents & Credentials
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [coverLetter, setCoverLetter] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [portfolioUrl, setPortfolioUrl] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  // Healthcare license fields
+  // Healthcare specific
   const [licenseType, setLicenseType] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [licenseJurisdiction, setLicenseJurisdiction] = useState("");
-  const [licenseExpiry, setLicenseExpiry] = useState("");
+  const [stage2Errors, setStage2Errors] = useState<Record<string, string>>({});
 
-  // Account details
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  // ---------- STAGE 03: Credentials & Account Security ----------
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [referralCode, setReferralCode] = useState("");
-
-  // Three explicit legal consents
+  const [additionalNotes, setAdditionalNotes] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeDataProcessing, setAgreeDataProcessing] = useState(false);
-
-  // Validation & Submission
-  const [attemptedStepNext, setAttemptedStepNext] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [stage3Errors, setStage3Errors] = useState<Record<string, string>>({});
 
   // Auto-fill referral code from query params
   useEffect(() => {
@@ -95,36 +77,40 @@ export function RegisterWizardView() {
     }
   }, [searchParams]);
 
-  // Handle Sector Change (re-sync defaults)
-  const handleSectorSelect = (code: SectorCode) => {
-    setSector(code);
-    if (code === "technology") {
-      setDomainId("dom-tech-fullstack");
-      setSeniorityId("lvl-tech-senior");
-      setSelectedSkillIds(["sk-react", "sk-nextjs", "sk-typescript", "sk-nodejs"]);
-    } else {
-      setDomainId("dom-health-nursing-icu");
-      setSeniorityId("lvl-health-specialist");
-      setSelectedSkillIds(["sk-nmc-reg", "sk-icu-critical", "sk-bls-acls"]);
-    }
-  };
+  // Taxonomies loaded directly from Backend
+  const [taxonomies, setTaxonomies] = useState<TaxonomyMatrix>({
+    sectors: [],
+    domains: [],
+    skills: [],
+    seniorities: [],
+    workAuths: [],
+    engagements: [],
+  });
 
-  const toggleSkill = (skillId: string) => {
-    if (selectedSkillIds.includes(skillId)) {
-      setSelectedSkillIds(selectedSkillIds.filter((id) => id !== skillId));
-    } else {
-      setSelectedSkillIds([...selectedSkillIds, skillId]);
-    }
-  };
-
-  const toggleEngagement = (id: string) => {
-    if (engagementIds.includes(id)) {
-      if (engagementIds.length > 1) {
-        setEngagementIds(engagementIds.filter((item) => item !== id));
+  useEffect(() => {
+    getTaxonomiesAction().then((res) => {
+      if (res.success && res.data) {
+        setTaxonomies(res.data);
       }
+    });
+  }, []);
+
+  // When sector changes, reset dependent fields with ZERO auto-selected dummy data
+  const handleSectorChange = (newSector: SectorCode | "") => {
+    setSector(newSector);
+    setDomainId("");
+    setSeniorityId("");
+    setSelectedSkillIds([]);
+    setStage1Errors((prev) => ({ ...prev, sector: "" }));
+  };
+
+  const toggleSkill = (id: string) => {
+    if (selectedSkillIds.includes(id)) {
+      setSelectedSkillIds(selectedSkillIds.filter((s) => s !== id));
     } else {
-      setEngagementIds([...engagementIds, id]);
+      setSelectedSkillIds([...selectedSkillIds, id]);
     }
+    setStage2Errors((prev) => ({ ...prev, skills: "" }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,69 +120,114 @@ export function RegisterWizardView() {
       const isExtValid = validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext));
       if (isExtValid) {
         setUploadedFile(file);
+        setStage3Errors((prev) => ({ ...prev, resume: "" }));
       } else {
         alert("Please upload a PDF, DOCX, or RTF document.");
       }
     }
   };
 
-  // Step Validation Check
-  const validateCurrentStep = (): boolean => {
-    setAttemptedStepNext(true);
-    setErrorMessage(null);
+  // ---------- STAGE 1 VALIDATION & PROCEED ----------
+  const handleStage1Next = () => {
+    const errs: Record<string, string> = {};
+    if (!fullName.trim()) errs.fullName = "Full name is required.";
+    if (!email.trim() || !email.includes("@")) errs.email = "Valid email address is required.";
+    if (!phone.trim()) errs.phone = "Phone number is required.";
+    if (!location.trim()) errs.location = "Location is required.";
+    if (!jobTitle.trim()) errs.jobTitle = "Current title is required.";
+    if (!sector) errs.sector = "Please select an industry / sector.";
 
-    if (currentStep === 1) {
-      return true;
-    }
-    if (currentStep === 2) {
-      return Boolean(domainId && seniorityId);
-    }
-    if (currentStep === 3) {
-      if (selectedSkillIds.length === 0) {
-        setErrorMessage("Please select at least one primary skill or clinical specialty.");
-        return false;
+    setStage1Errors(errs);
+    if (Object.keys(errs).length === 0) {
+      if (unlockedStage < 2) {
+        setUnlockedStage(2);
       }
-      return true;
-    }
-    if (currentStep === 4) {
-      if (!uploadedFile) {
-        setErrorMessage("Please upload your CV / Resume file to continue.");
-        return false;
-      }
-      if (sector === "healthcare" && (!licenseNumber || !licenseJurisdiction)) {
-        setErrorMessage("Please supply your clinical license number and jurisdiction.");
-        return false;
-      }
-      return true;
-    }
-    return true;
-  };
-
-  const handleNextStep = () => {
-    if (validateCurrentStep()) {
-      setAttemptedStepNext(false);
-      setCurrentStep((prev) => Math.min(prev + 1, 5) as any);
+      setTimeout(() => {
+        const el = document.getElementById("stage-02");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 80);
     }
   };
 
-  const handlePrevStep = () => {
-    setErrorMessage(null);
-    setAttemptedStepNext(false);
-    setCurrentStep((prev) => Math.max(prev - 1, 1) as any);
+  // ---------- STAGE 2 VALIDATION & PROCEED ----------
+  const handleStage2Next = () => {
+    const errs: Record<string, string> = {};
+    if (!domainId) errs.domain = "Please select your domain track.";
+    if (!seniorityId) errs.seniority = "Please select your experience level.";
+    if (!workAuthId) errs.workAuth = "Please select work authorization.";
+    if (!engagementType) errs.engagementType = "Please select engagement type.";
+    if (!timezone) errs.timezone = "Please select your preferred timezone.";
+    if (selectedSkillIds.length === 0) errs.skills = "Select at least one skill.";
+
+    if (sector === "healthcare") {
+      if (!licenseNumber.trim()) errs.licenseNumber = "License number is required for healthcare.";
+      if (!licenseJurisdiction.trim()) errs.licenseJurisdiction = "Jurisdiction is required.";
+    }
+
+    setStage2Errors(errs);
+    if (Object.keys(errs).length === 0) {
+      if (unlockedStage < 3) {
+        setUnlockedStage(3);
+      }
+      setTimeout(() => {
+        const el = document.getElementById("stage-03");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 80);
+    }
   };
 
+  // ---------- STAGE 3 FINAL SUBMISSION ----------
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAttemptedStepNext(true);
     setErrorMessage(null);
 
-    if (!fullName || !email || !password) {
-      setErrorMessage("Please fill in all mandatory account fields.");
+    // Validate Stage 1 fields (even if edited while on Stage 3)
+    const s1Errs: Record<string, string> = {};
+    if (!fullName.trim()) s1Errs.fullName = "Full name is required.";
+    if (!email.trim() || !email.includes("@")) s1Errs.email = "Valid email address is required.";
+    if (!phone.trim()) s1Errs.phone = "Phone number is required.";
+    if (!location.trim()) s1Errs.location = "Location is required.";
+    if (!jobTitle.trim()) s1Errs.jobTitle = "Current title is required.";
+    if (!sector) s1Errs.sector = "Please select an industry / sector.";
+    setStage1Errors(s1Errs);
+
+    // Validate Stage 2 fields
+    const s2Errs: Record<string, string> = {};
+    if (!domainId) s2Errs.domain = "Please select your domain track.";
+    if (!seniorityId) s2Errs.seniority = "Please select your experience level.";
+    if (!workAuthId) s2Errs.workAuth = "Please select work authorization.";
+    if (!engagementType) s2Errs.engagementType = "Please select engagement type.";
+    if (!timezone) s2Errs.timezone = "Please select preferred timezone.";
+    if (selectedSkillIds.length === 0) s2Errs.skills = "Select at least one skill.";
+    if (sector === "healthcare") {
+      if (!licenseNumber.trim()) s2Errs.licenseNumber = "License number is required for healthcare.";
+      if (!licenseJurisdiction.trim()) s2Errs.licenseJurisdiction = "Jurisdiction is required.";
+    }
+    setStage2Errors(s2Errs);
+
+    // Validate Stage 3 fields
+    const s3Errs: Record<string, string> = {};
+    if (!uploadedFile) s3Errs.resume = "Please upload your resume / CV file.";
+    if (!password || password.length < 4) s3Errs.password = "Password must be at least 4 characters.";
+    if (password !== confirmPassword) s3Errs.confirmPassword = "Passwords do not match.";
+    if (!agreeTerms || !agreePrivacy || !agreeDataProcessing) {
+      s3Errs.consents = "Please accept all three legal agreements to proceed.";
+    }
+    setStage3Errors(s3Errs);
+
+    if (Object.keys(s1Errs).length > 0) {
+      document.getElementById("stage-01")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-
-    if (!agreeTerms || !agreePrivacy || !agreeDataProcessing) {
-      setErrorMessage("You must accept all three required legal and data processing consents.");
+    if (Object.keys(s2Errs).length > 0) {
+      document.getElementById("stage-02")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (Object.keys(s3Errs).length > 0) {
       return;
     }
 
@@ -206,11 +237,27 @@ export function RegisterWizardView() {
       email,
       password,
       full_name: fullName,
+      phone,
+      location,
+      title: jobTitle,
+      referral_code: referralCode.trim() || undefined,
       role: "candidate",
       sector,
       domain: domainId,
       level: seniorityId,
       work_auth: workAuthId,
+      engagement: engagementType,
+      target_comp: compRate || undefined,
+      timezone,
+      skills: selectedSkillIds,
+      linkedin_url: linkedinUrl || undefined,
+      portfolio_url: portfolioUrl || undefined,
+      additional_notes: additionalNotes || undefined,
+      consents: [
+        { policy_type: "terms_of_service", policy_version: "v2026.1", agreed: agreeTerms },
+        { policy_type: "privacy_policy", policy_version: "v2026.1", agreed: agreePrivacy },
+        { policy_type: "data_processing", policy_version: "v2026.1", agreed: agreeDataProcessing },
+      ],
     });
 
     setLoading(false);
@@ -218,666 +265,845 @@ export function RegisterWizardView() {
     if (res.success) {
       router.push(`/verify?email=${encodeURIComponent(email)}`);
     } else {
-      setErrorMessage(
-        res.error?.message || "Failed to create account. Please verify your details."
-      );
+      if (res.error?.fields) {
+        const fieldDetails = Object.entries(res.error.fields)
+          .map(([k, msgs]) => `${k.replace("_", " ").toUpperCase()}: ${msgs.join(" ")}`)
+          .join(" • ");
+        setErrorMessage(fieldDetails || res.error.message || "Failed to create account.");
+      } else {
+        setErrorMessage(
+          res.error?.message || "Failed to create account. Please verify your details."
+        );
+      }
     }
   };
 
-  const filteredSkills = getSkillsForSector(sector).filter((s) =>
-    s.label.toLowerCase().includes(skillSearchQuery.toLowerCase())
-  );
+  const filteredSkills = taxonomies.skills
+    .filter((s) => !sector || s.sectorId === sector)
+    .filter((s) => s.label.toLowerCase().includes(skillSearchQuery.toLowerCase()));
+
+  const domainsForSector = taxonomies.domains.filter((d) => !sector || d.sectorId === sector);
+  const senioritiesForSector = taxonomies.seniorities.filter((l) => !sector || l.sectorId === sector);
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="rounded-3xl border border-[#bcd6fa] bg-white/95 p-6 sm:p-10 shadow-[0_20px_60px_-15px_rgba(10,20,40,0.08)] backdrop-blur-md">
-        {/* Top Progress & Stepper Bar */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-electric/30 bg-electric/10 px-3 py-0.5 text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
-                <span>ONBOARDING STAGE {currentStep} OF 5</span>
-              </div>
-              <h1 className="mt-1 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
-                Candidate Intake & Talent Profile
-              </h1>
-            </div>
-
-            <div className="font-mono text-xs text-mist">
-              {currentStep === 1 && "Sector & Track"}
-              {currentStep === 2 && "Domain & Experience"}
-              {currentStep === 3 && "Skills & Compensation"}
-              {currentStep === 4 && "Credentials & Documents"}
-              {currentStep === 5 && "Account Security & Consents"}
-            </div>
+    <div className="min-h-screen w-full bg-white text-slate-800 flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+      {/* 1. Static Clean Header */}
+      <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="inline-flex items-center transition-opacity hover:opacity-90">
+              <Image
+                src="/assets/pepoltek/black_logo.png"
+                alt="PEPOLTek Limited"
+                width={130}
+                height={32}
+                className="h-7 w-auto object-contain"
+                priority
+              />
+            </Link>
+            <span className="text-slate-300 font-light hidden sm:inline">|</span>
+            <span className="text-xs sm:text-[13px] text-slate-500 font-normal tracking-wide hidden sm:inline">
+              Global Talent. Strategic Growth.
+            </span>
           </div>
 
-          {/* Stepper Dots & Line */}
-          <div className="relative">
-            <div className="h-2 w-full rounded-full bg-canvas overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-electric to-electric-bright transition-all duration-300"
-                style={{ width: `${(currentStep / 5) * 100}%` }}
-              />
-            </div>
-            <div className="mt-2.5 flex justify-between text-[11px] font-mono text-ink-soft">
-              <span className={currentStep >= 1 ? "font-bold text-electric" : "text-mist"}>
-                1. Sector
-              </span>
-              <span className={currentStep >= 2 ? "font-bold text-electric" : "text-mist"}>
-                2. Domain
-              </span>
-              <span className={currentStep >= 3 ? "font-bold text-electric" : "text-mist"}>
-                3. Skills
-              </span>
-              <span className={currentStep >= 4 ? "font-bold text-electric" : "text-mist"}>
-                4. Credentials
-              </span>
-              <span className={currentStep === 5 ? "font-bold text-electric" : "text-mist"}>
-                5. Account
-              </span>
-            </div>
+          <div className="flex items-center gap-2 sm:gap-3 text-xs">
+            <span className="text-slate-500 hidden sm:inline">Already registered?</span>
+            <Link
+              href="/login"
+              className="font-semibold text-blue-600 hover:text-blue-700 hover:underline px-2.5 py-1.5 rounded-md hover:bg-blue-50 transition-colors"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
+      </header>
 
+      {/* 2. Main Enterprise Grade Form Flow (Zero card bg, zero dummy auto-selects) */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        
+        {/* Global Error Banner if any */}
         {errorMessage && (
-          <div className="mb-6 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-xs font-semibold text-rose-700 flex items-center justify-between">
-            <span>{errorMessage}</span>
-            <button onClick={() => setErrorMessage(null)} className="font-bold ml-2">
-              ✕
+          <div className="mb-8 rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 font-medium flex items-start gap-2.5 shadow-xs">
+            <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+            <div className="leading-relaxed flex-1">{errorMessage}</div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              className="text-rose-500 hover:text-rose-700 cursor-pointer"
+            >
+              <X size={14} />
             </button>
           </div>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* STAGE 1: SECTOR SELECTION WITH 3D GLASS TRANSPARENT BADGES        */}
-        {/* ------------------------------------------------------------------ */}
-        {currentStep === 1 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">
-                Select Your Primary Professional Sector
-              </h2>
-              <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
-                Choose your field to load domain-specific interview pipelines, benchmarks, and sprint pods.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {INTAKE_SECTORS.map((sec) => {
-                const isSelected = sector === sec.code;
-                const badgeImage =
-                  sec.code === "technology"
-                    ? "/assets/auth/tech-sector.png"
-                    : "/assets/auth/health-sector.png";
-
-                return (
-                  <div
-                    key={sec.id}
-                    onClick={() => handleSectorSelect(sec.code)}
-                    className={`relative rounded-3xl p-6 border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                      isSelected
-                        ? "border-electric bg-gradient-to-br from-white via-[#f3f8fe] to-white shadow-md ring-2 ring-electric/20"
-                        : "border-[#bcd6fa]/60 bg-white hover:border-electric/50 hover:bg-[#fafcff]"
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <span
-                          className={`rounded-full px-3 py-0.5 text-[11px] font-mono font-bold ${
-                            isSelected
-                              ? "bg-electric text-white"
-                              : "bg-canvas text-ink-soft border border-[#bcd6fa]"
-                          }`}
-                        >
-                          {sec.badge}
-                        </span>
-
-                        <div className="relative h-16 w-16">
-                          <Image
-                            src={badgeImage}
-                            alt={sec.label}
-                            fill
-                            className="object-contain"
-                            priority
-                          />
-                        </div>
-                      </div>
-
-                      <h3 className="font-display text-lg font-bold text-ink">{sec.label}</h3>
-                      <div className="font-mono text-xs text-electric font-semibold mt-1">
-                        {sec.headline}
-                      </div>
-                      <p className="text-xs text-ink-soft mt-2 leading-relaxed">
-                        {sec.description}
-                      </p>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-[#bcd6fa]/40 flex items-center justify-between text-xs font-semibold">
-                      <span className={isSelected ? "text-electric" : "text-mist"}>
-                        {isSelected ? "✓ Track Selected" : "Click to Select Track"}
-                      </span>
-                      <span className="font-mono text-[11px] text-ink-soft">7-Day Deployment</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* ============================================================== */}
+        {/* STAGE 01: Candidate Information                               */}
+        {/* ============================================================== */}
+        <section
+          id="stage-01"
+          className="pb-10 sm:pb-14 transition-all"
+        >
+          {/* Stage Header */}
+          <div className="mb-6">
+            <span className="text-xs sm:text-sm font-bold text-blue-600 font-mono tracking-wider">
+              01
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1 font-display">
+              Candidate Information
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+              Tell us about your background and contact info so we can match you with the right opportunities.
+            </p>
           </div>
-        )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* STAGE 2: DOMAIN & SENIORITY SELECTION                             */}
-        {/* ------------------------------------------------------------------ */}
-        {currentStep === 2 && (
-          <div className="space-y-6">
+          {/* Double Column Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            {/* Full Name */}
             <div>
-              <h2 className="font-display text-lg font-bold text-ink">
-                Domain Specialization & Seniority
-              </h2>
-              <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
-                Define your exact area of focus and tier bracket in {sector === "technology" ? "Technology" : "Healthcare"}.
-              </p>
-            </div>
-
-            {/* Domains List */}
-            <div>
-              <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-2">
-                Specialization Domain
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Full Name <span className="text-blue-600">*</span>
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {getDomainsForSector(sector).map((dom) => {
-                  const isSelected = domainId === dom.id;
-                  return (
-                    <div
-                      key={dom.id}
-                      onClick={() => setDomainId(dom.id)}
-                      className={`rounded-2xl border p-4 cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-electric bg-[#f2f7fe] text-ink font-semibold shadow-xs"
-                          : "border-[#bcd6fa]/70 bg-white hover:border-electric/50 text-ink-soft"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm font-bold text-ink">{dom.label}</span>
-                        {isSelected && <CheckCircle size={16} className="text-electric" />}
-                      </div>
-                      {dom.description && (
-                        <p className="mt-1 text-[11px] text-ink-soft leading-snug">
-                          {dom.description}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Seniority */}
-            <div>
-              <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-2">
-                Experience Level & Seniority Tier
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {getSenioritiesForSector(sector).map((sen) => {
-                  const isSelected = seniorityId === sen.id;
-                  return (
-                    <div
-                      key={sen.id}
-                      onClick={() => setSeniorityId(sen.id)}
-                      className={`rounded-2xl border p-4 cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-electric bg-[#f2f7fe] text-ink font-semibold shadow-xs"
-                          : "border-[#bcd6fa]/70 bg-white hover:border-electric/50 text-ink-soft"
-                      }`}
-                    >
-                      <div className="text-xs font-mono text-electric font-bold">{sen.yearsRange}</div>
-                      <div className="font-display text-xs sm:text-sm font-bold text-ink mt-1">
-                        {sen.label}
-                      </div>
-                      {sen.description && (
-                        <p className="mt-1 text-[11px] text-ink-soft leading-snug">
-                          {sen.description}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ------------------------------------------------------------------ */}
-        {/* STAGE 3: SKILLS, COMPENSATION & WORK AUTHORIZATION                 */}
-        {/* ------------------------------------------------------------------ */}
-        {currentStep === 3 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">
-                Verified Skills, Rate & Work Authorization
-              </h2>
-              <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
-                Highlight your verified tech stack or clinical credentials to power AI pod matching.
-              </p>
-            </div>
-
-            {/* Skills selection */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft">
-                  Select Skills & Specialties ({selectedSkillIds.length} selected)
-                </label>
-                <span className="text-xs text-mist font-mono">Min 1 required</span>
-              </div>
-
               <input
                 type="text"
-                value={skillSearchQuery}
-                onChange={(e) => setSkillSearchQuery(e.target.value)}
-                placeholder="Filter skills (e.g. React, Go, Next.js, ICU, Epic)..."
-                className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-4 py-2 text-xs text-ink placeholder:text-mist focus:border-electric focus:bg-white outline-hidden mb-3"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter full name"
+                className={`w-full rounded-lg border ${
+                  stage1Errors.fullName ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                } bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
               />
-
-              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
-                {filteredSkills.map((sk) => {
-                  const isSelected = selectedSkillIds.includes(sk.id);
-                  return (
-                    <button
-                      key={sk.id}
-                      type="button"
-                      onClick={() => toggleSkill(sk.id)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-mono transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-ink text-white font-bold shadow-xs ring-1 ring-electric"
-                          : "bg-white border border-[#bcd6fa] text-ink-soft hover:border-electric"
-                      }`}
-                    >
-                      {isSelected ? "✓ " : "+ "}
-                      {sk.label}
-                    </button>
-                  );
-                })}
-              </div>
+              {stage1Errors.fullName && (
+                <p className="text-[11px] text-rose-600 mt-1">{stage1Errors.fullName}</p>
+              )}
             </div>
 
-            {/* Compensation Expectations & Timezone */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-              <div>
-                <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
-                  Min Expected Rate ($/hr)
-                </label>
-                <input
-                  type="number"
-                  value={compMin}
-                  onChange={(e) => setCompMin(e.target.value)}
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs font-mono text-ink focus:border-electric focus:bg-white outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
-                  Target Rate ($/hr)
-                </label>
-                <input
-                  type="number"
-                  value={compMax}
-                  onChange={(e) => setCompMax(e.target.value)}
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs font-mono text-ink focus:border-electric focus:bg-white outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
-                  Primary Timezone
-                </label>
-                <select
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3 py-2 text-xs text-ink focus:border-electric focus:bg-white outline-hidden"
-                >
-                  <option>EST (UTC-5)</option>
-                  <option>CST (UTC-6)</option>
-                  <option>PST (UTC-8)</option>
-                  <option>BST / GMT (London)</option>
-                  <option>CET (Central Europe)</option>
-                  <option>IST (India UTC+5:30)</option>
-                </select>
-              </div>
+            {/* Email Address */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Email Address <span className="text-blue-600">*</span>
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email address"
+                className={`w-full rounded-lg border ${
+                  stage1Errors.email ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                } bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+              />
+              {stage1Errors.email && (
+                <p className="text-[11px] text-rose-600 mt-1">{stage1Errors.email}</p>
+              )}
             </div>
 
-            {/* Work Authorization & Engagement */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
-                  Work Authorization Status
-                </label>
-                <select
-                  value={workAuthId}
-                  onChange={(e) => setWorkAuthId(e.target.value)}
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs text-ink focus:border-electric focus:bg-white outline-hidden"
-                >
-                  {INTAKE_WORK_AUTH.map((auth) => (
-                    <option key={auth.id} value={auth.id}>
-                      {auth.label} ({auth.region})
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Phone Number */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Phone Number <span className="text-blue-600">*</span>
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 (___) ___-____"
+                className={`w-full rounded-lg border ${
+                  stage1Errors.phone ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                } bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+              />
+              {stage1Errors.phone && (
+                <p className="text-[11px] text-rose-600 mt-1">{stage1Errors.phone}</p>
+              )}
+            </div>
 
-              <div>
-                <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-ink-soft mb-1">
-                  Engagement Models (Multi-select)
-                </label>
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {INTAKE_ENGAGEMENT_PREFS.map((eng) => {
-                    const isSelected = engagementIds.includes(eng.id);
-                    return (
-                      <button
-                        key={eng.id}
-                        type="button"
-                        onClick={() => toggleEngagement(eng.id)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-mono transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-electric text-white font-semibold"
-                            : "bg-canvas text-ink-soft border border-[#bcd6fa]/70"
-                        }`}
-                      >
-                        {eng.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Current Job Title / Headline */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Current Job Title <span className="text-blue-600">*</span>
+              </label>
+              <input
+                type="text"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Senior Full-Stack Engineer"
+                className={`w-full rounded-lg border ${
+                  stage1Errors.jobTitle ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                } bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+              />
+              {stage1Errors.jobTitle && (
+                <p className="text-[11px] text-rose-600 mt-1">{stage1Errors.jobTitle}</p>
+              )}
+            </div>
+
+            {/* Industry / Sector Selector (No auto-select) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Primary Industry / Sector <span className="text-blue-600">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={sector}
+                  onChange={(e) => handleSectorChange(e.target.value as SectorCode | "")}
+                  className={`w-full appearance-none rounded-lg border ${
+                    stage1Errors.sector ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                  } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm ${
+                    !sector ? "text-slate-400" : "text-slate-800"
+                  } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer`}
+                >
+                  <option value="" disabled>
+                    Select industry sector
+                  </option>
+                  {taxonomies.sectors.length > 0 ? (
+                    taxonomies.sectors.map((s) => (
+                      <option key={s.id || s.code} value={s.code} className="text-slate-800">
+                        {s.label}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="technology" className="text-slate-800">
+                        Technology &amp; Software Engineering
+                      </option>
+                      <option value="healthcare" className="text-slate-800">
+                        Healthcare &amp; Clinical Specialists
+                      </option>
+                    </>
+                  )}
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={16}
+                />
               </div>
+              {stage1Errors.sector && (
+                <p className="text-[11px] text-rose-600 mt-1">{stage1Errors.sector}</p>
+              )}
+            </div>
+
+            {/* Current Location / Country */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Current Location (City, Country) <span className="text-blue-600">*</span>
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. New York, USA or London, UK"
+                className={`w-full rounded-lg border ${
+                  stage1Errors.location ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                } bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+              />
+              {stage1Errors.location && (
+                <p className="text-[11px] text-rose-600 mt-1">{stage1Errors.location}</p>
+              )}
             </div>
           </div>
-        )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* STAGE 4: DOCUMENTS & CREDENTIALS                                   */}
-        {/* ------------------------------------------------------------------ */}
-        {currentStep === 4 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">
-                Upload CV / Resume & Professional Credentials
+          {/* Stage 01 Next Button (ONLY visible when Stage 1 is the active latest stage) */}
+          {unlockedStage === 1 && (
+            <div className="mt-8 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleStage1Next}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#e8f2ff] hover:bg-blue-600 hover:text-white text-blue-600 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+              >
+                <span>Next</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* ============================================================== */}
+        {/* STAGE 02: Contact & Admin Details / Professional Profile      */}
+        {/* ============================================================== */}
+        {unlockedStage >= 2 && (
+          <section
+            id="stage-02"
+            className="pt-10 sm:pt-14 pb-10 sm:pb-14 border-t border-slate-100 transition-all animate-in fade-in duration-300"
+          >
+            {/* Stage Header */}
+            <div className="mb-6">
+              <span className="text-xs sm:text-sm font-bold text-blue-600 font-mono tracking-wider">
+                02
+              </span>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1 font-display">
+                Professional Experience &amp; Domain
               </h2>
-              <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
-                Our AI parser will extract your experience, stack benchmarks, and audit clearance.
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                Specify your specialized domain, seniority level, and employment preferences.
               </p>
             </div>
 
-            {/* Drag & Drop File Upload */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-3xl border-2 border-dashed border-[#bcd6fa] bg-canvas/30 p-8 text-center cursor-pointer hover:border-electric hover:bg-[#f6faff] transition-all"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx,.rtf"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <FileText className="mx-auto h-12 w-12 text-electric mb-2" />
-              <div className="font-display text-sm font-bold text-ink">
-                {uploadedFile ? uploadedFile.name : "Click or drag your CV / Resume here"}
+            {/* Double Column Grid (ZERO auto-selects, choices from backend) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              
+              {/* Specialized Domain Track */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Specialized Domain / Track <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={domainId}
+                    onChange={(e) => setDomainId(e.target.value)}
+                    className={`w-full appearance-none rounded-lg border ${
+                      stage2Errors.domain ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm ${
+                      !domainId ? "text-slate-400" : "text-slate-800"
+                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer`}
+                  >
+                    <option value="" disabled>
+                      Select specialized domain / track
+                    </option>
+                    {domainsForSector.map((d) => (
+                      <option key={d.id} value={d.id} className="text-slate-800">
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    size={16}
+                  />
+                </div>
+                {stage2Errors.domain && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage2Errors.domain}</p>
+                )}
               </div>
-              <p className="text-xs text-mist mt-1">
-                {uploadedFile
-                  ? `Size: ${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB - Ready for AI parser`
-                  : "Supports PDF, DOCX, and RTF formats (Max 10MB)"}
-              </p>
-            </div>
 
-            {/* Sector Specific Credentials */}
-            {sector === "technology" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-ink mb-1">GitHub Profile URL</label>
-                  <input
-                    type="url"
-                    value={githubUrl}
-                    onChange={(e) => setGithubUrl(e.target.value)}
-                    placeholder="https://github.com/yourhandle"
-                    className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs text-ink focus:border-electric focus:bg-white outline-hidden"
+              {/* Experience Level / Seniority */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Experience Level / Seniority <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={seniorityId}
+                    onChange={(e) => setSeniorityId(e.target.value)}
+                    className={`w-full appearance-none rounded-lg border ${
+                      stage2Errors.seniority ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm ${
+                      !seniorityId ? "text-slate-400" : "text-slate-800"
+                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer`}
+                  >
+                    <option value="" disabled>
+                      Select experience level
+                    </option>
+                    {senioritiesForSector.map((lvl) => (
+                      <option key={lvl.id} value={lvl.id} className="text-slate-800">
+                        {lvl.label} {lvl.yearsRange ? `(${lvl.yearsRange})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    size={16}
                   />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-ink mb-1">Portfolio / Website</label>
-                  <input
-                    type="url"
-                    value={portfolioUrl}
-                    onChange={(e) => setPortfolioUrl(e.target.value)}
-                    placeholder="https://yourportfolio.com"
-                    className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs text-ink focus:border-electric focus:bg-white outline-hidden"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-ink mb-1">LinkedIn Profile</label>
-                  <input
-                    type="url"
-                    value={linkedinUrl}
-                    onChange={(e) => setLinkedinUrl(e.target.value)}
-                    placeholder="https://linkedin.com/in/handle"
-                    className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs text-ink focus:border-electric focus:bg-white outline-hidden"
-                  />
-                </div>
+                {stage2Errors.seniority && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage2Errors.seniority}</p>
+                )}
               </div>
-            ) : (
-              <div className="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
-                <div className="text-xs font-bold text-emerald-900 font-display">
-                  Healthcare Compliance & Clinical Registration (SRS CAN-04)
+
+              {/* Work Authorization Status */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Work Authorization Status <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={workAuthId}
+                    onChange={(e) => setWorkAuthId(e.target.value)}
+                    className={`w-full appearance-none rounded-lg border ${
+                      stage2Errors.workAuth ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm ${
+                      !workAuthId ? "text-slate-400" : "text-slate-800"
+                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer`}
+                  >
+                    <option value="" disabled>
+                      Select work authorization
+                    </option>
+                    {taxonomies.workAuths.map((auth) => (
+                      <option key={auth.id} value={auth.id} className="text-slate-800">
+                        {auth.label} {auth.region ? `(${auth.region})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    size={16}
+                  />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {stage2Errors.workAuth && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage2Errors.workAuth}</p>
+                )}
+              </div>
+
+              {/* Preferred Engagement Type */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Preferred Engagement Type <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={engagementType}
+                    onChange={(e) => setEngagementType(e.target.value)}
+                    className={`w-full appearance-none rounded-lg border ${
+                      stage2Errors.engagementType ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm ${
+                      !engagementType ? "text-slate-400" : "text-slate-800"
+                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer`}
+                  >
+                    <option value="" disabled>
+                      Select engagement type
+                    </option>
+                    {taxonomies.engagements.map((eng) => (
+                      <option key={eng.id} value={eng.id} className="text-slate-800">
+                        {eng.label} {eng.badge ? `(${eng.badge})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    size={16}
+                  />
+                </div>
+                {stage2Errors.engagementType && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage2Errors.engagementType}</p>
+                )}
+              </div>
+
+              {/* Target Hourly Rate / Compensation (Starts empty, placeholder only) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Target Compensation (Hourly / Annual)
+                </label>
+                <input
+                  type="text"
+                  value={compRate}
+                  onChange={(e) => setCompRate(e.target.value)}
+                  placeholder="e.g. $85 - $115 / hr"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                />
+              </div>
+
+              {/* Preferred Timezone & Availability */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Preferred Timezone <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className={`w-full appearance-none rounded-lg border ${
+                      stage2Errors.timezone ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm ${
+                      !timezone ? "text-slate-400" : "text-slate-800"
+                    } focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer`}
+                  >
+                    <option value="" disabled>
+                      Select preferred timezone
+                    </option>
+                    <option value="EST (UTC-5)" className="text-slate-800">
+                      EST (US Eastern, UTC-5)
+                    </option>
+                    <option value="CST (UTC-6)" className="text-slate-800">
+                      CST (US Central, UTC-6)
+                    </option>
+                    <option value="MST (UTC-7)" className="text-slate-800">
+                      MST (US Mountain, UTC-7)
+                    </option>
+                    <option value="PST (UTC-8)" className="text-slate-800">
+                      PST (US Pacific, UTC-8)
+                    </option>
+                    <option value="GMT (UTC+0)" className="text-slate-800">
+                      GMT (London / UK, UTC+0)
+                    </option>
+                    <option value="CET (UTC+1)" className="text-slate-800">
+                      CET (Central Europe, UTC+1)
+                    </option>
+                    <option value="Asia/Dhaka (UTC+6)" className="text-slate-800">
+                      Asia/Dhaka (UTC+6)
+                    </option>
+                    <option value="IST (UTC+5:30)" className="text-slate-800">
+                      IST (India Standard, UTC+5:30)
+                    </option>
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    size={16}
+                  />
+                </div>
+                {stage2Errors.timezone && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage2Errors.timezone}</p>
+                )}
+              </div>
+
+              {/* Healthcare specific credentials */}
+              {sector === "healthcare" && (
+                <>
                   <div>
-                    <label className="block text-xs font-semibold text-ink mb-1">
-                      License Type / Governing Body
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Clinical License Type <span className="text-blue-600">*</span>
                     </label>
                     <input
                       type="text"
                       value={licenseType}
                       onChange={(e) => setLicenseType(e.target.value)}
-                      placeholder="e.g. GMC Specialist Register or NMC Band 7"
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2 text-xs text-ink focus:border-electric outline-hidden"
+                      placeholder="e.g. Registered Nurse (RN) / GMC Registered"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-ink mb-1">
-                      License Registration Number
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      License Number &amp; Jurisdiction <span className="text-blue-600">*</span>
                     </label>
                     <input
                       type="text"
                       value={licenseNumber}
                       onChange={(e) => setLicenseNumber(e.target.value)}
-                      placeholder="e.g. 7482910"
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2 text-xs text-ink focus:border-electric outline-hidden"
+                      placeholder="e.g. CA-RN-992144 (California)"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                     />
                   </div>
+                </>
+              )}
 
-                  <div>
-                    <label className="block text-xs font-semibold text-ink mb-1">
-                      Issuing Jurisdiction (State / Country)
-                    </label>
-                    <input
-                      type="text"
-                      value={licenseJurisdiction}
-                      onChange={(e) => setLicenseJurisdiction(e.target.value)}
-                      placeholder="e.g. United Kingdom (GMC) or California"
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2 text-xs text-ink focus:border-electric outline-hidden"
-                    />
-                  </div>
+              {/* Skills Multi-Selection Box (ZERO auto-selects, click to select) */}
+              <div className="col-span-full">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Key Technical Skills &amp; Clinical Specialties <span className="text-blue-600">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    {selectedSkillIds.length} skills selected
+                  </span>
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-ink mb-1">
-                      License Expiry Date
-                    </label>
-                    <input
-                      type="date"
-                      value={licenseExpiry}
-                      onChange={(e) => setLicenseExpiry(e.target.value)}
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2 text-xs text-ink focus:border-electric outline-hidden"
-                    />
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 sm:p-4">
+                  <input
+                    type="text"
+                    value={skillSearchQuery}
+                    onChange={(e) => setSkillSearchQuery(e.target.value)}
+                    placeholder="Search or filter skills (e.g. React, Node, Python, ICU)..."
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none mb-3"
+                  />
+
+                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                    {filteredSkills.map((s) => {
+                      const isSelected = selectedSkillIds.includes(s.id);
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => toggleSkill(s.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-blue-600 text-white shadow-xs"
+                              : "bg-white border border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/50"
+                          }`}
+                        >
+                          {isSelected && <Check size={12} />}
+                          <span>{s.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
+                {stage2Errors.skills && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage2Errors.skills}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Stage 02 Next Button (ONLY visible when Stage 2 is the active latest stage) */}
+            {unlockedStage === 2 && (
+              <div className="mt-8 flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={handleStage2Next}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#e8f2ff] hover:bg-blue-600 hover:text-white text-blue-600 text-xs sm:text-sm font-semibold transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                >
+                  <span>Next</span>
+                  <ArrowRight size={14} />
+                </button>
               </div>
             )}
-          </div>
+          </section>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* STAGE 5: ACCOUNT CREDENTIALS & 3 MANDATORY CONSENTS               */}
-        {/* ------------------------------------------------------------------ */}
-        {currentStep === 5 && (
-          <form onSubmit={handleFinalSubmit} className="space-y-6">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">
-                Secure Account Credentials & Consent
+        {/* ============================================================== */}
+        {/* STAGE 03: Additional Information / Credentials & Account      */}
+        {/* ============================================================== */}
+        {unlockedStage >= 3 && (
+          <form
+            onSubmit={handleFinalSubmit}
+            id="stage-03"
+            className="pt-10 sm:pt-14 border-t border-slate-100 transition-all animate-in fade-in duration-300"
+          >
+            {/* Stage Header */}
+            <div className="mb-6">
+              <span className="text-xs sm:text-sm font-bold text-blue-600 font-mono tracking-wider">
+                03
+              </span>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mt-1 font-display">
+                Credentials &amp; Account Security
               </h2>
-              <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
-                Create your password and review mandatory data processing authorizations.
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                Upload your resume, set up your secure password, and finalize your enterprise intake.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-ink mb-1">Candidate Full Name</label>
+            {/* Double Column Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              
+              {/* CV / Resume Upload Box (Col-span full) */}
+              <div className="col-span-full">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Upload CV / Resume <span className="text-blue-600">*</span>
+                </label>
+                
                 <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. David Kim"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs sm:text-sm text-ink focus:border-electric focus:bg-white outline-hidden"
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,.rtf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed ${
+                    stage3Errors.resume ? "border-rose-400 bg-rose-50/20" : "border-slate-200 hover:border-blue-400"
+                  } rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/40 hover:bg-blue-50/20`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-100/80 text-blue-600 flex items-center justify-center mx-auto mb-2">
+                    <UploadCloud size={20} />
+                  </div>
+                  {uploadedFile ? (
+                    <div className="flex items-center justify-center gap-2 text-slate-800 font-medium text-xs sm:text-sm">
+                      <FileText size={16} className="text-blue-600" />
+                      <span className="font-semibold">{uploadedFile.name}</span>
+                      <span className="text-slate-400 text-xs">
+                        ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-700">
+                        Click to upload your CV / Resume or drag &amp; drop
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Supported formats: PDF, DOCX, RTF (Max size 10MB)
+                      </p>
+                    </>
+                  )}
+                </div>
+                {stage3Errors.resume && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage3Errors.resume}</p>
+                )}
+              </div>
+
+              {/* LinkedIn URL */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  LinkedIn Profile URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 />
               </div>
 
+              {/* GitHub / Portfolio URL */}
               <div>
-                <label className="block text-xs font-semibold text-ink mb-1">Candidate Email Address</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  GitHub / Portfolio URL (Optional)
+                </label>
                 <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="david@example.com"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs sm:text-sm text-ink focus:border-electric focus:bg-white outline-hidden"
+                  type="url"
+                  value={portfolioUrl}
+                  onChange={(e) => setPortfolioUrl(e.target.value)}
+                  placeholder="https://github.com/username or your portfolio"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 />
               </div>
 
+              {/* Create Password */}
               <div>
-                <label className="block text-xs font-semibold text-ink mb-1">Create Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 8 characters"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs sm:text-sm text-ink focus:border-electric focus:bg-white outline-hidden"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Create Password <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a strong password"
+                    className={`w-full rounded-lg border ${
+                      stage3Errors.password ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {stage3Errors.password && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage3Errors.password}</p>
+                )}
               </div>
 
+              {/* Confirm Password */}
               <div>
-                <label className="block text-xs font-semibold text-ink mb-1">
-                  Referral Tracking Code (Optional)
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Confirm Password <span className="text-blue-600">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter your password"
+                    className={`w-full rounded-lg border ${
+                      stage3Errors.confirmPassword ? "border-rose-400 bg-rose-50/20" : "border-slate-200"
+                    } bg-white px-3.5 py-2.5 pr-10 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {stage3Errors.confirmPassword && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage3Errors.confirmPassword}</p>
+                )}
+              </div>
+
+              {/* Referral Code */}
+              <div className="col-span-full md:col-span-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Referral Code (Optional)
                 </label>
                 <input
                   type="text"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. PEP-ALEX-9042"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs font-mono font-bold text-ink focus:border-electric focus:bg-white outline-hidden"
+                  placeholder="e.g. PEPOL-REF-100"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 font-mono uppercase focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 />
+              </div>
+
+              {/* Additional Notes */}
+              <div className="col-span-full">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Additional Notes (Optional)
+                  </label>
+                  <span className="text-[11px] text-slate-400">{additionalNotes.length}/500</span>
+                </div>
+                <textarea
+                  rows={3}
+                  maxLength={500}
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  placeholder="Tell us anything else we should know regarding your availability or target roles..."
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+                />
+              </div>
+
+              {/* Legal Consents (Col-span full, starts unchecked) */}
+              <div className="col-span-full pt-2 space-y-2 border-t border-slate-100">
+                <label className="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                  />
+                  <span>
+                    I accept the{" "}
+                    <Link href="/terms" target="_blank" className="text-blue-600 underline font-medium">
+                      Terms of Service
+                    </Link>{" "}
+                    governing candidate representation.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreePrivacy}
+                    onChange={(e) => setAgreePrivacy(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                  />
+                  <span>
+                    I accept the{" "}
+                    <Link href="/privacy" target="_blank" className="text-blue-600 underline font-medium">
+                      Privacy Policy
+                    </Link>{" "}
+                    regarding candidate data protection.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeDataProcessing}
+                    onChange={(e) => setAgreeDataProcessing(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer"
+                  />
+                  <span>
+                    I consent to automated RPO talent matching and cross-border profile processing.
+                  </span>
+                </label>
+
+                {stage3Errors.consents && (
+                  <p className="text-[11px] text-rose-600 mt-1">{stage3Errors.consents}</p>
+                )}
               </div>
             </div>
 
-            {/* Three Explicit Consents (SRS CAN-07) */}
-            <div className="rounded-2xl border border-[#bcd6fa] bg-canvas/40 p-4 space-y-3">
-              <div className="font-mono text-[11px] font-bold text-ink uppercase tracking-wider">
-                Mandatory Policy & Data Authorizations
-              </div>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  required
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-[#bcd6fa] text-electric focus:ring-electric"
-                />
-                <span className="text-xs text-ink-soft">
-                  I agree to the <strong className="text-ink">Pepoltek Terms of Service (v2026.1)</strong> and service delivery agreements.
-                </span>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  required
-                  checked={agreePrivacy}
-                  onChange={(e) => setAgreePrivacy(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-[#bcd6fa] text-electric focus:ring-electric"
-                />
-                <span className="text-xs text-ink-soft">
-                  I agree to the <strong className="text-ink">Privacy Policy</strong> and encrypted PII storage.
-                </span>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  required
-                  checked={agreeDataProcessing}
-                  onChange={(e) => setAgreeDataProcessing(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-[#bcd6fa] text-electric focus:ring-electric"
-                />
-                <span className="text-xs text-ink-soft">
-                  I consent to automated AI resume extraction, vector embedding, and anonymous matching for client pod shortlists.
-                </span>
-              </label>
+            {/* Stage 03 Submit Button */}
+            <div className="mt-8 flex items-center justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center gap-2 px-7 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold transition-all shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60 active:scale-[0.99]"
+              >
+                {loading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Submitting Application...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Complete Registration</span>
+                    <ArrowRight size={14} />
+                  </>
+                )}
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-2xl bg-signal py-3.5 font-display text-xs sm:text-sm font-bold text-ink hover:bg-emerald-400 transition-colors cursor-pointer shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <span>{loading ? "Submitting Intake & Creating Account..." : "Complete Intake & Create Account"}</span>
-              <ArrowRight size={16} />
-            </button>
           </form>
         )}
+      </main>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* BOTTOM STEP NAVIGATION STRIP                                       */}
-        {/* ------------------------------------------------------------------ */}
-        {currentStep < 5 && (
-          <div className="mt-8 pt-6 border-t border-[#bcd6fa]/40 flex items-center justify-between">
-            {currentStep > 1 ? (
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                className="rounded-xl border border-[#bcd6fa] bg-white px-4 py-2 font-display text-xs font-semibold text-ink-soft hover:text-ink hover:bg-canvas transition-colors"
-              >
-                ← Back
-              </button>
-            ) : (
-              <div />
-            )}
-
-            <button
-              type="button"
-              onClick={handleNextStep}
-              className="inline-flex items-center gap-2 rounded-xl bg-ink px-6 py-2.5 font-display text-xs font-semibold text-white hover:bg-electric transition-colors shadow-xs"
-            >
-              <span>Continue to Step {currentStep + 1}</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-        )}
-      </div>
+      {/* 3. Subtle Clean Bottom Space */}
+      <footer className="w-full py-4 text-center text-xs text-slate-400 font-sans border-t border-slate-100 bg-white">
+        &copy; {new Date().getFullYear()} Pepoltek Limited. All rights reserved.
+      </footer>
     </div>
   );
 }

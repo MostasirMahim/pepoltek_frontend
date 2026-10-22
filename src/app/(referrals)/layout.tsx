@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { logoutAction } from "@/actions/auth.actions";
 
 interface NavItem {
   label: string;
@@ -50,6 +51,7 @@ export default function ReferralsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -160,12 +162,16 @@ export default function ReferralsLayout({
             >
               Candidate Portal
             </Link>
-            <Link
-              href="/login"
-              className="rounded-xl bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-electric transition-colors"
+            <button
+              type="button"
+              onClick={async () => {
+                await logoutAction();
+                router.push("/login");
+              }}
+              className="rounded-xl bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-electric transition-colors cursor-pointer"
             >
               Sign Out
-            </Link>
+            </button>
           </div>
         </header>
 

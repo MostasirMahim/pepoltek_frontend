@@ -12,10 +12,10 @@ export interface PodFeatureCard {
 
 const podCardsData: PodFeatureCard[] = [
   {
-    category: "Delivery Pods",
+    category: "Delivery Teams",
     title: "Technical & Healthcare Specialists",
     description:
-      "Technical and clinical sourcing pods maintaining active talent pipelines across North America, Europe, GCC, and Asia-Pacific.",
+      "Technical and clinical sourcing teams maintaining active talent pipelines across North America, Europe, GCC, and Asia-Pacific.",
     icon: (
       <svg
         width="40"
@@ -67,7 +67,7 @@ const podCardsData: PodFeatureCard[] = [
     ),
   },
   {
-    category: "Delivery Pods",
+    category: "Delivery Teams",
     title: "Business Analysts",
     description:
       "Structures client tech stack mappings, workflow requirements, and operational SLAs prior to candidate deployment.",
@@ -124,7 +124,7 @@ const podCardsData: PodFeatureCard[] = [
     ),
   },
   {
-    category: "Delivery Pods",
+    category: "Delivery Teams",
     title: "In-House Software Engineers",
     description:
       "Conduct hard-coded technical validation, system design reviews, and repository evaluations before any profile reaches a hiring manager panel.",
@@ -293,9 +293,9 @@ const podCardsData: PodFeatureCard[] = [
 ];
 
 export default function FeaturesGrid({
-  badge = "Delivery Pods & Leadership",
-  title = "In-House Delivery Pod Breakdown",
-  subtitle = "High-velocity talent engineering pods, strict technical vetting, and proven executive scaling execution.",
+  badge = "Delivery Teams & Leadership",
+  title = "In-House Delivery Team Breakdown",
+  subtitle = "High-velocity talent engineering teams, strict technical vetting, and proven executive scaling execution.",
   cards = podCardsData,
 }: {
   badge?: string;

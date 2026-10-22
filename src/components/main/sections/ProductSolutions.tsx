@@ -127,12 +127,22 @@ function getTechDotColor(tech: string): string {
   return "bg-sky-400";
 }
 
-export default function ProductSolutions() {
+export interface ProductSolutionsContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+export default function ProductSolutions({ content }: { content?: ProductSolutionsContent } = {}) {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [overviewProject, setOverviewProject] = useState<Project | null>(null);
   const [selectedCaseStudy, setSelectedCaseStudy] = useState<Project | null>(null);
   const [dynamicStudies, setDynamicStudies] = useState<CaseStudyCard[]>(CASE_STUDIES);
+
+  const eyebrow = content?.eyebrow ?? "Verified Technical Footprint · Pepoltek Limited";
+  const title = content?.title ?? "Systems Built, Deployed & Scaled";
+  const subtitle = content?.subtitle ?? "We do not just recruit talent; our in-house engineering team designs, builds, and maintains enterprise-grade platforms. This deep technical foundation guarantees authentic vetting for your open roles.";
 
   useEffect(() => {
     async function loadCaseStudies() {
@@ -193,15 +203,15 @@ export default function ProductSolutions() {
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/25 bg-electric/[0.08] px-4 py-1 font-mono text-[10.5px] font-semibold tracking-[0.16em] uppercase text-electric shadow-sm backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_6px_rgba(10,132,255,0.6)]" />
-            Verified Technical Footprint · Pepoltek Limited
+            {eyebrow}
           </div>
 
           <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl lg:text-[40px] leading-[1.12] line-clamp-2 text-balance">
-            Systems Built, Deployed &amp; Scaled
+            {title}
           </h2>
 
           <p className="mt-3.5 text-base sm:text-lg leading-relaxed text-ink-soft max-w-2xl">
-            We do not just recruit talent; our in-house engineering team designs, builds, and maintains enterprise-grade platforms. This deep technical foundation guarantees authentic vetting for your open roles.
+            {subtitle}
           </p>
 
           {/* Interactive Category Filter Toggles */}

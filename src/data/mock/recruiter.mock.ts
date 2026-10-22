@@ -9,6 +9,7 @@
 
 export interface RecruiterPod {
   id: string;
+  rawId?: string;
   name: string;
   type: "Software Tech" | "Healthcare" | "Dual Sector";
   lead: string;
@@ -16,11 +17,26 @@ export interface RecruiterPod {
   stage?: string;
   velocity?: string;
   members: string[];
-  status: "Active Sprint" | "Deployed On-Site" | "Sprint Assembly" | "Client Review";
+  status: "Active Sprint" | "Deployed On-Site" | "Sprint Assembly" | "Client Review" | "open" | "on_hold" | "filled" | "cancelled" | string;
   sprintProgress: string;
   deploymentDate: string;
   weeklyBudget: string;
   burnRate?: "Optimal" | "Normal" | "Elevated";
+  clientName?: string;
+  sector?: string;
+  level?: string;
+  headcount?: number;
+  budgetMin?: number;
+  budgetMax?: number;
+  visibility?: string;
+  bountyAmount?: number;
+  bountyEnabled?: boolean;
+  bountyTypeId?: string;
+  bountyTypeName?: string;
+  description?: string;
+  candidatesCount?: number;
+  location?: string;
+  engagement?: string;
 }
 
 export interface RecruiterCandidate {
@@ -34,7 +50,15 @@ export interface RecruiterCandidate {
   rate: string;
   availability: string;
   verified: boolean;
+  email?: string;
+  phone?: string;
+  location?: string;
+  workAuth?: string;
+  engagement?: string;
+  summary?: string;
+  notes?: string;
 }
+
 
 export interface RecruiterInterview {
   id: string;
@@ -56,10 +80,12 @@ export interface RecruiterShortlist {
   action: string;
 }
 
+export type RecruiterRequisition = RecruiterPod;
+
 export const RECRUITER_ACTIVE_PODS: RecruiterPod[] = [
   {
-    id: "POD-842",
-    name: "Full-Stack High-Frequency Web3 Pod",
+    id: "REQ-842",
+    name: "Full-Stack High-Frequency Web3 Team",
     type: "Software Tech",
     lead: "Alex Morgan",
     size: "4 Engineers",
@@ -73,7 +99,7 @@ export const RECRUITER_ACTIVE_PODS: RecruiterPod[] = [
     burnRate: "Normal",
   },
   {
-    id: "POD-719",
+    id: "REQ-719",
     name: "CarePulse Emergency ICU Specialist Rota",
     type: "Healthcare",
     lead: "Dr. Rachel Higgins",
@@ -88,8 +114,8 @@ export const RECRUITER_ACTIVE_PODS: RecruiterPod[] = [
     burnRate: "Optimal",
   },
   {
-    id: "POD-904",
-    name: "Cloud Native Kubernetes Migration Pod",
+    id: "REQ-904",
+    name: "Cloud Native Kubernetes Migration Team",
     type: "Software Tech",
     lead: "Devon Reed",
     size: "3 Platform Devs",
@@ -103,8 +129,8 @@ export const RECRUITER_ACTIVE_PODS: RecruiterPod[] = [
     burnRate: "Normal",
   },
   {
-    id: "POD-611",
-    name: "AI Patient Triage Pipeline Pod",
+    id: "REQ-611",
+    name: "AI Patient Triage Pipeline Team",
     type: "Dual Sector",
     lead: "Dr. Ethan Wright",
     size: "4 Specialists",
@@ -119,6 +145,8 @@ export const RECRUITER_ACTIVE_PODS: RecruiterPod[] = [
   },
 ];
 
+export const RECRUITER_ACTIVE_REQUISITIONS = RECRUITER_ACTIVE_PODS;
+
 export const RECRUITER_SHORTLISTS: RecruiterShortlist[] = [
   {
     name: "David Kim",
@@ -126,7 +154,7 @@ export const RECRUITER_SHORTLISTS: RecruiterShortlist[] = [
     skills: ["Go", "Kafka", "Kubernetes", "gRPC"],
     match: "99%",
     status: "Technical Sprint Passed",
-    action: "Schedule Pod Presentation",
+    action: "Schedule Technical Presentation",
   },
   {
     name: "Sarah Lindqvist",
@@ -142,7 +170,7 @@ export const RECRUITER_SHORTLISTS: RecruiterShortlist[] = [
     skills: ["Next.js 15", "TypeScript", "Performance"],
     match: "97%",
     status: "Vetting Tier 1 Cleared",
-    action: "Review Pod Availability",
+    action: "Review Requisition Availability",
   },
   {
     name: "Dr. Ethan Wright",
@@ -158,7 +186,7 @@ export const RECRUITER_TALENT_POOL: RecruiterCandidate[] = [
   {
     id: "TAL-501",
     name: "Alex Morgan",
-    title: "Senior Full-Stack & Pod Delivery Lead",
+    title: "Senior Full-Stack & Technical Delivery Lead",
     sector: "Software Tech",
     skills: ["Next.js 15", "TypeScript", "Node.js", "GraphQL", "Redis"],
     experience: "9 Years",
@@ -234,10 +262,10 @@ export const RECRUITER_INTERVIEWS: RecruiterInterview[] = [
     id: "INT-102",
     candidate: "Alex Morgan",
     role: "Lead React & TypeScript Architect",
-    pod: "FinTech Ledger Pod",
+    pod: "FinTech Ledger Team",
     time: "Today, 3:30 PM BST",
-    type: "Pod Technical Sprint Review",
-    panel: "Marcus Vance (Pod Lead), Elena Rostova (Hiring VP)",
+    type: "Technical Sprint Review",
+    panel: "Marcus Vance (Engineering Lead), Elena Rostova (Hiring VP)",
     status: "Upcoming",
   },
   {
@@ -254,7 +282,7 @@ export const RECRUITER_INTERVIEWS: RecruiterInterview[] = [
     id: "INT-104",
     candidate: "Carlos Mendez",
     role: "Cloud Platform SRE",
-    pod: "AeroTech Kubernetes Pod",
+    pod: "AeroTech Kubernetes Infrastructure",
     time: "Oct 4, 2:00 PM BST",
     type: "Terraform & EKS Live Architecture Pitch",
     panel: "Devon Reed (DevOps Lead)",

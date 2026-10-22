@@ -57,7 +57,7 @@ function StatCardSprint({ delay }: { delay: string }) {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-display text-[13.5px] font-extrabold tracking-tight text-[#0a1428]">
-                Tech &amp; SDLC Pods
+                Tech &amp; SDLC Teams
               </span>
             </div>
             <div className="font-mono text-[8.5px] font-bold uppercase tracking-wider text-electric">
@@ -146,12 +146,12 @@ function StatCardPods({ delay }: { delay: string }) {
   );
 }
 
-function HeroTypingHeadline() {
+function HeroTypingHeadline({ textToType = "Hire Faster" }: { textToType?: string }) {
   const [text, setText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
-  const fullText = "Hire Faster";
+  const fullText = textToType;
 
   useEffect(() => {
     const cursorInterval = setInterval(() => {
@@ -245,7 +245,43 @@ function HeroTypingHeadline() {
   );
 }
 
-export default function Hero() {
+export interface HeroContent {
+  eyebrow?: string;
+  typedHeadline?: string;
+  headlineSuffix?: string;
+  description?: string;
+  descriptionMobile?: string;
+  pills?: string[];
+  primaryCta?: { label: string; href: string };
+  secondaryCta?: { label: string; href: string };
+  cards?: Array<{ id: string; title: string; subtitle: string }>;
+}
+
+export default function Hero({ content }: { content?: HeroContent } = {}) {
+  const eyebrow = content?.eyebrow ?? "Enterprise RPO & Strategic HR Solutions";
+  const typedHeadline = content?.typedHeadline ?? "Hire Faster";
+  const headlineSuffix = content?.headlineSuffix ?? "than your competition";
+  const description =
+    content?.description ??
+    "Pepoltek is an enterprise Recruitment Process Outsourcing (RPO) and strategic HR partner. We combine AI-driven candidate screening, automated technical assessments, and dedicated HR operations teams to deliver pre-vetted IT and compliance-ready healthcare talent within 2 to 7 days.";
+  const descriptionMobile =
+    content?.descriptionMobile ??
+    "Enterprise RPO deploying pre-screened IT engineers and compliance-ready healthcare specialists in 2 to 7 days with guaranteed global timezone overlap.";
+  const pills = content?.pills ?? [
+    "Enterprise RPO",
+    "AI-Powered HRMS",
+    "Healthcare Compliance",
+    "Tech & SDLC Staffing",
+  ];
+  const primaryCta = content?.primaryCta ?? {
+    label: "Explore RPO Solutions",
+    href: "#specialist-tracks",
+  };
+  const secondaryCta = content?.secondaryCta ?? {
+    label: "View Pre-Screened Talent",
+    href: "#calculator-section",
+  };
+
   return (
     <div id="hero-section" className="relative z-10 min-h-full w-full bg-canvas">
       {/* Volumetric Radiant Light Aurora Layer (Right Globe Area) */}
@@ -287,36 +323,31 @@ export default function Hero() {
             <div className="flex items-center gap-2.5">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_8px_2px_rgba(10,132,255,0.6)]" />
               <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#3d4c68]">
-                Enterprise RPO &amp; Strategic HR Solutions
+                {eyebrow}
               </span>
             </div>
 
             {/* Headline */}
             <h1 className="mt-3 sm:mt-5 font-display text-3xl sm:text-[46px] lg:text-[54px] xl:text-[58px] font-extrabold leading-[1.15] tracking-tight text-[#0a1428]">
-              <HeroTypingHeadline />
+              <HeroTypingHeadline textToType={typedHeadline} />
               <span className="block mt-2.5 sm:mt-3.5 lg:mt-4 text-[#0a1428]">
-                than your competition
+                {headlineSuffix}
               </span>
             </h1>
 
             {/* Sub-headline: responsive length to ensure 100vh viewport fit on mobile */}
             <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-base lg:text-[17px] leading-relaxed text-[#3d4c68]">
               <span className="hidden sm:inline">
-                Pepoltek is an enterprise Recruitment Process Outsourcing (RPO) and strategic HR partner. We combine AI-driven candidate screening, automated technical assessments, and dedicated HR operations teams to deliver pre-vetted IT and compliance-ready healthcare talent within 2 to 7 days.
+                {description}
               </span>
               <span className="inline sm:hidden">
-                Enterprise RPO deploying pre-screened IT engineers and compliance-ready healthcare specialists in 2 to 7 days with guaranteed global timezone overlap.
+                {descriptionMobile}
               </span>
             </p>
 
             {/* Sticky Capability Pills */}
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              {[
-                "Enterprise RPO",
-                "AI-Powered HRMS",
-                "Healthcare Compliance",
-                "Tech & SDLC Staffing",
-              ].map((pill) => (
+              {pills.map((pill) => (
                 <span
                   key={pill}
                   className="inline-flex items-center gap-1.5 rounded-full border border-[#bcd6fa] bg-white/90 px-3 py-1 font-mono text-[10.5px] font-semibold tracking-tight text-[#0a1428] shadow-[0_2px_8px_rgba(10,132,255,0.06)] backdrop-blur-sm"
@@ -330,16 +361,16 @@ export default function Hero() {
             {/* CTAs */}
             <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-3.5">
               <a
-                href="#specialist-tracks"
+                href={primaryCta.href}
                 className="group inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-6 py-3.5 font-display text-sm font-semibold text-white shadow-[0_8px_20px_-4px_rgba(10,20,40,0.5)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_12px_28px_-6px_rgba(10,132,255,0.5)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric cursor-pointer"
               >
-                Explore RPO Solutions
+                {primaryCta.label}
               </a>
               <a
-                href="#calculator-section"
+                href={secondaryCta.href}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-6 py-3.5 font-display text-sm font-semibold text-[#0a1428] shadow-[0_4px_14px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric cursor-pointer"
               >
-                View Pre-Screened Talent
+                {secondaryCta.label}
               </a>
             </div>
           </div>

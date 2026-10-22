@@ -5,7 +5,35 @@ import Link from "next/link";
 import { CheckCircle } from "@/components/ui/Icons";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
 
-export default function CtaBanner() {
+export interface CtaBannerContent {
+  badge?: string;
+  title?: string;
+  description?: string;
+  pills?: string[];
+  primaryCta?: { label: string; href: string };
+  secondaryCta?: { label: string; href: string };
+}
+
+export default function CtaBanner({ content }: { content?: CtaBannerContent } = {}) {
+  const badge = content?.badge ?? "Zero Risk Hiring";
+  const title = content?.title ?? "Submit your requisition. We deploy a verified shortlist in 48 hours.";
+  const description =
+    content?.description ??
+    "Enterprise teams and pre-screened specialists ready for immediate integration. Backed by guaranteed daily timezone overlap and zero billing until trial benchmarks pass.";
+  const pills = content?.pills ?? [
+    "14-day risk-free trial on staff augmentation",
+    "90-day placement replacement guarantee",
+    "Zero generalist recruiters",
+  ];
+  const primaryCta = content?.primaryCta ?? {
+    label: "Start 14-Day Risk-Free Trial",
+    href: "/contact",
+  };
+  const secondaryCta = content?.secondaryCta ?? {
+    label: "Schedule RPO Consultation",
+    href: "/contact",
+  };
+
   return (
     <section
       id="cta-banner"
@@ -25,25 +53,21 @@ export default function CtaBanner() {
               {/* Trust Badge */}
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 font-sans text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm shadow-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric-bright" />
-                <span>Zero Risk Hiring</span>
+                <span>{badge}</span>
               </div>
 
               {/* Headline */}
               <h2 className="mt-4 font-display text-2xl sm:text-3xl lg:text-[40px] font-extrabold leading-[1.12] tracking-tight text-white line-clamp-2 text-balance">
-                Submit your requisition. We deploy a verified shortlist in 48 hours.
+                {title}
               </h2>
 
               <p className="mt-4 max-w-xl text-sm sm:text-base text-gray-300 leading-relaxed font-sans">
-                Enterprise pods and pre-screened specialists ready for immediate integration. Backed by guaranteed daily timezone overlap and zero billing until trial benchmarks pass.
+                {description}
               </p>
 
               {/* Guarantee Pills */}
               <div className="mt-6 flex flex-wrap gap-2.5">
-                {[
-                  "14-day risk-free trial on staff augmentation",
-                  "90-day placement replacement guarantee",
-                  "Zero generalist recruiters",
-                ].map((t) => (
+                {pills.map((t) => (
                   <span
                     key={t}
                     className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 font-sans text-xs sm:text-[13px] font-medium text-white/90 backdrop-blur-sm shadow-sm"
@@ -57,17 +81,17 @@ export default function CtaBanner() {
               {/* Action Buttons */}
               <div className="mt-8 flex flex-wrap items-center gap-3.5">
                 <Link
-                  href="/contact"
+                  href={primaryCta.href}
                   className="group inline-flex items-center gap-2.5 rounded-xl bg-white px-7 py-3.5 font-display text-sm font-bold text-ink shadow-[0_14px_34px_-10px_rgba(255,255,255,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 cursor-pointer"
                 >
-                  <span>Start 14-Day Risk-Free Trial</span>
+                  <span>{primaryCta.label}</span>
                   <AnimatedChevrons size={13} count={3} variant="dark" />
                 </Link>
                 <Link
-                  href="/contact"
+                  href={secondaryCta.href}
                   className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 font-display text-sm font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/15 cursor-pointer"
                 >
-                  <span>Schedule RPO Consultation</span>
+                  <span>{secondaryCta.label}</span>
                 </Link>
               </div>
             </div>

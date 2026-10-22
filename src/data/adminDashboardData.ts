@@ -21,7 +21,14 @@ export interface AdminTelemetryMetrics {
   pendingComplianceAudits: number;
 }
 
-export type AdminRole = "Candidate" | "Recruiter" | "Technical Validator" | "Super Admin";
+export type AdminRole =
+  | "Candidate"
+  | "Recruiter"
+  | "Technical Validator"
+  | "Business Analyst"
+  | "Credential Officer"
+  | "Super Admin"
+  | "Platform Administrator";
 
 export interface CandidateDossierDetails {
   title: string;
@@ -56,9 +63,11 @@ export interface CandidateDossierDetails {
 
 export interface AdminUserRecord {
   id: string;
+  raw_id?: string;
   fullName: string;
   email: string;
   role: AdminRole;
+  roles?: string[];
   sector: "Technology & SDLC" | "Healthcare & Clinical" | "Platform Operations";
   status: "Active" | "Pending Vetting" | "Suspended";
   vettingScore?: number;

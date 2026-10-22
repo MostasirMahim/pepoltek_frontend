@@ -3,12 +3,15 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { logoutAction } from "@/actions/auth.actions";
 
 export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   return (
     <div className="flex min-h-screen bg-canvas font-sans text-ink antialiased">
       {/* Sidebar */}
@@ -53,12 +56,16 @@ export default function ClientLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-16 items-center justify-between border-b border-[#bcd6fa] bg-white px-4 sm:px-6">
           <div className="text-xs text-ink-soft">Enterprise Client Command</div>
-          <Link
-            href="/login"
-            className="rounded-xl bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-electric transition-colors"
+          <button
+            type="button"
+            onClick={async () => {
+              await logoutAction();
+              router.push("/login");
+            }}
+            className="rounded-xl bg-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-electric transition-colors cursor-pointer"
           >
             Sign Out
-          </Link>
+          </button>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">

@@ -85,7 +85,7 @@ const REGION_ZONES: RegionZone[] = [
     end: 19,
     hours: "16h live",
     coverage: "24/7 Follow-the-Sun Core",
-    rightDetail: "BST, India IST, & APAC Delivery Pod",
+    rightDetail: "BST, India IST, & APAC Delivery Hub",
   },
 ];
 

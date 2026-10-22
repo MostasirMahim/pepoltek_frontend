@@ -20,6 +20,7 @@ import {
   ReferralRecord,
   BountySummary,
 } from "@/data/mock";
+import { submitDirectReferralAction } from "@/actions/referral.actions";
 
 interface ReferralDashboardViewProps {
   initialSummary?: BountySummary;
@@ -58,32 +59,48 @@ export function ReferralDashboardView({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleManualReferralSubmit = (e: React.FormEvent) => {
+  const handleManualReferralSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!refName || !refEmail || !refRole) return;
 
-    const newRecord: ReferralRecord = {
-      id: `REF-00${referrals.length + 1}`,
-      candidateName: refName,
-      role: refRole,
-      sector: refSector,
-      submittedDate: "Just now",
-      stage: "Submitted",
-      stageIndex: 1,
-      bountyAmount: refSector === "Technology" ? "$500.00" : "$500.00",
-      payoutStatus: "Pending Placement",
-    };
+    try {
+      const res = await submitDirectReferralAction({
+        referred_name: refName.trim(),
+        referred_email: refEmail.trim(),
+        target_role: refRole.trim(),
+        notes: `Sector: ${refSector}`,
+      });
 
-    setReferrals([newRecord, ...referrals]);
-    setSubmittedMessage(
-      `Invitation sent to ${refName} (${refEmail}). Your referral tracking ID is ${newRecord.id}.`
-    );
-    setRefName("");
-    setRefEmail("");
-    setRefRole("");
+      if (res.success) {
+        const newRecord: ReferralRecord = {
+          id: `REF-${res.data?.id ? String(res.data.id).slice(0, 6) : "00" + (referrals.length + 1)}`,
+          candidateName: refName,
+          role: refRole,
+          sector: refSector,
+          submittedDate: "Just now",
+          stage: "Submitted",
+          stageIndex: 1,
+          bountyAmount: "$500.00",
+          payoutStatus: "Pending Placement",
+        };
+
+        setReferrals([newRecord, ...referrals]);
+        setSubmittedMessage(
+          `Candidate referral recorded for ${refName} (${refEmail}). Referral tracking is active.`
+        );
+        setRefName("");
+        setRefEmail("");
+        setRefRole("");
+      } else {
+        setSubmittedMessage(res.error || "Failed to submit candidate referral.");
+      }
+    } catch {
+      setSubmittedMessage("Failed to submit candidate referral. Please try again.");
+    }
 
     setTimeout(() => setSubmittedMessage(null), 6000);
   };
+
 
   const openPayoutModal = (record?: ReferralRecord) => {
     setSelectedRecordForPayout(record || null);
@@ -141,7 +158,7 @@ export function ReferralDashboardView({
               Referral Bounties & Partner Cockpit
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-xl leading-relaxed">
-              Earn bounties for Tech Pod placements and Clinical Specialist deployments.
+              Earn bounties for Tech Role placements and Clinical Specialist deployments.
               Track pipeline milestones and trigger direct bank disbursements.
             </p>
           </div>
@@ -164,7 +181,7 @@ export function ReferralDashboardView({
             <DollarSign className="h-4 w-4 text-emerald-600" />
           </div>
           <div className="mt-2 text-2xl font-bold text-ink">{summaryData.totalEarned}</div>
-          <p className="mt-1 text-[11px] text-ink-soft">Lifetime earnings across all pods</p>
+          <p className="mt-1 text-[11px] text-ink-soft">Lifetime earnings across all requisitions</p>
         </div>
 
         <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs">
@@ -229,8 +246,8 @@ export function ReferralDashboardView({
           <div className="mt-6 rounded-xl border border-dashed border-[#bcd6fa] bg-canvas p-3.5">
             <div className="text-[11px] font-semibold text-ink">Bounty Release Terms:</div>
             <ul className="mt-1.5 space-y-1 text-[11px] text-ink-soft list-disc list-inside">
-              <li>Candidate signs sprint contract and passes vetting</li>
-              <li>Pod completes 30 calendar days of active sprint velocity</li>
+              <li>Candidate signs contract and passes vetting</li>
+              <li>Candidate completes 30 calendar days of active contract velocity</li>
               <li>Funds clear immediately to your chosen banking route</li>
             </ul>
           </div>
@@ -296,8 +313,8 @@ export function ReferralDashboardView({
                 onChange={(e) => setRefSector(e.target.value as "Technology" | "Healthcare")}
                 className="w-full rounded-xl border border-[#bcd6fa] bg-canvas px-3.5 py-2 text-xs text-ink focus:border-electric focus:bg-white outline-hidden transition-all"
               >
-                <option value="Technology">Technology (Tech Pod Bounty: $500)</option>
-                <option value="Healthcare">Healthcare (Clinical Rota Bounty: $500)</option>
+                <option value="Technology">Technology (Tech Specialist Bounty: $500)</option>
+                <option value="Healthcare">Healthcare (Clinical Specialist Bounty: $500)</option>
               </select>
             </div>
 
@@ -339,7 +356,20 @@ export function ReferralDashboardView({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#bcd6fa]/50">
-              {referrals.map((item) => (
+              {referrals.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-ink-soft">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-canvas border border-[#bcd6fa]/50 text-mist mb-2">
+                      <Users className="h-5 w-5 text-mist" />
+                    </div>
+                    <div className="font-display text-sm font-bold text-ink">No Referrals Registered Yet</div>
+                    <p className="text-xs text-mist mt-1 max-w-sm mx-auto">
+                      Share your unique referral link or directly invite engineers and clinicians to earn placement bounties.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                referrals.map((item) => (
                 <tr key={item.id} className="hover:bg-canvas/50 transition-colors">
                   <td className="py-3.5 font-semibold text-ink">{item.candidateName}</td>
                   <td className="py-3.5 text-ink-soft">{item.role}</td>
@@ -386,7 +416,8 @@ export function ReferralDashboardView({
                     )}
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
@@ -419,7 +450,7 @@ export function ReferralDashboardView({
                 <div className="text-xs text-emerald-600 font-bold">{leader.totalBounties}</div>
               </div>
               <div className="mt-2 text-[11px] text-ink-soft">
-                {leader.successfulDeployments} Placed Pod Engineers
+                {leader.successfulDeployments} Placed Specialists
               </div>
             </div>
           ))}

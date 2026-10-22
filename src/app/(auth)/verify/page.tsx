@@ -3,16 +3,21 @@
 import { useState, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
+import { resendOtpAction } from "@/actions/auth.actions";
+import { Zap } from "@/components/ui/Icons";
 
 function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "alex.morgan@engineer.com";
 
+  const DEMO_OTP = "749201";
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState<number>(59);
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -21,6 +26,25 @@ function VerifyContent() {
       return () => clearInterval(interval);
     }
   }, [timer]);
+
+  const handleFillOtp = () => {
+    const digits = DEMO_OTP.split("");
+    setOtp(digits);
+    inputRefs.current[5]?.focus();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pastedData) return;
+    const newOtp = [...otp];
+    pastedData.split("").forEach((char, idx) => {
+      if (idx < 6) newOtp[idx] = char;
+    });
+    setOtp(newOtp);
+    const focusIdx = Math.min(pastedData.length, 5);
+    inputRefs.current[focusIdx]?.focus();
+  };
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -55,10 +79,18 @@ function VerifyContent() {
     }, 800);
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (timer === 0) {
       setTimer(60);
       setOtp(["", "", "", "", "", ""]);
+      setResendStatus("Dispatching new security code via SMTP...");
+      const res = await resendOtpAction({ email: emailParam });
+      if (res.success) {
+        setResendStatus("New 6-digit security PIN dispatched to your email!");
+      } else {
+        setResendStatus(res.message || "Failed to dispatch code.");
+      }
+      setTimeout(() => setResendStatus(null), 5000);
       inputRefs.current[0]?.focus();
     }
   };
@@ -81,7 +113,60 @@ function VerifyContent() {
         <div className="mt-1 inline-block rounded-lg bg-canvas px-3 py-1 font-mono text-xs font-semibold text-ink border border-[#bcd6fa]/50">
           {emailParam}
         </div>
+
+        {/* Sandbox Dev OTP Display & 1-Click Autofill */}
+        <div className="mt-4 rounded-xl border border-electric/30 bg-[#eff6ff] p-3 text-left">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div>
+              <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-electric">
+                <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
+                <span>Verification OTP:</span>
+                <span className="rounded-md border border-[#bcd6fa] bg-white px-2 py-0.5 font-mono text-xs font-bold text-ink tracking-widest shadow-xs">
+                  {DEMO_OTP}
+                </span>
+              </div>
+              <p className="text-[11px] text-ink-soft mt-0.5">
+                Local testing mode active. Click the button to fill the code.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleFillOtp}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-electric px-3.5 py-1.5 font-display text-xs font-semibold text-white shadow-xs hover:bg-ink transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+            >
+              <Zap size={12} />
+              <span>Fill OTP</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Google Fast-Track Verification Section */}
+      <div className="mb-6 rounded-2xl border border-electric/30 bg-[#eff6ff]/70 p-4 text-center space-y-2">
+        <div className="text-xs font-bold text-ink font-display">
+          Fast-Track Verification with Google
+        </div>
+        <p className="text-[11px] text-ink-soft">
+          Verify your candidate identity and link your account instantly with Google OAuth.
+        </p>
+        <div className="max-w-xs mx-auto pt-1">
+          <GoogleAuthButton label="Verify with Google" />
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center my-6">
+        <div className="border-t border-[#bcd6fa]/50 w-full" />
+        <span className="bg-white px-3 font-mono text-[10px] text-mist uppercase tracking-widest shrink-0">
+          Or confirm with 6-digit PIN
+        </span>
+        <div className="border-t border-[#bcd6fa]/50 w-full" />
+      </div>
+
+      {resendStatus && (
+        <div className="mb-4 rounded-xl border border-electric/30 bg-electric/10 p-3 text-center text-xs font-semibold text-electric animate-in fade-in-0 duration-200">
+          {resendStatus}
+        </div>
+      )}
 
       {verified ? (
         <div className="rounded-xl border border-signal/30 bg-signal/10 p-5 text-center text-signal">
@@ -107,6 +192,7 @@ function VerifyContent() {
                 inputMode="numeric"
                 maxLength={1}
                 value={digit}
+                onPaste={handlePaste}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
                 className="h-12 w-11 sm:h-14 sm:w-12 rounded-xl border border-[#bcd6fa] bg-canvas/40 text-center font-mono text-lg font-bold text-ink transition-all focus:border-electric focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-electric/30"

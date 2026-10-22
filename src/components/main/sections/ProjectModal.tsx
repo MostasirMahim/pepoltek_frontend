@@ -85,7 +85,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) 
         <div className="case-study-page-hero-overlay">
           <div className="case-study-page-container">
             <p className="case-study-page-hero-subtitle font-mono">
-              {project.labelLeft || "ENTERPRISE"} • {project.labelRight || "CLOUD POD"}
+              {project.labelLeft || "ENTERPRISE"} • {project.labelRight || "CLOUD TEAM"}
             </p>
             <h1 className="case-study-page-hero-title font-display">
               {project.titleTop || project.title} <br className="title-br" /> {project.titleBottom || "SOLUTION"}

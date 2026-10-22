@@ -364,10 +364,10 @@ export default function WebProjects() {
         <div className="projects-section-header pointer-events-none absolute left-0 top-8 z-20 px-6 sm:px-12 lg:px-20">
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/25 bg-electric/[0.08] px-4 py-1 font-mono text-[10px] font-500 uppercase tracking-[0.18em] text-electric backdrop-blur-sm">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric" />
-            [ 06 ] · Pod Delivery Portfolio
+            [ 06 ] · Delivery Portfolio
           </div>
           <h2 className="mt-3 font-display text-3xl font-800 tracking-tight text-ink sm:text-4xl lg:text-5xl">
-            PROVEN ENGINEERING <span className="text-electric">&amp; HEALTHCARE PODS</span>
+            PROVEN ENGINEERING <span className="text-electric">&amp; HEALTHCARE TEAMS</span>
           </h2>
         </div>
 

@@ -15,10 +15,10 @@ export function ClientDashboardView() {
               <span>ENTERPRISE CLIENT WORKSPACE</span>
             </div>
             <h1 className="mt-2.5 font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-              Enterprise Pods & Workforce Cockpit
+              Enterprise Requisitions & Workforce Cockpit
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-xl leading-relaxed">
-              Autonomous engineering pods and clinical staffing squads deployed to your enterprise with guaranteed timezone overlap and weekly SLA billing.
+              Autonomous engineering teams and clinical staffing squads deployed to your enterprise with guaranteed timezone overlap and weekly SLA billing.
             </p>
           </div>
 
@@ -27,21 +27,21 @@ export function ClientDashboardView() {
               href="/contact"
               className="rounded-xl bg-signal px-5 py-3 font-display text-xs font-bold text-ink hover:bg-emerald-400 transition-colors shadow-xs"
             >
-              Request New Pod Assembly
+              Request New Staffing Requisition
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Placeholder Metrics */}
+      {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-ink-soft">Active Enterprise Pods</span>
+            <span className="text-xs font-semibold text-ink-soft">Active Enterprise Teams</span>
             <Briefcase className="h-4 w-4 text-electric" />
           </div>
-          <div className="mt-2 text-2xl font-bold text-ink">2 Pods</div>
-          <p className="mt-1 text-[11px] text-ink-soft">1 Tech Pod + 1 Healthcare Squad</p>
+          <div className="mt-2 text-2xl font-bold text-ink">2 Teams</div>
+          <p className="mt-1 text-[11px] text-ink-soft">1 Tech Team + 1 Healthcare Squad</p>
         </div>
 
         <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs">
@@ -63,12 +63,12 @@ export function ClientDashboardView() {
         </div>
       </div>
 
-      {/* Pod Summary Card */}
+      {/* Requisitions Summary Card */}
       <div className="rounded-2xl border border-[#bcd6fa] bg-white p-6 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-display text-base font-bold text-ink">Active Contracted Squads</h2>
-            <p className="text-xs text-ink-soft">Live pods deployed in your production repos and clinical rotas</p>
+            <h2 className="font-display text-base font-bold text-ink">Active Contracted Teams</h2>
+            <p className="text-xs text-ink-soft">Live teams deployed in your production repos and clinical rotas</p>
           </div>
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
             All SLAs Optimal
@@ -79,9 +79,9 @@ export function ClientDashboardView() {
           <div className="rounded-xl border border-[#bcd6fa] bg-canvas p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-electric">POD-842</span>
+                <span className="font-mono text-xs font-bold text-electric">REQ-842</span>
                 <span className="font-display text-sm font-bold text-ink">
-                  Full-Stack High-Frequency Web3 Pod
+                  Full-Stack High-Frequency Web3 Team
                 </span>
               </div>
               <p className="mt-1 text-xs text-ink-soft">
@@ -99,7 +99,7 @@ export function ClientDashboardView() {
           <div className="rounded-xl border border-[#bcd6fa] bg-canvas p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-emerald-600">POD-719</span>
+                <span className="font-mono text-xs font-bold text-emerald-600">REQ-719</span>
                 <span className="font-display text-sm font-bold text-ink">
                   CarePulse Emergency ICU Specialist Rota
                 </span>

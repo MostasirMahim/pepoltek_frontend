@@ -23,6 +23,7 @@ import {
   CandidatePersonaProvider,
   useCandidatePersona,
 } from "@/context/CandidatePersonaContext";
+import { logoutAction } from "@/actions/auth.actions";
 
 interface NavItem {
   label: string;
@@ -38,16 +39,14 @@ const CANDIDATE_NAV: NavItem[] = [
     icon: <Activity size={18} />,
   },
   {
-    label: "Pod Applications",
+    label: "Applications & Roles",
     href: "/candidate/applications",
     icon: <Briefcase size={18} />,
-    badge: "3 Active",
   },
   {
     label: "Reverse Job Search",
     href: "/candidate/reverse-search",
     icon: <Compass size={18} />,
-    badge: "4 Matches",
   },
   {
     label: "Resume Intake & Re-Parse",
@@ -63,7 +62,6 @@ const CANDIDATE_NAV: NavItem[] = [
     label: "Talent Academy",
     href: "/candidate/academy",
     icon: <Award size={18} />,
-    badge: "2 Badges",
   },
   {
     label: "Technical Vetting",
@@ -71,73 +69,64 @@ const CANDIDATE_NAV: NavItem[] = [
     icon: <Zap size={18} />,
   },
   {
-    label: "Referral Bounty ($500)",
+    label: "Referral Partner Network",
     href: "/candidate/referrals",
     icon: <DollarSign size={18} />,
-    badge: "$500 Earned",
   },
   {
     label: "Sprint Messages",
     href: "/candidate/messages",
     icon: <ShieldCheck size={18} />,
-    badge: "2 New",
   },
 ];
 
 const SEARCHABLE_ITEMS = [
   {
-    category: "Sprint Pods",
-    title: "POD-842: FinTech High-Frequency Ledger Pod",
-    subtitle: "Lead: Alex Morgan · 4 Engineers · 100% Escrow Funded",
+    category: "Navigation",
+    title: "Sprint Application Pipelines",
+    subtitle: "Track 5-stage progress across all active applications",
     href: "/candidate/applications",
-    badge: "Active",
+    badge: "Pipelines",
   },
   {
-    category: "Sprint Pods",
-    title: "POD-719: NHS Clinical Interoperability Pod",
-    subtitle: "Lead: Dr. Rachel Higgins · 6 Specialists · Compliance Cleared",
-    href: "/candidate/applications",
-    badge: "Clinical",
-  },
-  {
-    category: "Reverse Search",
-    title: "Enterprise Requisitions Pipeline (4 Matches)",
-    subtitle: "Zero Public Exposure Guarantee · 1-Click Client Pitches",
+    category: "Navigation",
+    title: "Reverse Job Search Engine",
+    subtitle: "Requisition matching with zero public profile exposure",
     href: "/candidate/reverse-search",
     badge: "Matches",
   },
   {
-    category: "Talent Academy",
-    title: "Take Skill Diagnostic Exam",
-    subtitle: "Distributed Systems & RAG Architecture Quiz · Unlock Tier 1",
+    category: "Navigation",
+    title: "Talent Academy & Certifications",
+    subtitle: "Enterprise courses, skill diagnostics, and deployment badges",
     href: "/candidate/academy",
-    badge: "Quiz",
+    badge: "Academy",
   },
   {
-    category: "Talent Academy",
-    title: "HIPAA Title II & Clinical Data Protection",
-    subtitle: "Healthcare Regulatory Framework & NHS BAA Protocols",
-    href: "/candidate/academy",
-    badge: "Cert",
-  },
-  {
-    category: "Referrals",
-    title: "Referral Bounty Ledger ($500 Cleared Cash)",
-    subtitle: "Direct Bank Wire Disbursement Modal & Referral Links",
+    category: "Navigation",
+    title: "Referral Partner Network",
+    subtitle: "Refer engineers and clinical specialists for placement bounties",
     href: "/candidate/referrals",
-    badge: "Bounty",
+    badge: "Bounties",
   },
   {
-    category: "Profile",
-    title: "Verified Profile Telemetry & Skills Matrix",
-    subtitle: "ATS Compatibility 98% · Code Reviews & Clinical Registration",
+    category: "Navigation",
+    title: "Verified Candidate Profile",
+    subtitle: "Skills matrix, work authorization, and engagement preferences",
     href: "/candidate/profile",
     badge: "Profile",
   },
   {
-    category: "Direct Channels",
-    title: "Sprint Message Channels (Marcus Vance & Elena Rostova)",
-    subtitle: "Encrypted pod lead & technical validator communications",
+    category: "Navigation",
+    title: "Technical Vetting & Diagnostics",
+    subtitle: "Proctor-free evaluation benchmark and coding scorecards",
+    href: "/candidate/assessments",
+    badge: "Vetting",
+  },
+  {
+    category: "Navigation",
+    title: "Direct Sprint Messages",
+    subtitle: "Encrypted communications with hiring leads and evaluators",
     href: "/candidate/messages",
     badge: "Messages",
   },
@@ -148,7 +137,16 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { activePersona, setActivePersona, currentProfile, isOpenToPods, setIsOpenToPods } = useCandidatePersona();
 
-  const avatarInitials = activePersona === "alex" ? "AM" : "RH";
+  const avatarInitials = currentProfile.fullName
+    ? currentProfile.fullName
+        .trim()
+        .split(/\s+/)
+        .map((w) => w[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "CT";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -245,7 +243,7 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
                 setIsSearchOpen(true);
               }}
               onFocus={() => setIsSearchOpen(true)}
-              placeholder="Search pods, contracts, telemetry..."
+              placeholder="Search applications, contracts, telemetry..."
               className="w-full rounded-full border border-[#bcd6fa] bg-canvas/40 py-2 pl-9.5 pr-16 text-xs text-ink placeholder-mist transition-all hover:bg-white hover:border-electric/50 focus:border-electric focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-electric/15"
             />
             <button
@@ -305,30 +303,16 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* Persona Switcher Capsule */}
-          <div className="flex items-center rounded-xl border border-[#bcd6fa] bg-canvas/50 p-1 text-xs shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setActivePersona("alex")}
-              className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
-                activePersona === "alex" ? "bg-ink text-white shadow-xs" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              Tech (Alex Morgan)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActivePersona("rachel")}
-              className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
-                activePersona === "rachel" ? "bg-signal text-white shadow-xs" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              Clinical (Dr. Higgins)
-            </button>
+          {/* Live Sector Badge Capsule */}
+          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-[#bcd6fa]/70 bg-canvas/60 px-3 py-1.5 text-xs shadow-2xs">
+            <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
+            <span className="font-mono text-[11px] font-bold text-ink uppercase tracking-wider">
+              {currentProfile.primaryTrack === "healthcare" ? "Clinical Squad Network" : "Engineering Talent Network"}
+            </span>
           </div>
         </div>
 
-        {/* Right: Refined Pod Availability Toggle & Interactive Profile Dropdown */}
+        {/* Right: Refined Availability Toggle & Interactive Profile Dropdown */}
         <div className="flex items-center gap-3 sm:gap-4">
           {/* Refined Sprint Availability Toggle Button */}
           <button
@@ -339,7 +323,7 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
                 ? "border-signal/30 bg-signal/10 hover:bg-signal/15 text-ink"
                 : "border-[#bcd6fa]/70 bg-canvas/60 hover:bg-canvas text-ink-soft"
             }`}
-            title="Click to toggle sprint deployment status"
+            title="Click to toggle role availability status"
           >
             <span className="relative flex h-2 w-2">
               {isOpenToPods && (
@@ -348,7 +332,7 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
               <span className={`relative inline-flex h-2 w-2 rounded-full ${isOpenToPods ? "bg-signal" : "bg-mist"}`} />
             </span>
             <span className="text-xs font-semibold tracking-normal text-ink">
-              {isOpenToPods ? "Open to Pod Sprints" : "Unavailable"}
+              {isOpenToPods ? "Open to Roles & Gigs" : "Unavailable"}
             </span>
             <span
               className={`relative inline-flex h-4 w-7.5 items-center rounded-full transition-colors duration-200 ${
@@ -400,7 +384,7 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
                   />
                 </div>
                 <div className="font-mono text-[10px] text-ink-soft">
-                  {activePersona === "alex" ? "Lead / Architect" : "Consultant / Lead"}
+                  {currentProfile.seniority || "Verified Candidate"}
                 </div>
               </div>
             </button>
@@ -427,43 +411,6 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
                       <div className="text-[11px] text-mist truncate">
                         {currentProfile.email}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Dual-Persona Switcher in Dropdown */}
-                  <div className="mt-3 rounded-xl border border-[#bcd6fa]/70 bg-canvas/40 p-1.5 text-xs">
-                    <div className="text-[10px] font-mono text-mist uppercase font-semibold mb-1 px-1">
-                      Switch Active Persona
-                    </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActivePersona("alex");
-                          setProfileMenuOpen(false);
-                        }}
-                        className={`rounded-lg px-2 py-1 text-[11px] font-bold transition-all cursor-pointer ${
-                          activePersona === "alex"
-                            ? "bg-ink text-white shadow-xs"
-                            : "bg-white text-ink-soft hover:bg-canvas border border-[#bcd6fa]/50"
-                        }`}
-                      >
-                        Alex Morgan
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActivePersona("rachel");
-                          setProfileMenuOpen(false);
-                        }}
-                        className={`rounded-lg px-2 py-1 text-[11px] font-bold transition-all cursor-pointer ${
-                          activePersona === "rachel"
-                            ? "bg-signal text-white shadow-xs"
-                            : "bg-white text-ink-soft hover:bg-canvas border border-[#bcd6fa]/50"
-                        }`}
-                      >
-                        Dr. Rachel
-                      </button>
                     </div>
                   </div>
 
@@ -529,13 +476,17 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
 
                 {/* Bottom Sign Out */}
                 <div className="mt-2 pt-2 border-t border-[#bcd6fa]/40">
-                  <Link
-                    href="/login"
-                    onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setProfileMenuOpen(false);
+                      await logoutAction();
+                      router.push("/login");
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer"
                   >
                     <span>Sign Out</span>
-                  </Link>
+                  </button>
                 </div>
               </div>
             )}
@@ -556,19 +507,19 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between text-xs font-semibold">
               <span className="text-ink font-display">Profile Readiness</span>
               <span className="font-display text-sm font-bold text-electric">
-                {currentProfile.readinessIndex}%
+                {currentProfile.readinessIndex > 0 ? `${currentProfile.readinessIndex}%` : "In Review"}
               </span>
             </div>
             <div className="mt-2 h-1.5 w-full rounded-full bg-canvas overflow-hidden border border-[#bcd6fa]/40">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-electric to-electric-bright transition-all duration-500"
-                style={{ width: `${currentProfile.readinessIndex}%` }}
+                style={{ width: `${currentProfile.readinessIndex > 0 ? currentProfile.readinessIndex : 20}%` }}
               />
             </div>
             <p className="mt-2 text-[10.5px] text-ink-soft leading-snug">
-              {activePersona === "alex"
-                ? "Tier 1 Elite Squad verified. Ready for 7-day client sprint deployment."
-                : "Tier 1 Clinical Specialist (NHS Band 8). Cleared for acute ICU rota deployment."}
+              {currentProfile.readinessIndex > 0
+                ? "Candidate intake verified. Profile active in talent search."
+                : "Candidate intake submitted. Ready for verification and assessment."}
             </p>
           </div>
 
@@ -612,9 +563,9 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
           {/* Bottom Static Help Box (shrink-0, NEVER scrolls) */}
           <div className="shrink-0 p-3 border-t border-[#bcd6fa]/40 bg-white">
             <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/60 p-3 text-xs">
-              <div className="font-display font-bold text-ink">Need Pod Guidance?</div>
+              <div className="font-display font-bold text-ink">Need Career Guidance?</div>
               <p className="mt-0.5 text-[11px] text-ink-soft leading-snug">
-                Connect directly with Marcus Vance, In-House Pod Director.
+                Connect directly with the Pepoltek Talent Operations team.
               </p>
               <Link
                 href="/candidate/messages"

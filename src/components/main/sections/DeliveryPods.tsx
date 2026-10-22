@@ -100,7 +100,7 @@ const CAPS = [
   {
     icon: Icons.specialists,
     title: "Technical & Healthcare Specialists",
-    body: "Technical and clinical sourcing pods maintaining active talent pipelines across North America, Europe, GCC, and Asia Pacific.",
+    body: "Technical and clinical sourcing teams maintaining active talent pipelines across North America, Europe, GCC, and Asia Pacific.",
   },
   {
     icon: Icons.analyst,
@@ -194,13 +194,13 @@ function PodNetwork() {
         <circle cx="50" cy="30" r="6" fill="url(#dp-core)" />
         <circle cx="50" cy="30" r="6" fill="none" stroke="#38bdf8" strokeWidth="0.5" className="dp-ring" />
         <text x="50" y="31.2" textAnchor="middle" fontSize="2.4" fill="#fff" fontFamily="'JetBrains Mono', monospace" fontWeight="600">
-          POD
+          HUB
         </text>
       </svg>
 
       <div className="relative mt-5 grid grid-cols-3 gap-3 border-t border-[#bcd6fa]/50 pt-5">
         {[
-          { k: "12", l: "Active pods" },
+          { k: "12", l: "Active teams" },
           { k: "4", l: "Regions covered" },
           { k: "24/7", l: "Live sourcing" },
         ].map((s) => (
@@ -302,13 +302,13 @@ export default function DeliveryPods() {
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/20 bg-electric/[0.08] px-4 py-1 font-mono text-[11px] font-medium tracking-[0.14em] uppercase text-electric">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-electric shadow-[0_0_6px_rgba(10,132,255,0.6)]" />
-            Delivery Pods & Leadership
+            Delivery Teams & Leadership
           </div>
           <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-[#0a1428] sm:text-4xl lg:text-[38px]">
-            In House Delivery Pod Breakdown
+            In-House Delivery Team Breakdown
           </h2>
           <p className="mt-3 text-base leading-relaxed text-[#3d4c68] sm:text-lg">
-            High velocity talent engineering pods, strict technical vetting, and proven executive scaling execution.
+            High velocity talent engineering teams, strict technical vetting, and proven executive scaling execution.
           </p>
         </div>
 

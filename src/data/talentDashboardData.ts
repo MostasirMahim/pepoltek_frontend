@@ -304,8 +304,8 @@ export const RACHEL_HIGGINS_PROFILE: CandidateProfile = {
 
 export const ACTIVE_SPRINT_PIPELINES: SprintPipelineItem[] = [
   {
-    id: "POD-842",
-    podName: "FinTech High-Frequency Ledger Pod",
+    id: "REQ-842",
+    podName: "FinTech High-Frequency Ledger Team",
     clientName: "Global Capital Markets Ltd",
     clientIndustry: "Financial Services & Asset Custody",
     role: "Lead React & Low-Latency Systems Architect",
@@ -344,7 +344,7 @@ export const ACTIVE_SPRINT_PIPELINES: SprintPipelineItem[] = [
     ],
     interviewBrief: {
       scheduledAt: "Tomorrow at 3:30 PM EST (15:30 UTC)",
-      meetingUrl: "https://meet.pepoltek.com/pod-842-audit",
+      meetingUrl: "https://meet.pepoltek.com/interview-842-audit",
       interviewerName: "Jonathan Vance",
       interviewerTitle: "Chief Technology Officer, Global Capital Markets",
       agenda: "30-minute architectural sync covering distributed ledger throughput and 7-day deployment onboarding.",
@@ -363,8 +363,8 @@ export const ACTIVE_SPRINT_PIPELINES: SprintPipelineItem[] = [
     },
   },
   {
-    id: "POD-719",
-    podName: "NHS Clinical Interoperability Pod",
+    id: "REQ-719",
+    podName: "NHS Clinical Interoperability Team",
     clientName: "CarePulse NHS Foundation Trust",
     clientIndustry: "Healthcare Systems & Hospital Networks",
     role: "Senior Backend Node.js & FHIR v4 Specialist",
@@ -427,8 +427,8 @@ export const ACTIVE_SPRINT_PIPELINES: SprintPipelineItem[] = [
     },
   },
   {
-    id: "POD-904",
-    podName: "Cloud Migration & Kubernetes Pod",
+    id: "REQ-904",
+    podName: "Cloud Migration & Kubernetes Team",
     clientName: "AeroTech Distributed Systems",
     clientIndustry: "Enterprise Cloud Infrastructure",
     role: "Cloud Native Kubernetes SRE",
@@ -451,18 +451,18 @@ export const ACTIVE_SPRINT_PIPELINES: SprintPipelineItem[] = [
 export const UPCOMING_INTERVIEWS: UpcomingInterview[] = [
   {
     id: "INT-101",
-    podName: "FinTech High-Frequency Ledger Pod",
+    podName: "FinTech High-Frequency Ledger Team",
     dateString: "Today, Sep 30",
     timeString: "3:30 PM EST",
     type: "Live System Design & Concurrency Audit (45 min)",
     interviewerName: "Marcus Vance",
-    interviewerTitle: "In-House Engineering Pod Director",
+    interviewerTitle: "In-House Engineering Director",
     status: "Confirmed",
-    meetingUrl: "https://meet.pepoltek.com/pod-842-audit",
+    meetingUrl: "https://meet.pepoltek.com/interview-842-audit",
   },
   {
     id: "INT-102",
-    podName: "NHS Clinical Interoperability Pod",
+    podName: "NHS Clinical Interoperability Team",
     dateString: "Tomorrow, Oct 01",
     timeString: "11:00 AM BST",
     type: "HIPAA & FHIR Schema Integration Review (30 min)",
@@ -503,7 +503,7 @@ export const REVERSE_SEARCH_MATCHES: ReverseSearchMatch[] = [
       anonymizedProjectImpacts: [
         "Architected sub-millisecond market feed visualization handling 50k events/second.",
         "Cut client bundle size by 42% with zero layout shift enterprise standards.",
-        "Guaranteed 6-hour daily live timezone overlap with client London and New York engineering pods.",
+        "Guaranteed 6-hour daily live timezone overlap with client London and New York engineering teams.",
       ],
     },
   },
@@ -582,8 +582,8 @@ export const ACADEMY_COURSES: AcademyCourse[] = [
     completedModules: 6,
     progressPercentage: 100,
     status: "Completed",
-    badgeName: "RAG Pod Lead Badge",
-    tierUnlockText: "Unlocks Tier 1 $100+/hr Pod Requisitions",
+    badgeName: "RAG Delivery Lead Badge",
+    tierUnlockText: "Unlocks Tier 1 $100+/hr Enterprise Requisitions",
     instructor: "Marcus Vance (Engineering Director)",
     syllabus: [
       "Microservice Orchestration with Go and Kafka",
@@ -618,7 +618,7 @@ export const ACADEMY_COURSES: AcademyCourse[] = [
           explanation: "React 19 and Next.js 15 utilize non-blocking streaming transitions with optimistic state transitions and automatic reconciliation.",
         },
         {
-          questionText: "What is Pepoltek's core requirement for remote engineering pods delivering into US/UK enterprises?",
+          questionText: "What is Pepoltek's core requirement for remote engineering teams delivering into US/UK enterprises?",
           options: [
             "Zero communication during the week",
             "Mandatory 4 to 6 hours daily synchronous standup overlap and asynchronous documentation",
@@ -640,8 +640,8 @@ export const ACADEMY_COURSES: AcademyCourse[] = [
     completedModules: 3,
     progressPercentage: 75,
     status: "In Progress",
-    badgeName: "HIPAA Certified Pod Specialist",
-    tierUnlockText: "Unlocks Hospital Network & EMR Integration Pods",
+    badgeName: "HIPAA Certified Healthcare Specialist",
+    tierUnlockText: "Unlocks Hospital Network & EMR Integration Roles",
     instructor: "Dr. Rachel Higgins (Clinical Operations Lead)",
     syllabus: [
       "Protected Health Information (PHI) Encryption Standards",
@@ -699,12 +699,12 @@ export const ACADEMY_COURSES: AcademyCourse[] = [
           questionText: "How are blockers communicated during high-velocity 7-day deployment sprints?",
           options: [
             "Wait until the end of the sprint review",
-            "Escalate immediately on the dedicated Slack/Teams pod channel with clear reproducer steps",
+            "Escalate immediately on the dedicated Slack/Teams project channel with clear reproducer steps",
             "Ignore the blocker and work on another feature",
             "Email customer support anonymously",
           ],
           correctIndex: 1,
-          explanation: "Rapid escalation on the sprint channel ensures the pod lead and client sponsor can resolve dependencies with zero latency.",
+          explanation: "Rapid escalation on the sprint channel ensures the team lead and client sponsor can resolve dependencies with zero latency.",
         },
       ],
     },
@@ -719,7 +719,7 @@ export const ACADEMY_COURSES: AcademyCourse[] = [
     progressPercentage: 0,
     status: "Available",
     badgeName: "Cloud Security Specialist",
-    tierUnlockText: "Unlocks Fortune 500 Infrastructure Pods",
+    tierUnlockText: "Unlocks Fortune 500 Infrastructure Requisitions",
     instructor: "David Sterling (DevOps Lead)",
     syllabus: [
       "Zero-Trust Service Mesh with Istio",
@@ -744,7 +744,7 @@ export const TALENT_BADGES: TalentBadge[] = [
   },
   {
     id: "BADGE-02",
-    name: "RAG Pod Delivery Lead",
+    name: "RAG Delivery Lead",
     category: "AI & Distributed Systems",
     status: "Active",
     level: "Tier 1",
@@ -758,7 +758,7 @@ export const TALENT_BADGES: TalentBadge[] = [
     category: "Healthcare Compliance",
     status: "In Progress",
     level: "Tier 2",
-    rateBoost: "Unlocks Hospital Network Pods",
+    rateBoost: "Unlocks Hospital Network Roles",
     iconName: "ShieldCheck",
   },
   {
