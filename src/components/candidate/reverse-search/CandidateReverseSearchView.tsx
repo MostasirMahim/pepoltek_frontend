@@ -117,42 +117,42 @@ export function CandidateReverseSearchView({
 
   return (
     <div className="space-y-6">
-      {/* Header & Privacy Seal */}
-      <div className="relative overflow-hidden rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-6 sm:p-8 text-white shadow-md">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header & Privacy Seal - Responsive Mobile & Desktop */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-signal/40 bg-signal/10 px-3 py-0.5 text-[11px] font-mono text-signal">
-              <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
+              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
               <span>ZERO PUBLIC PROFILE EXPOSURE GUARANTEE</span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl font-bold tracking-tight">
+            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               Reverse Job Search Engine
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
               Your profile is continuously scanned against live client enterprise requisitions. Enterprise clients only receive your anonymized dossier once you authorize a <strong>One-Click Pitch</strong>.
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={handleTriggerRescan}
               disabled={isScanning}
-              className="inline-flex items-center gap-2 rounded-xl bg-electric px-4 py-2.5 font-display text-xs font-semibold text-white shadow-xs transition-all hover:bg-electric-bright disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl bg-electric px-3 py-1.5 sm:px-4 sm:py-2.5 font-display text-xs font-semibold text-white shadow-xs transition-all hover:bg-electric-bright disabled:opacity-50 active:scale-95 cursor-pointer"
             >
-              <Zap size={15} className={isScanning ? "animate-spin" : ""} />
-              <span>{isScanning ? "Scanning Live Pipelines..." : "Rescan Active Gigs"}</span>
+              <Zap size={13} className={isScanning ? "animate-spin" : "sm:w-3.5 sm:h-3.5"} />
+              <span>{isScanning ? "Scanning..." : "Rescan Active Gigs"}</span>
             </button>
           </div>
         </div>
 
-        {/* Scan Status Ribbon */}
-        <div className="relative z-10 mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 font-mono text-gray-300 text-[11px]">
-            <Clock size={13} className="text-electric-bright" />
+        {/* Scan Status Ribbon - Compact on Mobile */}
+        <div className="relative z-10 mt-3 sm:mt-6 pt-3 sm:pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 text-xs">
+          <div className="flex items-center gap-1.5 font-mono text-gray-300 text-[10px] sm:text-[11px]">
+            <Clock size={12} className="text-electric-bright shrink-0" />
             <span>Telemetry Last Synced: <strong className="text-white">{lastScanned}</strong></span>
           </div>
-          <div className="font-mono text-[11px] text-gray-300">
+          <div className="font-mono text-[10px] sm:text-[11px] text-gray-300">
             Active Verified Pipelines: <strong className="text-signal font-bold">{matches.length} Enterprise Matches</strong>
           </div>
         </div>
@@ -168,23 +168,23 @@ export function CandidateReverseSearchView({
 
       {/* Toast Banner */}
       {toastMessage && (
-        <div className="rounded-xl border border-signal/30 bg-signal/10 px-4 py-2.5 text-xs font-semibold text-signal flex items-center gap-2 animate-in fade-in-0 duration-200">
-          <CheckCircle size={16} />
+        <div className="rounded-xl border border-signal/30 bg-signal/10 px-3.5 py-2 text-xs font-semibold text-signal flex items-center gap-2 animate-in fade-in-0 duration-200">
+          <CheckCircle size={15} className="shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Filter Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#bcd6fa] bg-white p-3 shadow-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[11px] font-semibold text-ink-soft uppercase tracking-wider pl-2">
-            Sector Filter:
+      {/* Filter Strip - Horizontally Scrollable on Mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-[#bcd6fa] bg-white p-2.5 sm:p-3 shadow-xs">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
+          <span className="shrink-0 font-mono text-[10px] sm:text-[11px] font-semibold text-ink-soft uppercase tracking-wider pl-1">
+            Sector:
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => setFilterSector("all")}
-              className={`rounded-xl px-3 py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
+              className={`rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
                 filterSector === "all" ? "bg-ink text-white" : "text-ink-soft hover:bg-canvas hover:text-ink"
               }`}
             >
@@ -193,7 +193,7 @@ export function CandidateReverseSearchView({
             <button
               type="button"
               onClick={() => setFilterSector("it")}
-              className={`rounded-xl px-3 py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
+              className={`rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
                 filterSector === "it" ? "bg-ink text-white" : "text-ink-soft hover:bg-canvas hover:text-ink"
               }`}
             >
@@ -202,11 +202,11 @@ export function CandidateReverseSearchView({
             <button
               type="button"
               onClick={() => setFilterSector("health")}
-              className={`rounded-xl px-3 py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
+              className={`rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
                 filterSector === "health" ? "bg-ink text-white" : "text-ink-soft hover:bg-canvas hover:text-ink"
               }`}
             >
-              Healthcare & Med-Tech
+              Healthcare &amp; Med-Tech
             </button>
           </div>
         </div>

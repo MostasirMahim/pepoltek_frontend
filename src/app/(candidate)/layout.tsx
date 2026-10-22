@@ -147,7 +147,7 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
         .join("")
         .toUpperCase()
     : "CT";
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [rightSheetOpen, setRightSheetOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -201,19 +201,8 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
     <div className="h-screen overflow-hidden bg-canvas text-ink flex flex-col antialiased">
       {/* Top Navbar: Permanent Static Header (h-16 shrink-0) */}
       <header className="h-16 shrink-0 z-40 flex w-full items-center justify-between border-b border-[#bcd6fa]/50 bg-white/95 px-4 sm:px-6 lg:px-8 backdrop-blur-md shadow-xs">
-        {/* Left: Mobile Toggle & Clean Brand Logo */}
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-1.5 text-ink-soft hover:bg-canvas lg:hidden cursor-pointer"
-            aria-label="Toggle mobile menu"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
+        {/* Left: Clean Brand Logo ONLY (Zero menu icon) */}
+        <div className="flex items-center">
           <Link href="/" className="group flex items-center transition-transform hover:opacity-90">
             <Image
               src="/assets/pepoltek/black_logo.png"
@@ -497,11 +486,8 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
       {/* Main Body (flex-1 min-h-0 flex overflow-hidden) */}
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
         {/* Left Sidebar: Fixed Width (w-64) with Static Top + Scrollable Nav + Static Bottom */}
-        <aside
-          className={`fixed inset-y-0 left-0 top-16 z-30 w-64 border-r border-[#bcd6fa]/50 bg-white/95 backdrop-blur-md transition-transform duration-300 lg:static lg:top-0 lg:translate-x-0 ${
-            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-          } flex flex-col h-full`}
-        >
+        {/* Left Sidebar: Fixed Width (w-64) for Desktop Only */}
+        <aside className="hidden lg:flex lg:flex-col lg:static lg:top-0 lg:w-64 lg:h-full lg:shrink-0 lg:border-r lg:border-[#bcd6fa]/50 lg:bg-white/95 lg:backdrop-blur-md">
           {/* Top Static Readiness Box (shrink-0, NEVER scrolls) */}
           <div className="shrink-0 p-4 border-b border-[#bcd6fa]/40 bg-canvas/30">
             <div className="flex items-center justify-between text-xs font-semibold">
@@ -531,7 +517,6 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
                   className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
                     active
                       ? "bg-ink text-white shadow-xs"
@@ -585,21 +570,204 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Backdrop overlay for mobile drawer */}
-        {mobileMenuOpen && (
-          <div
-            className="fixed inset-0 top-16 z-20 bg-ink/30 backdrop-blur-xs lg:hidden"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-        )}
-
         {/* Center Workspace Content Area: Independent Vertical Scroll */}
-        <main className="flex-1 min-w-0 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 bg-canvas">
-          <div className="mx-auto max-w-7xl 2xl:max-w-[1360px] pb-12">
+        <main className="flex-1 min-w-0 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 bg-canvas">
+          <div className="mx-auto max-w-7xl 2xl:max-w-[1360px] pb-8">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom 5-Icon Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#bcd6fa]/60 shadow-[0_-4px_25px_rgba(10,20,40,0.08)] lg:hidden px-2 py-1.5 flex items-center justify-around pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {/* 1. Dashboard */}
+        <Link
+          href="/candidate/dashboard"
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            pathname === "/candidate/dashboard"
+              ? "text-electric font-bold scale-[1.03]"
+              : "text-mist hover:text-ink"
+          }`}
+        >
+          <Activity size={20} className={pathname === "/candidate/dashboard" ? "text-electric stroke-[2.4]" : "text-mist"} />
+          <span className="text-[10px] tracking-tight font-medium">Dashboard</span>
+        </Link>
+
+        {/* 2. Applications */}
+        <Link
+          href="/candidate/applications"
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            pathname === "/candidate/applications"
+              ? "text-electric font-bold scale-[1.03]"
+              : "text-mist hover:text-ink"
+          }`}
+        >
+          <Briefcase size={20} className={pathname === "/candidate/applications" ? "text-electric stroke-[2.4]" : "text-mist"} />
+          <span className="text-[10px] tracking-tight font-medium">Jobs</span>
+        </Link>
+
+        {/* 3. Verified Profile */}
+        <Link
+          href="/candidate/profile"
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            pathname === "/candidate/profile"
+              ? "text-electric font-bold scale-[1.03]"
+              : "text-mist hover:text-ink"
+          }`}
+        >
+          <Users size={20} className={pathname === "/candidate/profile" ? "text-electric stroke-[2.4]" : "text-mist"} />
+          <span className="text-[10px] tracking-tight font-medium">Profile</span>
+        </Link>
+
+        {/* 4. Resume / Documents */}
+        <Link
+          href="/candidate/resume-upload"
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            pathname === "/candidate/resume-upload"
+              ? "text-electric font-bold scale-[1.03]"
+              : "text-mist hover:text-ink"
+          }`}
+        >
+          <FileText size={20} className={pathname === "/candidate/resume-upload" ? "text-electric stroke-[2.4]" : "text-mist"} />
+          <span className="text-[10px] tracking-tight font-medium">Documents</span>
+        </Link>
+
+        {/* 5. Menu (Opens Right-Side Sheet) */}
+        <button
+          type="button"
+          onClick={() => setRightSheetOpen(true)}
+          className={`flex flex-col items-center justify-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            rightSheetOpen ? "text-electric font-bold scale-[1.03]" : "text-mist hover:text-ink"
+          }`}
+          aria-label="Open navigation menu sheet"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span className="text-[10px] tracking-tight font-medium">Menu</span>
+        </button>
+      </nav>
+
+      {/* Mobile Right-Side Sheet (Slide-over drawer from right side) */}
+      {rightSheetOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-ink/40 backdrop-blur-xs transition-opacity animate-in fade-in-0 duration-200"
+            onClick={() => setRightSheetOpen(false)}
+          />
+
+          {/* Drawer container from right */}
+          <aside className="fixed inset-y-0 right-0 z-50 w-[300px] sm:w-[350px] bg-white border-l border-[#bcd6fa] shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-250">
+            {/* Header: Candidate Identity & Close */}
+            <div className="p-4 border-b border-[#bcd6fa]/50 flex items-center justify-between bg-canvas/30">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display text-xs font-bold text-white shadow-xs ${
+                    activePersona === "alex"
+                      ? "bg-gradient-to-tr from-electric to-electric-bright"
+                      : "bg-gradient-to-tr from-signal to-emerald-400"
+                  }`}
+                >
+                  {avatarInitials}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display text-sm font-bold text-ink truncate">
+                    {currentProfile.fullName}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-ink-soft">
+                    <span className="h-1.5 w-1.5 rounded-full bg-signal" />
+                    <span className="truncate">{currentProfile.seniority || "Verified Candidate"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setRightSheetOpen(false)}
+                className="rounded-xl p-1.5 text-ink-soft hover:bg-canvas hover:text-ink cursor-pointer"
+                aria-label="Close menu sheet"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Scrollable Nav List */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1 thin-scrollbar">
+              {/* Readiness Progress Bar */}
+              <div className="p-3 mb-2 rounded-xl border border-[#bcd6fa]/60 bg-canvas/50">
+                <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                  <span className="text-ink">Profile Readiness</span>
+                  <span className="text-electric font-bold">
+                    {currentProfile.readinessIndex > 0 ? `${currentProfile.readinessIndex}%` : "In Review"}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-canvas overflow-hidden border border-[#bcd6fa]/40">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-electric to-electric-bright transition-all duration-500"
+                    style={{ width: `${currentProfile.readinessIndex > 0 ? currentProfile.readinessIndex : 20}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Navigation Items */}
+              {CANDIDATE_NAV.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setRightSheetOpen(false)}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                      active
+                        ? "bg-ink text-white shadow-xs"
+                        : "text-ink-soft hover:bg-canvas hover:text-ink"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className={active ? "text-electric-bright shrink-0" : "text-mist shrink-0"}>
+                        {item.icon}
+                      </span>
+                      <span className="truncate">{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                          active ? "bg-electric text-white" : "bg-electric/10 text-electric"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Sheet Footer */}
+            <div className="p-3 border-t border-[#bcd6fa]/40 bg-white space-y-2">
+              <Link
+                href="/"
+                onClick={() => setRightSheetOpen(false)}
+                className="flex items-center justify-center gap-1.5 w-full rounded-xl border border-[#bcd6fa] bg-canvas/40 py-2 text-xs font-semibold text-ink hover:bg-canvas transition-colors"
+              >
+                <span>Back to Homepage</span>
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  setRightSheetOpen(false);
+                  await logoutAction();
+                  router.push("/login");
+                }}
+                className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-rose-50 border border-rose-200 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+              >
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }

@@ -77,18 +77,18 @@ export function CandidateAssessmentsView() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-6 sm:p-8 text-white shadow-md">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Banner - Responsive Mobile & Desktop */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-signal/40 bg-signal/10 px-3 py-0.5 text-[11px] font-mono text-signal">
-              <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
+              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
               <span>OBJECTIVE PROCTOR-FREE EVALUATIONS</span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl font-bold tracking-tight">
+            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               Technical &amp; Clinical Assessments
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
               Verify your architectural mastery and clinical safety knowledge. Successful evaluations directly increase your Reverse Search matching score and unlocked hourly rate.
             </p>
           </div>
@@ -104,29 +104,29 @@ export function CandidateAssessmentsView() {
       </div>
 
       {/* Live Assessment Report Summary */}
-      <div className="rounded-3xl border border-[#bcd6fa] bg-white p-6 sm:p-8 shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#bcd6fa]/40 pb-4">
+      <div className="rounded-2xl sm:rounded-3xl border border-[#bcd6fa] bg-white p-4 sm:p-6 lg:p-8 shadow-xs space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-[#bcd6fa]/40 pb-3 sm:pb-4">
           <div>
-            <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-mono font-bold ${
+            <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9.5px] sm:text-[10px] font-mono font-bold ${
               isVetted ? "bg-signal/15 text-signal" : "bg-electric/15 text-electric"
             }`}>
-              <ShieldCheck size={13} />
+              <ShieldCheck size={12} className="sm:w-3.5 sm:h-3.5" />
               <span>{isVetted ? "BENCHMARK ASSESSMENT VERIFIED" : "INITIAL ASSESSMENT PENDING"}</span>
             </div>
-            <h2 className="font-display text-lg font-bold text-ink mt-1.5">
+            <h2 className="font-display text-base sm:text-lg font-bold text-ink mt-1">
               Verified Technical Dossier Assessment
             </h2>
-            <p className="text-xs text-ink-soft">
+            <p className="text-[11.5px] sm:text-xs text-ink-soft line-clamp-2 sm:line-clamp-none">
               {isVetted
                 ? "Evaluation report generated and cryptographically signed by Pepoltek Vetting Panel."
                 : "No assessments completed yet. Launch an assessment below to generate your cryptographically signed evaluation report."}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="font-mono text-[10px] text-mist uppercase">Overall Vetting Score</div>
-              <div className="font-display text-2xl font-extrabold text-electric">
+          <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-0 border-[#bcd6fa]/30">
+            <div className="text-left sm:text-right">
+              <div className="font-mono text-[9.5px] sm:text-[10px] text-mist uppercase">Overall Vetting Score</div>
+              <div className="font-display text-xl sm:text-2xl font-extrabold text-electric">
                 {currentProfile.technicalVettingScore > 0 ? `${currentProfile.technicalVettingScore} / 100` : "Pending"}
               </div>
             </div>

@@ -6,28 +6,28 @@ import { Briefcase, Users, ShieldCheck, Clock, ArrowRight, Zap } from "@/compone
 export function ClientDashboardView() {
   return (
     <div className="space-y-8">
-      {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-6 sm:p-8 text-white shadow-md">
-        <div className="relative z-10 flex flex-col justify-between gap-5 md:flex-row md:items-center">
+      {/* Top Banner - Responsive Mobile & Desktop */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
+        <div className="relative z-10 flex flex-col justify-between gap-3 sm:gap-5 md:flex-row md:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-electric/40 bg-electric/20 px-3 py-0.5 text-[11px] font-mono text-electric-bright">
-              <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-electric/40 bg-electric/20 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-electric-bright">
+              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
               <span>ENTERPRISE CLIENT WORKSPACE</span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-              Enterprise Requisitions & Workforce Cockpit
+            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+              Enterprise Requisitions &amp; Workforce Cockpit
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-xl leading-relaxed">
+            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
               Autonomous engineering teams and clinical staffing squads deployed to your enterprise with guaranteed timezone overlap and weekly SLA billing.
             </p>
           </div>
 
-          <div className="flex shrink-0 gap-3">
+          <div className="flex shrink-0 w-full sm:w-auto">
             <Link
               href="/contact"
-              className="rounded-xl bg-signal px-5 py-3 font-display text-xs font-bold text-ink hover:bg-emerald-400 transition-colors shadow-xs"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg sm:rounded-xl bg-signal px-3.5 py-2 sm:px-5 sm:py-3 font-display text-xs font-bold text-ink hover:bg-emerald-400 active:scale-95 transition-all shadow-xs text-center"
             >
-              Request New Staffing Requisition
+              Request New Requisition
             </Link>
           </div>
         </div>

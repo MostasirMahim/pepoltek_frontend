@@ -181,28 +181,27 @@ export function ReferralDashboardView({
 
   return (
     <div className="space-y-8">
-      {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-6 sm:p-8 text-white shadow-md">
-        <div className="relative z-10 flex flex-col justify-between gap-5 md:flex-row md:items-center">
+      {/* Top Banner - Responsive Mobile & Desktop */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
+        <div className="relative z-10 flex flex-col justify-between gap-3 sm:gap-5 md:flex-row md:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-electric/40 bg-electric/20 px-3 py-0.5 text-[11px] font-mono text-electric-bright">
-              <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
-              <span>PEPOLTEK PARTNER & REFERRAL PORTAL</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-electric/40 bg-electric/20 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-electric-bright">
+              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
+              <span>PEPOLTEK PARTNER &amp; REFERRAL PORTAL</span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-              Referral Bounties & Partner Cockpit
+            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+              Referral Bounties &amp; Partner Cockpit
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-xl leading-relaxed">
-              Earn bounties for Tech Role placements and Clinical Specialist deployments.
-              Track pipeline milestones and trigger direct bank disbursements.
+            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
+              Earn bounties for Tech Role placements and Clinical Specialist deployments. Track pipeline milestones and trigger direct bank disbursements.
             </p>
           </div>
 
           <button
             onClick={() => openPayoutModal()}
-            className="inline-flex items-center gap-2 rounded-xl bg-signal px-5 py-3 font-display text-xs font-bold text-ink shadow-sm hover:bg-emerald-400 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl bg-signal px-3.5 py-2 sm:px-5 sm:py-3 font-display text-xs font-bold text-ink shadow-sm hover:bg-emerald-400 active:scale-95 transition-all cursor-pointer"
           >
-            <CreditCard className="h-4 w-4" />
+            <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>Disburse Cleared Bounties</span>
           </button>
         </div>

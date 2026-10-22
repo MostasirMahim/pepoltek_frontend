@@ -3,7 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Briefcase, Sparkles, LogOut } from "lucide-react";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
+import { logoutAction } from "@/actions/auth.actions";
 
 interface DropdownItem {
   title: string;
@@ -370,7 +372,11 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<number | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ fullName: string; role: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    fullName: string;
+    role: string;
+    email?: string;
+  } | null>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -381,6 +387,7 @@ export default function Header() {
           setCurrentUser({
             fullName: user.fullName || "Candidate",
             role: user.role || "CANDIDATE",
+            email: user.email,
           });
         }
       } catch {
@@ -389,6 +396,26 @@ export default function Header() {
     }
     checkAuth();
   }, []);
+
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const getDashboardHref = (role?: string) => {
+    if (role === "SUPER_ADMIN" || role === "ADMIN") return "/admin/dashboard";
+    if (role === "RECRUITER") return "/recruiter/dashboard";
+    return "/candidate/dashboard";
+  };
+
+  const getRoleLabel = (role?: string) => {
+    if (role === "SUPER_ADMIN") return "Super Admin";
+    if (role === "ADMIN") return "Administrator";
+    if (role === "RECRUITER") return "Senior Recruiter";
+    return "Verified Candidate";
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -565,32 +592,41 @@ export default function Header() {
         </nav>
 
         {/* Right: Auth buttons & Mobile Hamburger */}
-        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+        <div className="flex shrink-0 items-center gap-1.5 xs:gap-2 sm:gap-3">
           {currentUser ? (
             <Link
-              href={
-                currentUser.role === "SUPER_ADMIN" || currentUser.role === "ADMIN"
-                  ? "/admin/dashboard"
-                  : currentUser.role === "RECRUITER"
-                  ? "/recruiter/dashboard"
-                  : "/candidate/dashboard"
-              }
-              className="hidden items-center gap-1.5 justify-center whitespace-nowrap rounded-xl border border-electric/40 bg-electric/10 px-4 py-2 font-display text-xs sm:text-sm font-semibold text-electric shadow-xs backdrop-blur-sm transition-all duration-200 hover:bg-electric hover:text-white sm:inline-flex"
+              href={getDashboardHref(currentUser.role)}
+              title={`${currentUser.fullName} (${getRoleLabel(currentUser.role)}) • Go to Dashboard`}
+              aria-label="Go to Dashboard"
+              className="relative group/avatar flex h-9 w-9 sm:h-9.5 sm:w-9.5 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0066FF] via-[#0088FF] to-[#00D4FF] text-white font-display text-xs sm:text-sm font-bold shadow-[0_4px_14px_-2px_rgba(0,102,255,0.4)] ring-2 ring-white hover:ring-electric hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
-              <span>{currentUser.fullName.split(" ")[0]}&apos;s Dashboard</span>
-              <span className="font-mono text-[10px]">→</span>
+              <span>{getInitials(currentUser.fullName)}</span>
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-400" />
+
+              {/* Micro-tooltip on desktop hover */}
+              <span className="pointer-events-none absolute top-full mt-2 right-0 hidden sm:group-hover/avatar:flex flex-col items-end whitespace-nowrap rounded-xl bg-[#0a1428] px-3 py-1.5 text-[11px] font-medium text-white shadow-xl border border-white/10 z-50 animate-in fade-in-0 duration-150">
+                <span className="font-bold text-white">{currentUser.fullName}</span>
+                <span className="text-[10px] text-cyan-400 font-mono">
+                  {currentUser.role === "SUPER_ADMIN" || currentUser.role === "ADMIN"
+                    ? "Admin Workspace →"
+                    : currentUser.role === "RECRUITER"
+                    ? "Recruiter Workspace →"
+                    : "Candidate Dashboard →"}
+                </span>
+              </span>
             </Link>
           ) : (
             <Link
               href="/login"
-              className="hidden items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-4 py-2 font-display text-xs sm:text-sm font-semibold text-[#0a1428] shadow-[0_2px_8px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric sm:inline-flex"
+              className="hidden items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-3.5 py-1.5 sm:px-4 sm:py-2 font-display text-xs sm:text-sm font-semibold text-[#0a1428] shadow-[0_2px_8px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric sm:inline-flex"
             >
               Log in
             </Link>
           )}
+
           <Link
             href="/contact"
-            className="group inline-flex items-center gap-2 justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-4.5 py-2 font-display text-xs sm:text-sm font-semibold text-white shadow-[0_6px_16px_-4px_rgba(10,20,40,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)] cursor-pointer"
+            className="group inline-flex items-center gap-1.5 sm:gap-2 justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-3 py-1.5 xs:px-3.5 xs:py-2 sm:px-4.5 sm:py-2 font-display text-[11px] xs:text-xs sm:text-sm font-semibold text-white shadow-[0_6px_16px_-4px_rgba(10,20,40,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)] cursor-pointer"
           >
             <span>Hire & Deploy</span>
             <AnimatedChevrons size={11} count={3} />
@@ -599,7 +635,7 @@ export default function Header() {
           {/* Mobile Hamburger Button */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#bcd6fa]/80 bg-white/90 text-[#0a1428] transition-colors hover:bg-electric/10 hover:text-electric lg:hidden focus:outline-none"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#bcd6fa]/80 bg-white/90 text-[#0a1428] transition-colors hover:bg-electric/10 hover:text-electric lg:hidden focus:outline-none cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {mobileOpen ? (
@@ -617,15 +653,110 @@ export default function Header() {
 
       {/* Mobile Drawer Menu */}
       {mobileOpen && (
-        <div className="border-b border-[#bcd6fa]/50 bg-canvas/98 px-6 py-5 shadow-2xl backdrop-blur-xl lg:hidden">
-          <div className="flex flex-col gap-2">
+        <div className="border-b border-[#bcd6fa]/50 bg-white/98 px-5 py-4 sm:px-6 sm:py-5 shadow-2xl backdrop-blur-2xl lg:hidden max-h-[calc(100vh-68px)] overflow-y-auto animate-in fade-in-0 slide-in-from-top-2 duration-200">
+          
+          {/* User Profile Card (if authenticated) */}
+          {currentUser ? (
+            <div className="mb-4 rounded-2xl border border-electric/30 bg-gradient-to-r from-[#f0f7ff] to-white p-3.5 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0066FF] to-[#00D4FF] text-white font-display text-sm font-bold shadow-xs ring-2 ring-white">
+                  <span>{getInitials(currentUser.fullName)}</span>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-display text-sm font-bold text-ink truncate">
+                      {currentUser.fullName}
+                    </span>
+                    <span className="rounded bg-electric/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-electric uppercase">
+                      {currentUser.role}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-ink-soft truncate font-mono">
+                    {currentUser.email || "Active User Session"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                <Link
+                  href={getDashboardHref(currentUser.role)}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-electric py-2 font-display text-xs font-semibold text-white shadow-xs hover:bg-ink transition-colors"
+                >
+                  <span>Open Dashboard</span>
+                  <span className="font-mono text-[10px]">→</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logoutAction();
+                    setCurrentUser(null);
+                    setMobileOpen(false);
+                    window.location.href = "/";
+                  }}
+                  className="flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                  title="Sign out"
+                >
+                  <LogOut size={13} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center rounded-xl border border-[#bcd6fa] bg-white py-2.5 font-display text-xs font-semibold text-ink shadow-xs hover:border-electric transition-colors"
+              >
+                Candidate Login
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center rounded-xl bg-electric py-2.5 font-display text-xs font-semibold text-white shadow-xs hover:bg-ink transition-colors"
+              >
+                Join as Talent
+              </Link>
+            </div>
+          )}
+
+          {/* Quick Action Pills for Mobile */}
+          <div className="mb-3.5 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <Link
+              href="/jobs"
+              onClick={() => setMobileOpen(false)}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#bcd6fa]/70 bg-canvas/60 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink hover:border-electric hover:text-electric transition-colors"
+            >
+              <Briefcase size={12} className="text-electric" />
+              <span>Explore Jobs</span>
+            </Link>
+            <Link
+              href="/career/upload_cv"
+              onClick={() => setMobileOpen(false)}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#bcd6fa]/70 bg-canvas/60 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink hover:border-electric hover:text-electric transition-colors"
+            >
+              <Sparkles size={12} className="text-electric" />
+              <span>Upload CV</span>
+            </Link>
+            <Link
+              href="/services"
+              onClick={() => setMobileOpen(false)}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#bcd6fa]/70 bg-canvas/60 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-ink hover:border-electric hover:text-electric transition-colors"
+            >
+              <span>Solutions</span>
+            </Link>
+          </div>
+
+          {/* Navigation Accordion Sections */}
+          <div className="flex flex-col gap-1.5">
             {NAV_DATA.map((section, sIdx) => {
               const isExpanded = mobileExpanded === sIdx;
               return (
-                <div key={section.label} className="border-b border-[#bcd6fa]/30 pb-2">
+                <div key={section.label} className="rounded-xl border border-[#bcd6fa]/40 bg-white/70 overflow-hidden">
                   <button
                     onClick={() => setMobileExpanded(isExpanded ? null : sIdx)}
-                    className="flex w-full items-center justify-between py-2 text-left font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-[#0a1428]"
+                    className="flex w-full items-center justify-between p-3 text-left font-mono text-[11.5px] font-bold uppercase tracking-[0.12em] text-[#0a1428] transition-colors hover:bg-electric/5"
                   >
                     <span>{section.label}</span>
                     <svg
@@ -641,16 +772,18 @@ export default function Header() {
                   </button>
 
                   {isExpanded && (
-                    <div className="mt-2 space-y-2 pl-3 pb-3">
+                    <div className="space-y-1.5 px-3 pb-3 pt-1 border-t border-[#bcd6fa]/30 bg-canvas/30">
                       {section.items.map((item) => (
                         <Link
                           key={item.title}
                           href={item.href}
                           onClick={() => setMobileOpen(false)}
-                          className="flex items-center gap-2 py-1.5 text-[12.5px] font-medium text-[#3d4c68] hover:text-electric transition-colors"
+                          className="flex items-center gap-2.5 rounded-lg p-2 text-[12px] font-medium text-[#3d4c68] hover:bg-white hover:text-electric transition-colors shadow-2xs"
                         >
-                          <span className="h-1.5 w-1.5 rounded-full bg-electric" />
-                          <span>{item.title}</span>
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-electric/10 text-electric">
+                            {item.icon}
+                          </div>
+                          <span className="truncate">{item.title}</span>
                           {item.badge && (
                             <span className="ml-auto rounded bg-electric/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-electric">
                               {item.badge}
@@ -663,41 +796,18 @@ export default function Header() {
                 </div>
               );
             })}
+          </div>
 
-            {/* Mobile CTAs */}
-            <div className="mt-4 flex flex-col gap-2.5 pt-2 border-t border-[#bcd6fa]/40">
-              {currentUser ? (
-                <Link
-                  href={
-                    currentUser.role === "SUPER_ADMIN" || currentUser.role === "ADMIN"
-                      ? "/admin/dashboard"
-                      : currentUser.role === "RECRUITER"
-                      ? "/recruiter/dashboard"
-                      : "/candidate/dashboard"
-                  }
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center rounded-xl bg-electric py-2.5 font-display text-xs font-semibold text-white shadow-xs"
-                >
-                  My Dashboard ({currentUser.fullName.split(" ")[0]}) →
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center rounded-xl border border-[#bcd6fa] bg-white py-2.5 font-display text-xs font-semibold text-[#0a1428]"
-                >
-                  Log in
-                </Link>
-              )}
-              <Link
-                href="/contact"
-                onClick={() => setMobileOpen(false)}
-                className="group flex items-center justify-center gap-2 rounded-xl bg-[#0a1428] py-2.5 font-display text-xs font-semibold text-white shadow-xs hover:bg-electric transition-colors"
-              >
-                <span>Hire & Deploy</span>
-                <AnimatedChevrons size={11} count={3} />
-              </Link>
-            </div>
+          {/* Bottom Primary CTA */}
+          <div className="mt-4 pt-3 border-t border-[#bcd6fa]/40">
+            <Link
+              href="/contact"
+              onClick={() => setMobileOpen(false)}
+              className="group flex items-center justify-center gap-2 w-full rounded-xl bg-[#0a1428] py-3 font-display text-xs font-semibold text-white shadow-xs hover:bg-electric transition-colors"
+            >
+              <span>Hire & Deploy with Pepoltek</span>
+              <AnimatedChevrons size={11} count={3} />
+            </Link>
           </div>
         </div>
       )}

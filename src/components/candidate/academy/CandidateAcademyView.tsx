@@ -129,32 +129,32 @@ export function CandidateAcademyView({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Header & Readiness Index */}
-      <div className="rounded-3xl border border-[#bcd6fa] bg-white p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+      {/* Header & Readiness Index - Responsive Mobile & Desktop */}
+      <div className="rounded-2xl sm:rounded-3xl border border-[#bcd6fa] bg-white p-4 sm:p-6 lg:p-8 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-5">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-electric/30 bg-electric/10 px-3 py-0.5 text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-electric/30 bg-electric/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
               <span>Talent Upskilling Ecosystem</span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
+            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-ink">
               Pepoltek Talent Academy
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-ink-soft max-w-2xl leading-relaxed">
+            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-ink-soft max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
               Upskill through enterprise-accredited modules to unlock higher compensation tiers, specialized clinical rotas, and high-velocity engineering pods.
             </p>
           </div>
 
-          <div className="flex items-center gap-5 rounded-2xl border border-electric/30 bg-canvas p-4 sm:p-5">
-            <div className="text-right">
-              <div className="font-mono text-[10px] uppercase tracking-wider text-mist">Readiness Index</div>
-              <div className="font-display text-3xl font-extrabold text-electric">
+          <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-5 rounded-xl sm:rounded-2xl border border-electric/30 bg-canvas p-2.5 sm:p-4 lg:p-5">
+            <div className="text-left sm:text-right">
+              <div className="font-mono text-[9px] sm:text-[10px] uppercase tracking-wider text-mist">Readiness Index</div>
+              <div className="font-display text-2xl sm:text-3xl font-extrabold text-electric">
                 {readinessScore}%
               </div>
             </div>
-            <div className="h-10 w-px bg-[#bcd6fa]" />
+            <div className="h-8 sm:h-10 w-px bg-[#bcd6fa]" />
             <div>
-              <div className="font-display text-xs font-bold text-ink">Tier 1 Squad Ready</div>
-              <div className="text-[11px] text-signal font-semibold">Top 5% Placement Priority</div>
+              <div className="font-display text-xs sm:text-sm font-bold text-ink">Tier 1 Squad Ready</div>
+              <div className="text-[10px] sm:text-[11px] text-signal font-semibold">Top 5% Placement Priority</div>
             </div>
           </div>
         </div>

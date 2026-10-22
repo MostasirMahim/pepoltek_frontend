@@ -121,29 +121,29 @@ export function CandidateResumeUploadView() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-6 sm:p-8 text-white shadow-md">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Banner - Responsive Mobile & Desktop */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-signal/40 bg-signal/10 px-3 py-0.5 text-[11px] font-mono text-signal">
-              <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
-              <span>AI RESUME & CREDENTIAL PARSER</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
+              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
+              <span>AI RESUME &amp; CREDENTIAL PARSER</span>
             </div>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl font-bold tracking-tight">
-              CV / Resume & Credential Intake
+            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+              CV / Resume &amp; Credential Intake
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
               Upload your latest resume or clinical credentials. Our AI parser extracts your seniority, technical skills, and work authorization with zero manual data entry.
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/candidate/profile"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 font-display text-xs font-semibold text-white hover:bg-white/10 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border border-white/20 bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2.5 font-display text-xs font-semibold text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
             >
               <span>View Master Profile</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={13} className="sm:w-3.5 sm:h-3.5" />
             </Link>
           </div>
         </div>

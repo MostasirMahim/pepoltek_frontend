@@ -149,13 +149,13 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Top Profile Header Banner */}
-      <div className="rounded-3xl border border-[#bcd6fa] bg-white p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          <div className="flex items-center gap-4 sm:gap-5">
-            <div className="relative">
+      {/* Top Profile Header Banner - Responsive Mobile & Desktop */}
+      <div className="rounded-2xl sm:rounded-3xl border border-[#bcd6fa] bg-white p-4 sm:p-6 lg:p-8 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 sm:gap-5">
+          <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+            <div className="relative shrink-0">
               <div
-                className={`flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-3xl font-display text-2xl sm:text-3xl font-extrabold text-white shadow-md ${
+                className={`flex h-13 w-13 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl font-display text-lg sm:text-3xl font-extrabold text-white shadow-md ${
                   activePersona === "alex"
                     ? "bg-gradient-to-tr from-electric to-electric-bright"
                     : "bg-gradient-to-tr from-signal to-emerald-400"
@@ -163,51 +163,51 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
               >
                 {activePersona === "alex" ? "AM" : "RH"}
               </div>
-              <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-3 border-white bg-signal" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 sm:h-5 sm:w-5 rounded-full border-2 sm:border-3 border-white bg-signal" />
             </div>
 
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h1 className="font-display text-lg sm:text-2xl lg:text-3xl font-extrabold text-ink truncate">
                   {formData.fullName}
                 </h1>
-                <span className="rounded-full bg-signal/15 border border-signal/30 px-2.5 py-0.5 font-mono text-[10px] font-bold text-signal">
+                <span className="rounded-full bg-signal/15 border border-signal/30 px-2 py-0.5 font-mono text-[9px] sm:text-[10px] font-bold text-signal">
                   {formData.vettingTier}
                 </span>
-                <span className="rounded-full bg-canvas border border-[#bcd6fa] px-2.5 py-0.5 font-mono text-[10px] font-semibold text-ink-soft">
+                <span className="rounded-full bg-canvas border border-[#bcd6fa] px-2 py-0.5 font-mono text-[9px] sm:text-[10px] font-semibold text-ink-soft">
                   ID: {formData.id}
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
+              <p className="text-xs sm:text-sm text-ink-soft mt-0.5 truncate">
                 {formData.title}
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-mist">
-                <span className="flex items-center gap-1.5 text-ink-soft">
-                  <Globe size={13} className="text-electric" />
-                  <span>{formData.location}</span>
+              <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-xs font-mono text-mist">
+                <span className="flex items-center gap-1 text-ink-soft">
+                  <Globe size={12} className="text-electric shrink-0" />
+                  <span className="truncate">{formData.location}</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-ink-soft">
-                  <Clock size={13} className="text-electric" />
-                  <span>{formData.timezoneOverlapHours} Hours Live Overlap</span>
+                <span className="flex items-center gap-1 text-ink-soft">
+                  <Clock size={12} className="text-electric shrink-0" />
+                  <span>{formData.timezoneOverlapHours}h Overlap</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-ink-soft">
-                  <DollarSign size={13} className="text-signal" />
+                <span className="flex items-center gap-1 text-ink-soft">
+                  <DollarSign size={12} className="text-signal shrink-0" />
                   <span>{formData.desiredHourlyRate}</span>
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="text-right shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-0 border-[#bcd6fa]/40">
+          <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-0 border-[#bcd6fa]/40">
             <div>
-              <div className="font-mono text-[10.5px] uppercase tracking-wider text-mist">
+              <div className="font-mono text-[9.5px] sm:text-[10.5px] uppercase tracking-wider text-mist">
                 {activePersona === "alex" ? "Technical Vetting" : "Clinical Vetting"}
               </div>
-              <div className="font-display text-2xl font-extrabold text-electric">
+              <div className="font-display text-xl sm:text-2xl font-extrabold text-electric">
                 {formData.technicalVettingScore} <span className="text-xs font-normal text-mist">/ 100</span>
               </div>
             </div>
-            <div className="text-xs font-mono text-signal font-semibold">
+            <div className="text-[11px] sm:text-xs font-mono text-signal font-semibold">
               Readiness: {formData.readinessIndex}%
             </div>
           </div>
@@ -216,75 +216,75 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
 
       {/* Save Success Alert Banner */}
       {savedSuccess && (
-        <div className="rounded-2xl border border-signal/40 bg-signal/10 p-4 text-xs text-signal flex items-center gap-2.5 shadow-2xs animate-in fade-in-0 duration-200">
-          <CheckCircle size={18} className="shrink-0 text-signal" />
+        <div className="rounded-2xl border border-signal/40 bg-signal/10 p-3.5 sm:p-4 text-xs text-signal flex items-center gap-2 shadow-2xs animate-in fade-in-0 duration-200">
+          <CheckCircle size={16} className="shrink-0 text-signal" />
           <span className="font-semibold">{savedMessage}</span>
         </div>
       )}
 
       {/* Data Rights Notification */}
       {dataRightsSuccessMessage && (
-        <div className="rounded-2xl border border-electric/40 bg-electric/10 p-4 text-xs text-ink flex items-center gap-2.5 shadow-2xs animate-in fade-in-0 duration-200">
-          <ShieldCheck size={18} className="shrink-0 text-electric" />
+        <div className="rounded-2xl border border-electric/40 bg-electric/10 p-3.5 sm:p-4 text-xs text-ink flex items-center gap-2 shadow-2xs animate-in fade-in-0 duration-200">
+          <ShieldCheck size={16} className="shrink-0 text-electric" />
           <span className="font-semibold">{dataRightsSuccessMessage}</span>
         </div>
       )}
 
-      {/* Tabs Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#bcd6fa]/40 pb-3">
-        <div className="flex flex-wrap gap-2">
+      {/* Tabs Navigation - Smooth Horizontal Scroll on Mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#bcd6fa]/40 pb-2.5 sm:pb-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setActiveTab("general")}
-            className={`rounded-xl px-4 py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap rounded-lg sm:rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "general"
                 ? "bg-ink text-white shadow-xs"
                 : "bg-white border border-[#bcd6fa]/60 text-ink-soft hover:text-ink"
             }`}
           >
-            General Profile &amp; Credentials
+            General Profile
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("skills")}
-            className={`rounded-xl px-4 py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap rounded-lg sm:rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "skills"
                 ? "bg-ink text-white shadow-xs"
                 : "bg-white border border-[#bcd6fa]/60 text-ink-soft hover:text-ink"
             }`}
           >
-            Skills, Badges &amp; Domains
+            Skills &amp; Badges
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("compliance")}
-            className={`rounded-xl px-4 py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap rounded-lg sm:rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "compliance"
                 ? "bg-ink text-white shadow-xs"
                 : "bg-white border border-[#bcd6fa]/60 text-ink-soft hover:text-ink"
             }`}
           >
-            Compliance, Work Auth &amp; Legal
+            Compliance &amp; Legal
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("preferences")}
-            className={`rounded-xl px-4 py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap rounded-lg sm:rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "preferences"
                 ? "bg-ink text-white shadow-xs"
                 : "bg-white border border-[#bcd6fa]/60 text-ink-soft hover:text-ink"
             }`}
           >
-            Role Preferences &amp; Rate Brackets
+            Rate &amp; Preferences
           </button>
         </div>
 
         <button
           type="button"
           onClick={() => setIsDataRightsModalOpen(true)}
-          className="rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3 py-1.5 font-display text-xs font-semibold text-ink-soft hover:bg-white hover:text-ink transition-all cursor-pointer"
+          className="self-end sm:self-auto shrink-0 rounded-lg sm:rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3 py-1 sm:py-1.5 font-display text-[11px] sm:text-xs font-semibold text-ink-soft hover:bg-white hover:text-ink transition-all cursor-pointer"
         >
-          Data Rights &amp; Privacy
+          Data Rights &amp; GDPR
         </button>
       </div>
 
