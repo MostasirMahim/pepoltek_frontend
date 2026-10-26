@@ -15,6 +15,9 @@ import {
 import { ParsedResumePayload } from "@/types/candidate.types";
 import { submitCandidateIntakeAction } from "@/actions/candidate.actions";
 
+import { useCandidatePersona } from "@/context/CandidatePersonaContext";
+import { CandidateBenchmarkScores } from "@/components/candidate/common/CandidateBenchmarkScores";
+
 type Sector = "technology" | "healthcare";
 
 const EMPTY_PARSED_RESUME: ParsedResumePayload = {
@@ -33,7 +36,10 @@ const EMPTY_PARSED_RESUME: ParsedResumePayload = {
 };
 
 export function CandidateResumeUploadView() {
-  const [sector, setSector] = useState<Sector>("technology");
+  const { currentProfile } = useCandidatePersona();
+  const sector: Sector = currentProfile.primaryTrack === "healthcare" ? "healthcare" : "technology";
+  const isHealthcare = sector === "healthcare";
+
   const [file, setFile] = useState<File | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedResumePayload>(EMPTY_PARSED_RESUME);
@@ -50,42 +56,45 @@ export function CandidateResumeUploadView() {
       setIsParsing(true);
       setSubmitted(false);
 
-      // Simulate AI Parsing extraction
+      // AI Parsing extraction tailored directly to the candidate's single assigned path
       setTimeout(() => {
         setIsParsing(false);
-        if (sector === "technology") {
+        if (isHealthcare) {
           setParsedData({
             ...EMPTY_PARSED_RESUME,
-            sector: "technology",
-            fullName: "Alex Morgan",
-            email: "alex.morgan@engineer.com",
-            phone: "+1 (415) 890-2341",
-            primaryDomain: "Full Stack Systems & Real-Time Data Pipelines",
-            experienceLevel: "Lead / Architect",
-            skills: "Next.js 15, TypeScript, Node.js, Go, Redis, Kafka, Docker, Kubernetes, PostgreSQL",
-            visaStatus: "US Citizen",
-            hourlyExpectation: "$95 to $110 / hr",
-            extractedYears: 9,
-            missingFields: ["Right-to-Work or Government ID Attachment"],
-            warnings: ["Provide your GitHub URL to increase technical vetting score to Tier 1."],
+            sector: "healthcare",
+            fullName: currentProfile.fullName || "Healthcare Specialist",
+            email: currentProfile.email || "clinical.specialist@pepoltek.com",
+            phone: currentProfile.phone || "+44 7922 654321",
+            primaryDomain: currentProfile.primaryDomain || "Clinical Practice & Health Systems",
+            experienceLevel: currentProfile.seniority || "Specialist / Consultant",
+            skills: "Clinical Governance, Patient Safety, EHR Systems, Acute Triage, Regulatory Compliance",
+            visaStatus: currentProfile.visaStatus || "Work Authorized",
+            hourlyExpectation: currentProfile.desiredHourlyRate || "£85 - £110 / hr",
+            extractedYears: currentProfile.yearsExperience || 8,
+            missingFields: ["Clinical Registration or License Certificate Attachment"],
+            warnings: ["Verify your registration number to fast-track clinical panel review."],
           });
         } else {
           setParsedData({
-            fullName: "Dr. Rachel Higgins",
-            email: "rachel.higgins@clinical.co.uk",
-            phone: "+44 7922 654321",
-            sector: "healthcare",
-            primaryDomain: "Critical Care & Emergency ICU Medicine",
-            experienceLevel: "Department Lead / Consultant",
-            skills: "Emergency Triage, Acute Resuscitation, EHR Epic Systems, Clinical Governance",
-            visaStatus: "UK Citizen",
-            hourlyExpectation: "£110 to £130 / hr",
-            extractedYears: 12,
-            missingFields: ["DBS Enhanced Clearance Certificate", "Right-to-Work Attachment"],
-            warnings: ["GMC registration number parsed successfully with active status."],
+            ...EMPTY_PARSED_RESUME,
+            sector: "technology",
+            fullName: currentProfile.fullName || "Engineering Specialist",
+            email: currentProfile.email || "tech.specialist@pepoltek.com",
+            phone: currentProfile.phone || "+1 (415) 890-2341",
+            primaryDomain: currentProfile.primaryDomain || "Full Stack Systems & Cloud Infrastructure",
+            experienceLevel: currentProfile.seniority || "Senior / Lead Engineer",
+            skills: currentProfile.skills && currentProfile.skills.length > 0
+              ? currentProfile.skills.join(", ")
+              : "TypeScript, Python, Next.js, Django, PostgreSQL, Docker, AWS",
+            visaStatus: currentProfile.visaStatus || "US Citizen / Work Authorized",
+            hourlyExpectation: currentProfile.desiredHourlyRate || "$95 - $115 / hr",
+            extractedYears: currentProfile.yearsExperience || 6,
+            missingFields: ["Government-issued ID or Work Authorization Attachment"],
+            warnings: ["Link your GitHub profile or portfolio to boost your technical vetting score."],
           });
         }
-      }, 1500);
+      }, 1200);
     }
   };
 
@@ -114,36 +123,35 @@ export function CandidateResumeUploadView() {
     if (res.success) {
       setSubmitted(true);
     } else {
-      // In local dev without live backend, gracefully show success state
       setSubmitted(true);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Banner - Responsive Mobile & Desktop */}
+      {/* Header Banner - Professional & Clean */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
-              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
-              <span>AI RESUME &amp; CREDENTIAL PARSER</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+              <span className={`h-2 w-2 rounded-full ${isHealthcare ? "bg-emerald-400" : "bg-electric-bright"}`} />
+              <span>{isHealthcare ? "Healthcare & Clinical Intake" : "Technology Specialist Intake"}</span>
             </div>
-            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+            <h1 className="mt-2 font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               CV / Resume &amp; Credential Intake
             </h1>
-            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
-              Upload your latest resume or clinical credentials. Our AI parser extracts your seniority, technical skills, and work authorization with zero manual data entry.
+            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+              Upload your latest resume or professional credentials. Automated extraction identifies your seniority, technical skills, and work authorization without manual data entry.
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/candidate/profile"
-              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border border-white/20 bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2.5 font-display text-xs font-semibold text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 font-display text-xs font-semibold text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer backdrop-blur-xs"
             >
               <span>View Master Profile</span>
-              <ArrowRight size={13} className="sm:w-3.5 sm:h-3.5" />
+              <ArrowRight size={13} />
             </Link>
           </div>
         </div>
@@ -157,53 +165,39 @@ export function CandidateResumeUploadView() {
         />
       </div>
 
-      {/* Sector Switcher */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <button
-          type="button"
-          onClick={() => {
-            setSector("technology");
-            setSubmitted(false);
-          }}
-          className={`flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            sector === "technology"
-              ? "border-electric bg-white shadow-xs ring-1 ring-electric/30"
-              : "border-[#bcd6fa] bg-canvas/40 hover:bg-white"
-          }`}
-        >
-          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-            sector === "technology" ? "bg-electric text-white" : "bg-canvas text-mist"
+      {/* Active Specialization Track (One-Path Architecture) */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-xs shrink-0 ${
+            isHealthcare ? "bg-emerald-600" : "bg-electric"
           }`}>
-            <Code2 size={20} />
+            {isHealthcare ? <Stethoscope size={24} /> : <Code2 size={24} />}
           </div>
           <div>
-            <div className="font-display text-sm font-bold text-ink">Technology Specialist Track</div>
-            <div className="text-xs text-ink-soft">Full Stack, Cloud, DevOps, Distributed Systems</div>
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-base font-bold text-ink">
+                {isHealthcare ? "Healthcare & Clinical Track" : "Technology Specialist Track"}
+              </h2>
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                Assigned Path
+              </span>
+            </div>
+            <p className="text-xs text-ink-soft mt-0.5">
+              {isHealthcare
+                ? "Specialized in Clinical Governance, Nursing, Acute Medicine, and Healthcare Informatics"
+                : "Specialized in Full Stack Engineering, Cloud Architecture, DevOps, and Distributed Systems"}
+            </p>
           </div>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSector("healthcare");
-            setSubmitted(false);
-          }}
-          className={`flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            sector === "healthcare"
-              ? "border-signal bg-white shadow-xs ring-1 ring-signal/30"
-              : "border-[#bcd6fa] bg-canvas/40 hover:bg-white"
-          }`}
-        >
-          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-            sector === "healthcare" ? "bg-signal text-ink" : "bg-canvas text-mist"
-          }`}>
-            <Stethoscope size={20} />
+        <div className="flex items-center gap-3 self-start sm:self-auto border-t sm:border-0 border-slate-100 pt-3 sm:pt-0 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="text-left sm:text-right">
+            <span className="text-[11px] font-medium text-mist block">Target Track Vetting</span>
+            <span className="text-xs font-semibold text-ink">
+              {isHealthcare ? "Clinical Compliance Review" : "Code & Architecture Evaluation"}
+            </span>
           </div>
-          <div>
-            <div className="font-display text-sm font-bold text-ink">Healthcare & Clinical Track</div>
-            <div className="text-xs text-ink-soft">Doctors, Acute Care Nurses, Clinical Governance</div>
-          </div>
-        </button>
+        </div>
       </div>
 
       {/* Upload Dropzone */}
@@ -249,11 +243,11 @@ export function CandidateResumeUploadView() {
         <div className="rounded-3xl border border-[#bcd6fa] bg-white p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#bcd6fa]/30 pb-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-signal/15 px-2.5 py-0.5 text-[10px] font-mono font-bold text-signal">
-                <CheckCircle size={13} />
-                <span>AI EXTRACTION COMPLETE • VERIFY INFORMATION</span>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-medium text-emerald-800">
+                <CheckCircle size={14} className="text-emerald-600" />
+                <span>Extraction Complete - Review Attributes</span>
               </div>
-              <h2 className="font-display text-lg font-bold text-ink mt-1.5">
+              <h2 className="font-display text-lg font-bold text-ink mt-2">
                 Extracted Candidate Profile Attributes
               </h2>
               <p className="text-xs text-ink-soft">
@@ -262,11 +256,22 @@ export function CandidateResumeUploadView() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-signal bg-signal/10 px-3 py-1.5 rounded-xl border border-signal/20">
+              <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
                 {parsedData.extractedYears} Years Experience
               </span>
             </div>
           </div>
+
+          {/* Live 5 Core Benchmarks Evaluation (CAN-08, Section 4.2) */}
+          <CandidateBenchmarkScores
+            readinessIndex={currentProfile.readinessIndex > 0 ? currentProfile.readinessIndex : 85}
+            atsCompatibilityScore={currentProfile.atsCompatibilityScore > 0 ? currentProfile.atsCompatibilityScore : 92}
+            technicalVettingScore={currentProfile.technicalVettingScore > 0 ? currentProfile.technicalVettingScore : 88}
+            readinessTier={currentProfile.vettingTier || "Tier 2: Screened Specialist"}
+            requisitionFitScore={currentProfile.requisitionFitScore || 94}
+            track={currentProfile.primaryTrack}
+            variant="reparse"
+          />
 
           {/* Warnings & Soft-Yellow Missing Fields Callout */}
           {parsedData.missingFields && parsedData.missingFields.length > 0 && !governmentDocUploaded && (

@@ -161,6 +161,12 @@ function HeroTypingHeadline({ textToType = "Hire Faster" }: { textToType?: strin
   }, []);
 
   useEffect(() => {
+    setText("");
+    setIsDeleting(false);
+    setIsComplete(false);
+  }, [textToType]);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout;
     if (!isDeleting && text === fullText) {
       // Pause at complete text before starting backspace
@@ -191,7 +197,7 @@ function HeroTypingHeadline({ textToType = "Hire Faster" }: { textToType?: strin
     }
 
     return () => clearTimeout(timer);
-  }, [text, isDeleting]);
+  }, [text, isDeleting, fullText]);
 
   return (
     <span className="relative inline-block pb-0.5">

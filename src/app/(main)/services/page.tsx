@@ -14,7 +14,10 @@ import {
   ArrowRight,
 } from "@/components/ui/Icons";
 import { renderDynamicIcon } from "@/components/ui/DynamicIcon";
-import { getContentBlockDetailAction } from "@/actions/content.actions";
+import { getPublicSiteContentAction } from "@/actions/content.actions";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Services & Solutions | Pepoltek Limited Workforce",
@@ -136,8 +139,11 @@ export default async function ServicesPage() {
   let servicesList = FALLBACK_SERVICES;
 
   try {
-    const detail = await getContentBlockDetailAction("services_list");
-    const liveData = (detail.data?.published?.data ?? detail.data?.latest?.data ?? {}) as {
+    const detail = await getPublicSiteContentAction<{
+      header?: typeof DEFAULT_HEADER;
+      services?: typeof FALLBACK_SERVICES;
+    }>("services_list");
+    const liveData = (detail.data ?? {}) as {
       header?: typeof DEFAULT_HEADER;
       services?: typeof FALLBACK_SERVICES;
     };

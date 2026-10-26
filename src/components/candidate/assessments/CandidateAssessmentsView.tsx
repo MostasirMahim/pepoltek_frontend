@@ -70,7 +70,14 @@ const INITIAL_ASSESSMENTS: AssessmentItem[] = [
 
 export function CandidateAssessmentsView() {
   const { currentProfile } = useCandidatePersona();
-  const [assessments] = useState<AssessmentItem[]>(INITIAL_ASSESSMENTS);
+  const isHealthcare = currentProfile.primaryTrack === "healthcare";
+
+  const assessments = INITIAL_ASSESSMENTS.filter((a) => {
+    if (isHealthcare) {
+      return a.category.toLowerCase().includes("health") || a.category.toLowerCase().includes("clinical");
+    }
+    return !a.category.toLowerCase().includes("health") && !a.category.toLowerCase().includes("clinical");
+  });
 
   const completedCount = assessments.filter((a) => a.status === "Completed").length;
   const isVetted = currentProfile.technicalVettingScore > 0 || completedCount > 0;
@@ -81,15 +88,17 @@ export function CandidateAssessmentsView() {
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
-              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
-              <span>OBJECTIVE PROCTOR-FREE EVALUATIONS</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+              <span className={`h-2 w-2 rounded-full ${isHealthcare ? "bg-emerald-400" : "bg-electric-bright"}`} />
+              <span>{isHealthcare ? "Clinical & Regulatory Vetting" : "Technical & Architectural Vetting"}</span>
             </div>
-            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
-              Technical &amp; Clinical Assessments
+            <h1 className="mt-2 font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+              {isHealthcare ? "Clinical Safety & Healthcare Assessments" : "Technical & Engineering Assessments"}
             </h1>
-            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
-              Verify your architectural mastery and clinical safety knowledge. Successful evaluations directly increase your Reverse Search matching score and unlocked hourly rate.
+            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+              {isHealthcare
+                ? "Verify your clinical governance and healthcare regulatory knowledge. Validated benchmarks fast-track credential verification and rota placement."
+                : "Verify your architectural mastery and systems concurrency. Successful evaluations directly increase your Reverse Search matching score and rate bracket."}
             </p>
           </div>
         </div>

@@ -20,6 +20,7 @@ import {
   getReverseSearchMatchesAction,
   authorizePitchAction,
 } from "@/actions/matching.actions";
+import { useCandidatePersona } from "@/context/CandidatePersonaContext";
 
 interface CandidateReverseSearchViewProps {
   initialMatches?: ReverseSearchMatch[];
@@ -28,8 +29,10 @@ interface CandidateReverseSearchViewProps {
 export function CandidateReverseSearchView({
   initialMatches = [],
 }: CandidateReverseSearchViewProps) {
+  const { currentProfile } = useCandidatePersona();
+  const isHealthcare = currentProfile.primaryTrack === "healthcare";
+
   const [matches, setMatches] = useState<ReverseSearchMatch[]>(initialMatches);
-  const [filterSector, setFilterSector] = useState<"all" | "it" | "health">("all");
   const [selectedMatchForPreview, setSelectedMatchForPreview] = useState<ReverseSearchMatch | null>(null);
   const [declineTarget, setDeclineTarget] = useState<ReverseSearchMatch | null>(null);
   const [declineReason, setDeclineReason] = useState<string>("rate_too_low");
@@ -109,11 +112,7 @@ export function CandidateReverseSearchView({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const filteredMatches = matches.filter((m) => {
-    if (filterSector === "it") return m.sector === "Enterprise IT";
-    if (filterSector === "health") return m.sector === "Healthcare & Med-Tech";
-    return true;
-  });
+  const filteredMatches = matches;
 
   return (
     <div className="space-y-6">
@@ -121,11 +120,11 @@ export function CandidateReverseSearchView({
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
-              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
-              <span>ZERO PUBLIC PROFILE EXPOSURE GUARANTEE</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+              <span className={`h-2 w-2 rounded-full ${isHealthcare ? "bg-emerald-400" : "bg-electric-bright"}`} />
+              <span>{isHealthcare ? "Clinical Requisition Matching" : "Enterprise IT Requisition Matching"}</span>
             </div>
-            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+            <h1 className="mt-2 font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               Reverse Job Search Engine
             </h1>
             <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
@@ -174,41 +173,13 @@ export function CandidateReverseSearchView({
         </div>
       )}
 
-      {/* Filter Strip - Horizontally Scrollable on Mobile */}
+      {/* Match Status Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-[#bcd6fa] bg-white p-2.5 sm:p-3 shadow-xs">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
-          <span className="shrink-0 font-mono text-[10px] sm:text-[11px] font-semibold text-ink-soft uppercase tracking-wider pl-1">
-            Sector:
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+            <span className={`h-1.5 w-1.5 rounded-full ${isHealthcare ? "bg-emerald-500" : "bg-electric"}`} />
+            <span>{isHealthcare ? "Healthcare & Med-Tech Requisitions" : "Enterprise IT Requisitions"}</span>
           </span>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setFilterSector("all")}
-              className={`rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
-                filterSector === "all" ? "bg-ink text-white" : "text-ink-soft hover:bg-canvas hover:text-ink"
-              }`}
-            >
-              All Matches ({matches.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterSector("it")}
-              className={`rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
-                filterSector === "it" ? "bg-ink text-white" : "text-ink-soft hover:bg-canvas hover:text-ink"
-              }`}
-            >
-              Enterprise IT
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterSector("health")}
-              className={`rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
-                filterSector === "health" ? "bg-ink text-white" : "text-ink-soft hover:bg-canvas hover:text-ink"
-              }`}
-            >
-              Healthcare &amp; Med-Tech
-            </button>
-          </div>
         </div>
 
         <div className="font-mono text-[11px] text-mist pr-2">

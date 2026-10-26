@@ -145,8 +145,9 @@ export function CandidatePersonaProvider({ children }: { children: React.ReactNo
           setCurrentProfile((prev) => ({
             ...prev,
             readinessIndex: dash.profile_strength,
-            atsCompatibilityScore: dash.ats_compatibility_score ?? prev.atsCompatibilityScore,
+            atsCompatibilityScore: dash.cv_score ?? dash.ats_compatibility_score ?? prev.atsCompatibilityScore,
             technicalVettingScore: dash.technical_vetting_score ?? prev.technicalVettingScore,
+            requisitionFitScore: dash.match_score ?? (prev.requisitionFitScore || 94),
             vettingTier: (dash.vetting_tier || dash.readiness_tier || prev.vettingTier) as CandidateProfile["vettingTier"],
           }));
         }

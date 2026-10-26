@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, Sparkles, LogOut } from "lucide-react";
+import { Briefcase, Sparkles, LogOut, ChevronDown, LayoutDashboard, User, ArrowUpRight } from "lucide-react";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
 import { logoutAction } from "@/actions/auth.actions";
 
@@ -377,6 +377,8 @@ export default function Header() {
     role: string;
     email?: string;
   } | null>(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -397,6 +399,36 @@ export default function Header() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setProfileDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutAction();
+      setCurrentUser(null);
+      setProfileDropdownOpen(false);
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
+
   const getInitials = (name: string) => {
     if (!name) return "U";
     const parts = name.trim().split(/\s+/);
@@ -415,6 +447,73 @@ export default function Header() {
     if (role === "ADMIN") return "Administrator";
     if (role === "RECRUITER") return "Senior Recruiter";
     return "Verified Candidate";
+  };
+
+  const getNavOptions = (role?: string) => {
+    if (role === "SUPER_ADMIN" || role === "ADMIN") {
+      return [
+        {
+          label: "Admin Workspace",
+          href: "/admin/dashboard",
+          desc: "System KPIs, users & controls",
+          icon: LayoutDashboard,
+        },
+        {
+          label: "User Management",
+          href: "/admin/users",
+          desc: "Accounts & permissions",
+          icon: User,
+        },
+        {
+          label: "Audit Logs",
+          href: "/admin/audit-logs",
+          desc: "Security and compliance logs",
+          icon: Briefcase,
+        },
+      ];
+    }
+    if (role === "RECRUITER") {
+      return [
+        {
+          label: "Recruiter Workspace",
+          href: "/recruiter/dashboard",
+          desc: "Requisitions & pipeline",
+          icon: LayoutDashboard,
+        },
+        {
+          label: "Candidate Search",
+          href: "/recruiter/candidates",
+          desc: "Active talent dossiers",
+          icon: User,
+        },
+        {
+          label: "Client Mandates",
+          href: "/recruiter/requisitions",
+          desc: "Open positions",
+          icon: Briefcase,
+        },
+      ];
+    }
+    return [
+      {
+        label: "Candidate Dashboard",
+        href: "/candidate/dashboard",
+        desc: "Profile status & job matches",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Profile & Dossier",
+        href: "/candidate/profile",
+        desc: "Skills, experience & CV",
+        icon: User,
+      },
+      {
+        label: "Active Applications",
+        href: "/candidate/applications",
+        desc: "Track interview stages",
+        icon: Briefcase,
+      },
+    ];
   };
 
   useEffect(() => {
@@ -447,7 +546,7 @@ export default function Header() {
           : "bg-transparent pt-3.5 pb-2.5"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl 2xl:max-w-[1360px] items-center justify-between gap-4 px-6 lg:px-10">
+      <div className="mx-auto flex max-w-7xl 2xl:max-w-[1360px] items-center justify-between gap-2 sm:gap-3 lg:gap-4 px-4 sm:px-6 lg:px-8">
         
         {/* Left: black logo */}
         <Link href="/" className="group flex shrink-0 items-center transition-transform hover:opacity-90">
@@ -463,7 +562,7 @@ export default function Header() {
 
         {/* Middle: Desktop Nav with Interactive Mega Dropdowns */}
         <nav
-          className="hidden items-center gap-1 lg:flex"
+          className="hidden items-center gap-0.5 xl:gap-1.5 lg:flex shrink-0"
           onMouseLeave={handleMouseLeave}
         >
           {NAV_DATA.map((section, idx) => {
@@ -471,21 +570,21 @@ export default function Header() {
             return (
               <div
                 key={section.label}
-                className="relative"
+                className={`relative ${idx >= 4 ? "hidden 2xl:block" : ""}`}
                 onMouseEnter={() => handleMouseEnter(idx)}
               >
                 {/* Top-level Nav Pill Button */}
                 <Link
                   href={section.href}
-                  className={`group inline-flex items-center gap-1.5 rounded-full px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] transition-all duration-200 ${
+                  className={`group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 xl:px-4 py-1.5 xl:py-2 font-mono text-[10.5px] xl:text-[11px] font-semibold uppercase tracking-[0.07em] xl:tracking-[0.12em] transition-all duration-200 ${
                     isOpen
                       ? "bg-electric/[0.09] text-electric"
                       : "text-[#3d4c68] hover:bg-black/[0.04] hover:text-[#0a1428]"
                   }`}
                 >
-                  <span>{section.label}</span>
+                  <span className="whitespace-nowrap">{section.label}</span>
                   <svg
-                    className={`h-3 w-3 transition-transform duration-200 ${
+                    className={`h-3 w-3 shrink-0 transition-transform duration-200 ${
                       isOpen ? "rotate-180 text-electric" : "text-[#7d91b0] group-hover:text-electric"
                     }`}
                     fill="none"
@@ -592,45 +691,143 @@ export default function Header() {
         </nav>
 
         {/* Right: Auth buttons & Mobile Hamburger */}
-        <div className="flex shrink-0 items-center gap-1.5 xs:gap-2 sm:gap-3">
+        {/* Right: Auth controls & Mobile Hamburger */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {currentUser ? (
-            <Link
-              href={getDashboardHref(currentUser.role)}
-              title={`${currentUser.fullName} (${getRoleLabel(currentUser.role)}) • Go to Dashboard`}
-              aria-label="Go to Dashboard"
-              className="relative group/avatar flex h-9 w-9 sm:h-9.5 sm:w-9.5 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0066FF] via-[#0088FF] to-[#00D4FF] text-white font-display text-xs sm:text-sm font-bold shadow-[0_4px_14px_-2px_rgba(0,102,255,0.4)] ring-2 ring-white hover:ring-electric hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-            >
-              <span>{getInitials(currentUser.fullName)}</span>
-              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-400" />
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setProfileDropdownOpen((prev) => !prev)}
+                aria-expanded={profileDropdownOpen}
+                aria-haspopup="menu"
+                aria-label={`User menu for ${currentUser.fullName}`}
+                className="group/avatar flex items-center gap-2 rounded-full border border-[#bcd6fa]/80 bg-white/95 p-1 sm:pr-3 shadow-[0_2px_8px_-2px_rgba(10,20,40,0.06)] backdrop-blur-md transition-all duration-200 hover:border-[#0066FF]/60 hover:bg-white hover:shadow-[0_4px_16px_-2px_rgba(0,102,255,0.2)] focus:outline-none cursor-pointer"
+              >
+                {/* Circle Avatar with Initials + Online Dot */}
+                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0066FF] via-[#0088FF] to-[#00D4FF] text-white font-display text-xs sm:text-sm font-extrabold shadow-[0_3px_12px_-2px_rgba(0,102,255,0.45)] ring-[2px] ring-white">
+                  <span className="tracking-wide">{getInitials(currentUser.fullName)}</span>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-400 shadow-xs" />
+                </div>
 
-              {/* Micro-tooltip on desktop hover */}
-              <span className="pointer-events-none absolute top-full mt-2 right-0 hidden sm:group-hover/avatar:flex flex-col items-end whitespace-nowrap rounded-xl bg-[#0a1428] px-3 py-1.5 text-[11px] font-medium text-white shadow-xl border border-white/10 z-50 animate-in fade-in-0 duration-150">
-                <span className="font-bold text-white">{currentUser.fullName}</span>
-                <span className="text-[10px] text-cyan-400 font-mono">
-                  {currentUser.role === "SUPER_ADMIN" || currentUser.role === "ADMIN"
-                    ? "Admin Workspace →"
-                    : currentUser.role === "RECRUITER"
-                    ? "Recruiter Workspace →"
-                    : "Candidate Dashboard →"}
-                </span>
-              </span>
-            </Link>
+                {/* Name on Desktop */}
+                <div className="hidden sm:flex flex-col text-left leading-tight pr-0.5">
+                  <span className="font-display text-xs font-bold text-[#0a1428] max-w-[120px] lg:max-w-[150px] truncate group-hover/avatar:text-[#0066FF] transition-colors">
+                    {currentUser.fullName}
+                  </span>
+                  <span className="font-mono text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
+                    {getRoleLabel(currentUser.role)}
+                  </span>
+                </div>
+
+                {/* Dropdown Chevron */}
+                <ChevronDown
+                  size={14}
+                  className={`text-slate-400 transition-transform duration-200 group-hover/avatar:text-[#0066FF] ${
+                    profileDropdownOpen ? "rotate-180 text-[#0066FF]" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Panel */}
+              {profileDropdownOpen && (
+                <div
+                  role="menu"
+                  className="absolute top-full right-0 mt-2.5 w-72 rounded-2xl border border-[#bcd6fa]/80 bg-white/98 p-2.5 shadow-[0_20px_50px_-10px_rgba(10,20,40,0.18)] backdrop-blur-xl z-50 animate-in fade-in-0 zoom-in-95 duration-150 origin-top-right"
+                >
+                  {/* User Summary Card */}
+                  <div className="flex items-center gap-3 rounded-xl bg-gradient-to-br from-[#f0f6ff] to-[#e6efff] p-3 border border-[#bcd6fa]/40 mb-2">
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#0066FF] via-[#0088FF] to-[#00D4FF] text-white font-display text-sm font-bold shadow-sm">
+                      <span>{getInitials(currentUser.fullName)}</span>
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display text-xs font-bold text-[#0a1428]">
+                        {currentUser.fullName}
+                      </p>
+                      {currentUser.email && (
+                        <p className="truncate font-mono text-[11px] text-slate-500">
+                          {currentUser.email}
+                        </p>
+                      )}
+                      <span className="mt-1 inline-flex items-center rounded-md bg-[#0066FF]/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#0066FF]">
+                        {getRoleLabel(currentUser.role)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Nav Options */}
+                  <div className="space-y-0.5">
+                    {getNavOptions(currentUser.role).map((opt) => {
+                      const Icon = opt.icon;
+                      return (
+                        <Link
+                          key={opt.href}
+                          href={opt.href}
+                          onClick={() => setProfileDropdownOpen(false)}
+                          className="group flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-all hover:bg-[#0066FF]/5 hover:text-[#0066FF]"
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-[#0066FF]/10 group-hover:text-[#0066FF] transition-colors">
+                            <Icon size={15} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-display text-xs font-semibold text-[#0a1428] group-hover:text-[#0066FF] transition-colors">
+                              {opt.label}
+                            </p>
+                            <p className="truncate font-mono text-[10px] text-slate-500">
+                              {opt.desc}
+                            </p>
+                          </div>
+                          <ArrowUpRight
+                            size={13}
+                            className="text-slate-400 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[#0066FF]"
+                          />
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="my-1.5 border-t border-[#bcd6fa]/50" />
+
+                  {/* Logout Action */}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-rose-600 transition-all hover:bg-rose-50 cursor-pointer"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition-colors">
+                      <LogOut size={15} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display text-xs font-semibold text-rose-600">
+                        Sign out
+                      </p>
+                      <p className="font-mono text-[10px] text-rose-400">
+                        End active session
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
-            <Link
-              href="/login"
-              className="hidden items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-3.5 py-1.5 sm:px-4 sm:py-2 font-display text-xs sm:text-sm font-semibold text-[#0a1428] shadow-[0_2px_8px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric sm:inline-flex"
-            >
-              Log in
-            </Link>
-          )}
+            <>
+              <Link
+                href="/login"
+                className="hidden items-center justify-center whitespace-nowrap rounded-xl border border-[#bcd6fa] bg-white/80 px-3.5 py-1.5 sm:px-4 sm:py-2 font-display text-xs sm:text-sm font-semibold text-[#0a1428] shadow-[0_2px_8px_-2px_rgba(10,20,40,0.04)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-electric/50 hover:bg-white hover:text-electric sm:inline-flex"
+              >
+                Log in
+              </Link>
 
-          <Link
-            href="/contact"
-            className="group inline-flex items-center gap-1.5 sm:gap-2 justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-3 py-1.5 xs:px-3.5 xs:py-2 sm:px-4.5 sm:py-2 font-display text-[11px] xs:text-xs sm:text-sm font-semibold text-white shadow-[0_6px_16px_-4px_rgba(10,20,40,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)] cursor-pointer"
-          >
-            <span>Hire & Deploy</span>
-            <AnimatedChevrons size={11} count={3} />
-          </Link>
+              <Link
+                href="/contact"
+                className="group inline-flex items-center gap-1.5 sm:gap-2 justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-3 py-1.5 xs:px-3.5 xs:py-2 sm:px-4.5 sm:py-2 font-display text-[11px] xs:text-xs sm:text-sm font-semibold text-white shadow-[0_6px_16px_-4px_rgba(10,20,40,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)] cursor-pointer"
+              >
+                <span>Hire & Deploy</span>
+                <AnimatedChevrons size={11} count={3} />
+              </Link>
+            </>
+          )}
 
           {/* Mobile Hamburger Button */}
           <button

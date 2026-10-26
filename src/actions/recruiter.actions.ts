@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import {
   RecruiterPod,
@@ -369,6 +370,11 @@ export async function getRecruiterCandidatesAction(
       skills: Array.isArray(c.skills) ? c.skills : ["Engineering"],
       experience: c.experience || "Senior Specialist",
       matchScore: c.matchScore || "95%",
+      profileStrength: typeof c.profileStrength === "number" ? c.profileStrength : (typeof c.profile_strength === "number" ? c.profile_strength : 88),
+      readinessIndex: typeof c.readinessIndex === "number" ? c.readinessIndex : (typeof c.profile_strength === "number" ? c.profile_strength : 88),
+      cvScore: typeof c.cvScore === "number" ? c.cvScore : (typeof c.cv_score === "number" ? c.cv_score : 90),
+      vettingScore: typeof c.vettingScore === "number" ? c.vettingScore : (typeof c.vetting_score === "number" ? c.vetting_score : 92),
+      readinessTier: c.readinessTier || c.readiness_tier || "ready",
       rate: c.rate || "$95/hr",
       availability: c.availability || "Immediate",
       verified: true,
@@ -467,30 +473,68 @@ export async function getRecruiterAnalyticsAction(): Promise<RecruiterAnalyticsD
   }
 }
 
+export interface PipelineCandidateItem {
+  id: string;
+  candidate_id: string;
+  candidate_name: string;
+  candidate_email: string;
+  candidate_phone: string;
+  candidate_location: string;
+  requisition_id: string;
+  requisition_title: string;
+  requisition_sector: string;
+  client_name: string;
+  stage: string;
+  sub_stage: string;
+  source: string;
+  skills: string[];
+  rate: string;
+  match_score: string;
+  applied_at: string;
+  updated_at: string;
+  note: string;
+}
+
+export interface PipelineStagesData {
+  discovery: PipelineCandidateItem[];
+  market_mapping: PipelineCandidateItem[];
+  technical_vetting: PipelineCandidateItem[];
+  interview: PipelineCandidateItem[];
+  closed: PipelineCandidateItem[];
+  rejected?: PipelineCandidateItem[];
+}
+
 /**
- * Fetch 5-stage recruiter applicant pipeline
+ * Fetch 5-stage recruiter applicant pipeline with optional requisition and sector filters
  */
-export async function getRecruiterPipelineAction() {
+export async function getRecruiterPipelineAction(
+  requisitionId?: string,
+  sector?: string
+): Promise<PipelineStagesData> {
+  const emptyStages: PipelineStagesData = {
+    discovery: [],
+    market_mapping: [],
+    technical_vetting: [],
+    interview: [],
+    closed: [],
+    rejected: [],
+  };
+
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
 
-    const response = await apiGet<any>("ats/pipeline/", { cookieHeader });
-    return response.data || {
-      discovery: [],
-      market_mapping: [],
-      technical_vetting: [],
-      interview: [],
-      closed: [],
-    };
+    const params: Record<string, string | undefined> = {};
+    if (requisitionId && requisitionId !== "all") params.requisition_id = requisitionId;
+    if (sector && sector !== "all") params.sector = sector;
+
+    const response = await apiGet<PipelineStagesData>("ats/pipeline/", {
+      cookieHeader,
+      params,
+    });
+    return response.data || emptyStages;
   } catch {
-    return {
-      discovery: [],
-      market_mapping: [],
-      technical_vetting: [],
-      interview: [],
-      closed: [],
-    };
+    return emptyStages;
   }
 }
 
@@ -795,5 +839,321 @@ export async function updateRecruiterReferralAction(input: {
     return { success: false, error: err.message || "Failed to update referral." };
   }
 }
+
+export interface ClientContactItem {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  role_title?: string;
+  is_primary?: boolean;
+}
+
+export interface ClientItem {
+  id: string;
+  name: string;
+  sector: string;
+  website?: string;
+  terms?: Record<string, any>;
+  delivery_channel: "email" | "im" | "client_ats" | "portal" | string;
+  owner?: string;
+  owner_name?: string;
+  contacts: ClientContactItem[];
+  active_requisitions_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientCreatePayload {
+  name: string;
+  sector?: string;
+  website?: string;
+  delivery_channel?: string;
+  terms?: Record<string, any>;
+  primary_contact_name?: string;
+  primary_contact_email?: string;
+  primary_contact_phone?: string;
+  primary_contact_role?: string;
+}
+
+/**
+ * Retrieve all Client records for recruiter workspace (ATS-01)
+ */
+export async function getClientsAction(params?: { sector?: string; search?: string }): Promise<{
+  success: boolean;
+  data?: ClientItem[];
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    let url = "ats/clients/";
+    const query = new URLSearchParams();
+    if (params?.sector && params.sector !== "all") query.set("sector", params.sector);
+    if (params?.search) query.set("search", params.search);
+    const qs = query.toString();
+    if (qs) url += `?${qs}`;
+
+    const res = await apiGet<{ data: ClientItem[] } | ClientItem[]>(url, { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+    const list = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
+    return { success: true, data: list };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to load clients." };
+  }
+}
+
+/**
+ * Create a new Client record and optional primary contact (ATS-01)
+ */
+export async function createClientAction(payload: ClientCreatePayload): Promise<{
+  success: boolean;
+  data?: ClientItem;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const res = await apiPost<{ data: ClientItem } | ClientItem>("ats/clients/", payload, { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+    revalidatePath("/recruiter/requisitions");
+    revalidatePath("/recruiter/clients");
+    revalidatePath("/admin/clients");
+    return { success: true, data: (res.data as any)?.data || res.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to create client." };
+  }
+}
+
+/**
+ * Update an existing Client record (ATS-01)
+ */
+export async function updateClientAction(id: string, payload: Partial<ClientCreatePayload>): Promise<{
+  success: boolean;
+  data?: ClientItem;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const res = await apiPatch<{ data: ClientItem } | ClientItem>(`ats/clients/${id}/`, payload, { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+    revalidatePath("/recruiter/requisitions");
+    revalidatePath("/recruiter/clients");
+    revalidatePath("/admin/clients");
+    return { success: true, data: (res.data as any)?.data || res.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update client." };
+  }
+}
+
+/**
+ * Recruiter sources a candidate into a requisition pipeline (Stage 2: Market Mapping / Sourced)
+ */
+export async function sourceCandidateForRequisitionAction(payload: {
+  candidate_id: string;
+  requisition_id: string;
+  note?: string;
+}): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const res = await apiPost("ats/candidates/source/", payload, { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+    revalidatePath("/recruiter/requisitions");
+    revalidatePath("/recruiter/candidates");
+    return { success: true, data: (res.data as any)?.data || res.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to source candidate." };
+  }
+}
+
+export interface ApplicationSkillItem {
+  name: string;
+  type: string;
+  years_experience: number;
+  proficiency: string;
+  source: string;
+}
+
+export interface ApplicationDocumentItem {
+  id: string;
+  doc_type: string;
+  original_filename: string;
+  size_bytes: number;
+  scan_status: string;
+  uploaded_at: string;
+}
+
+export interface ApplicationEventItem {
+  id: string;
+  from_stage: string;
+  to_stage: string;
+  sub_stage: string;
+  actor_name: string;
+  note: string;
+  timestamp: string;
+}
+
+export interface ApplicationDetailData {
+  id: string;
+  stage: string;
+  sub_stage: string;
+  source: string;
+  applied_at: string;
+  updated_at: string;
+  candidate: {
+    id: string;
+    full_name: string;
+    email: string;
+    phone: string;
+    location: string;
+    timezone: string;
+    sector: string;
+    domain: string;
+    level: string;
+    work_auth: string;
+    engagement_prefs: string[];
+    expected_comp_min?: number;
+    expected_comp_max?: number;
+    desired_hourly_rate: string;
+    availability_date: string;
+    open_to_work: boolean;
+    portfolio_url: string;
+    github_url: string;
+    linkedin_url: string;
+    bio: string;
+    profile_strength: number;
+    cv_score: number;
+    vetting_status: string;
+    readiness_tier: string;
+    skills: ApplicationSkillItem[];
+    documents: ApplicationDocumentItem[];
+  };
+  requisition: {
+    id: string;
+    title: string;
+    sector: string;
+    level: string;
+    headcount: number;
+    budget_min: number;
+    budget_max: number;
+    location: string;
+    engagement: string;
+    status: string;
+    skills: string[];
+    description: string;
+    discovery: Record<string, any>;
+    client?: {
+      id: string;
+      name: string;
+      sector: string;
+      delivery_channel: string;
+    } | null;
+  };
+  rate: string;
+  match_score: string;
+  events: ApplicationEventItem[];
+}
+
+/**
+ * Fetch complete application details for the dedicated inner handling page
+ */
+export async function getRecruiterApplicationDetailAction(id: string): Promise<{
+  success: boolean;
+  data?: ApplicationDetailData;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const res = await apiGet<{ data: ApplicationDetailData } | ApplicationDetailData>(
+      `ats/applications/${id}/`,
+      { cookieHeader }
+    );
+
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+
+    const item = (res.data as any)?.data || res.data;
+    return { success: true, data: item };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to load application details." };
+  }
+}
+
+/**
+ * Update application stage and log note
+ */
+export async function updateRecruiterApplicationStageAction(
+  id: string,
+  payload: { stage: string; sub_stage?: string; note?: string }
+): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const res = await apiPatch(`ats/applications/${id}/`, payload, { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+
+    revalidatePath("/recruiter/applications");
+    revalidatePath(`/recruiter/applications/${id}`);
+    return { success: true, data: (res.data as any)?.data || res.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update application stage." };
+  }
+}
+
+/**
+ * Append internal recruiter audit note to application timeline
+ */
+export async function addRecruiterApplicationNoteAction(
+  id: string,
+  note: string
+): Promise<{
+  success: boolean;
+  data?: ApplicationEventItem;
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const res = await apiPost(`ats/applications/${id}/notes/`, { note }, { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+
+    revalidatePath(`/recruiter/applications/${id}`);
+    return { success: true, data: (res.data as any)?.data || res.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to log note." };
+  }
+}
+
 
 

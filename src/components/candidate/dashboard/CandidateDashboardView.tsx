@@ -23,6 +23,7 @@ import { CandidateProfileDrawer } from "./drawers/CandidateProfileDrawer";
 import { CandidateCredentialsDrawer } from "./drawers/CandidateCredentialsDrawer";
 import { CandidateDocumentsDrawer } from "./drawers/CandidateDocumentsDrawer";
 import { CandidateDataRightsDrawer } from "./drawers/CandidateDataRightsDrawer";
+import { CandidateBenchmarkScores } from "@/components/candidate/common/CandidateBenchmarkScores";
 
 export function CandidateDashboardView() {
   const {
@@ -37,18 +38,13 @@ export function CandidateDashboardView() {
     isLoading,
   } = useCandidatePersona();
 
-  const [activeTab, setActiveTab] = useState<"all" | "tech" | "health">("all");
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [isCredentialsDrawerOpen, setIsCredentialsDrawerOpen] = useState(false);
   const [isDocumentsDrawerOpen, setIsDocumentsDrawerOpen] = useState(false);
   const [isDataRightsDrawerOpen, setIsDataRightsDrawerOpen] = useState(false);
   const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
 
-  const filteredPipelines = pipelines.filter((pod) => {
-    if (activeTab === "tech") return pod.sector?.toLowerCase() === "technology";
-    if (activeTab === "health") return pod.sector?.toLowerCase() === "healthcare";
-    return true;
-  });
+  const filteredPipelines = pipelines;
 
   const nextAction = telemetry?.next_best_action;
 
@@ -79,14 +75,14 @@ export function CandidateDashboardView() {
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0d1f3d] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
         <div className="relative z-10 flex flex-col justify-between gap-4 sm:gap-6 md:flex-row md:items-center">
           <div>
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-electric/40 bg-electric/20 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-electric-bright">
-                <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+                <span className={`h-2 w-2 rounded-full ${currentProfile.primaryTrack === "healthcare" ? "bg-emerald-400" : "bg-electric-bright"}`} />
                 <span>
-                  STATUS: {currentProfile.readinessIndex > 0 ? "INTAKE VERIFIED" : "INTAKE SUBMITTED"}
+                  {currentProfile.primaryTrack === "healthcare" ? "Healthcare & Clinical Path" : "Technology & Engineering Path"}
                 </span>
               </div>
-              <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-gray-300">
+              <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-slate-300 font-medium">
                 {currentProfile.vettingTier}
               </span>
             </div>
@@ -95,7 +91,7 @@ export function CandidateDashboardView() {
               Welcome back, {currentProfile.fullName}
             </h1>
             <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
-              Your candidate profile is active in the Pepoltek talent network. Track your sprint pipelines, vetting telemetry, and role matches.
+              Your candidate profile is active in the Pepoltek talent network. Track your application status, vetting benchmarks, and matched roles.
             </p>
 
             {/* Quick Profile Drawer Trigger Buttons - Smooth Scrollable on Mobile */}
@@ -231,123 +227,34 @@ export function CandidateDashboardView() {
         </div>
       )}
 
-      {/* Metrics & Telemetry Row (SRS CAN-08) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Profile Readiness */}
-        <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-semibold text-mist uppercase tracking-wider">Readiness Index</div>
-            <div className="mt-1 font-display text-2xl sm:text-3xl font-bold text-ink">
-              {currentProfile.readinessIndex > 0 ? `${currentProfile.readinessIndex}%` : "In Review"}
-            </div>
-            <div className="mt-1 text-[11px] text-signal font-semibold">
-              {currentProfile.readinessIndex >= 70 ? "Priority Match Ready" : "Intake Completed"}
-            </div>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-electric/10 text-electric border border-electric/25 shadow-2xs">
-            <Activity size={24} />
-          </div>
-        </div>
+      {/* 5 Core Benchmarks of Candidate Value (CAN-08 & Business SRS 4.2) */}
+      <CandidateBenchmarkScores
+        readinessIndex={currentProfile.readinessIndex}
+        atsCompatibilityScore={currentProfile.atsCompatibilityScore}
+        technicalVettingScore={currentProfile.technicalVettingScore}
+        readinessTier={currentProfile.vettingTier}
+        requisitionFitScore={currentProfile.requisitionFitScore || (telemetry?.match_score ?? 94)}
+        track={currentProfile.primaryTrack}
+        variant="dashboard"
+      />
 
-        {/* ATS Compatibility */}
-        <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-semibold text-mist uppercase tracking-wider">ATS Compatibility</div>
-            <div className="mt-1 font-display text-2xl sm:text-3xl font-bold text-ink">
-              {currentProfile.atsCompatibilityScore > 0 ? `${currentProfile.atsCompatibilityScore}%` : "Pending Scan"}
-            </div>
-            <div className="mt-1 text-[11px] text-ink-soft font-medium">
-              {currentProfile.skills && currentProfile.skills.length > 0
-                ? `Skills: ${currentProfile.skills.slice(0, 2).join(", ")}`
-                : "Resume Upload Ready"}
-            </div>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/10 text-signal border border-signal/25 shadow-2xs">
-            <CheckCircle size={24} />
-          </div>
-        </div>
-
-        {/* Technical / Clinical Vetting */}
-        <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-semibold text-mist uppercase tracking-wider">
-              {currentProfile.primaryTrack === "healthcare" ? "Clinical Vetting" : "Technical Vetting"}
-            </div>
-            <div className="mt-1 font-display text-2xl sm:text-3xl font-bold text-ink">
-              {currentProfile.technicalVettingScore > 0 ? (
-                <>
-                  {currentProfile.technicalVettingScore} <span className="text-sm text-mist font-normal">/ 100</span>
-                </>
-              ) : (
-                <span className="text-xl text-mist font-bold">Pending Review</span>
-              )}
-            </div>
-            <div className="mt-1 text-[11px] text-ink-soft font-medium">
-              {currentProfile.technicalVettingScore > 0 ? "Validated Assessment" : "Queue: Priority Intake"}
-            </div>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-electric/10 text-electric border border-electric/25 shadow-2xs">
-            <Zap size={24} />
-          </div>
-        </div>
-
-        {/* Target Rate Bracket */}
-        <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-semibold text-mist uppercase tracking-wider">Target Rate Bracket</div>
-            <div className="mt-1 font-display text-lg sm:text-xl font-bold text-ink truncate max-w-[150px]">
-              {currentProfile.desiredHourlyRate && currentProfile.desiredHourlyRate !== "Specified in Intake"
-                ? currentProfile.desiredHourlyRate
-                : "Intake Specified"}
-            </div>
-            <div className="mt-1 text-[11px] text-signal font-semibold">Compensation Target</div>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/10 text-signal border border-signal/25 shadow-2xs">
-            <ShieldCheck size={24} />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Split: Active Pod Applications & Right Intelligence Panel */}
+      {/* Main Split: Active Applications & Right Intelligence Panel */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
-        {/* Left 8 Cols: Active Pod Applications */}
+        {/* Left 8 Cols: Active Applications */}
         <div className="lg:col-span-8 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-lg font-bold text-ink">Sprint Application Pipelines</h2>
+              <h2 className="font-display text-lg font-bold text-ink">Application Pipeline</h2>
               <p className="text-xs text-ink-soft">Live progress across candidate vetting and client introduction stages.</p>
             </div>
 
-            {/* Quick Sector Filter */}
+            {/* Track Application Count */}
             {pipelines.length > 0 && (
-              <div className="flex items-center gap-1 rounded-xl border border-[#bcd6fa] bg-white p-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("all")}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                    activeTab === "all" ? "bg-ink text-white shadow-xs" : "text-ink-soft hover:text-ink"
-                  }`}
-                >
-                  All ({pipelines.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("tech")}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                    activeTab === "tech" ? "bg-ink text-white shadow-xs" : "text-ink-soft hover:text-ink"
-                  }`}
-                >
-                  Tech
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("health")}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                    activeTab === "health" ? "bg-ink text-white shadow-xs" : "text-ink-soft hover:text-ink"
-                  }`}
-                >
-                  Health
-                </button>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  <span className={`h-1.5 w-1.5 rounded-full ${currentProfile.primaryTrack === "healthcare" ? "bg-emerald-500" : "bg-electric"}`} />
+                  <span>{currentProfile.primaryTrack === "healthcare" ? "Clinical Applications" : "Technology Applications"} ({pipelines.length})</span>
+                </span>
               </div>
             )}
           </div>
@@ -359,7 +266,7 @@ export function CandidateDashboardView() {
               </div>
               <h3 className="font-display text-base font-bold text-ink">No Active Applications</h3>
               <p className="mt-1 text-xs text-ink-soft max-w-md mx-auto leading-relaxed">
-                You have not submitted any sprint applications yet. Explore reverse search matches or browse open roles to join top enterprise teams.
+                You have not submitted any applications yet. Explore reverse search matches or browse open roles to connect with top enterprise teams.
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                 <Link
@@ -478,9 +385,9 @@ export function CandidateDashboardView() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-electric" />
-                <h3 className="font-display text-sm font-bold text-ink">Upcoming Sprints &amp; Calls</h3>
+                <h3 className="font-display text-sm font-bold text-ink">Upcoming Interviews</h3>
               </div>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-mist">Live Schedule</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-mist">Interviews</span>
             </div>
 
             {interviews.length === 0 ? (
@@ -488,9 +395,9 @@ export function CandidateDashboardView() {
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-canvas text-mist">
                   <Clock size={20} />
                 </div>
-                <div className="font-display font-bold text-ink">No Upcoming Live Calls</div>
+                <div className="font-display font-bold text-ink">No Scheduled Interviews</div>
                 <p className="text-ink-soft text-[11px] leading-relaxed">
-                  When a hiring lead schedules a technical screening or interview, your video room link will appear here.
+                  When a recruiter or client schedules a screening or technical interview, your meeting details and link will appear here.
                 </p>
               </div>
             ) : (
@@ -501,7 +408,7 @@ export function CandidateDashboardView() {
                     className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/40 p-4 space-y-2 text-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-display font-bold text-ink truncate pr-2">{item.podName}</span>
+                      <span className="font-display font-bold text-ink truncate pr-2">{item.role || item.podName}</span>
                       <span className="rounded-full bg-signal/10 px-2 py-0.5 text-[10px] font-mono font-bold text-signal shrink-0">
                         {item.status}
                       </span>

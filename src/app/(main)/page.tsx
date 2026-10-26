@@ -10,6 +10,9 @@ import ProductSolutions from "@/components/main/sections/ProductSolutions";
 import TalentEcosystem from "@/components/main/sections/TalentEcosystem";
 import CtaBanner from "@/components/main/sections/CtaBanner";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function MainPage() {
   const contentRes = await getPublicSiteContentAction<HomepageMasterData>("homepage");
   const data = contentRes.success ? contentRes.data : undefined;

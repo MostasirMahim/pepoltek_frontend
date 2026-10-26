@@ -207,8 +207,12 @@ export async function logoutAction(): Promise<{ success: boolean }> {
 export async function getCurrentUserAction(): Promise<AuthUser | null> {
   try {
     const cookieStore = await cookies();
-    const cookieHeader = cookieStore.toString();
+    const token = cookieStore.get("access_token")?.value;
+    if (!token) {
+      return null;
+    }
 
+    const cookieHeader = cookieStore.toString();
     const response = await apiGet<any>("auth/me", { cookieHeader });
     if (response.data) {
       const u = response.data.user || response.data;
@@ -314,6 +318,53 @@ export async function changeVerificationEmailAction(payload: { currentEmail: str
     };
   } catch (err: any) {
     return { success: false, message: err.message || "Failed to update email address." };
+  }
+}
+
+/**
+ * Refresh access token using refresh_token cookie.
+ */
+export async function refreshTokenAction(): Promise<{ success: boolean; access_token?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get("refresh_token")?.value;
+    if (!refreshToken) {
+      return { success: false };
+    }
+
+    const cookieHeader = cookieStore.toString();
+    const response = await apiPost<{ access_token?: string; refresh_token?: string }>(
+      "auth/refresh",
+      { refresh: refreshToken },
+      { cookieHeader }
+    );
+
+    if (response.error || !response.data?.access_token) {
+      return { success: false };
+    }
+
+    const { access_token, refresh_token } = response.data;
+    cookieStore.set("access_token", access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    if (refresh_token) {
+      cookieStore.set("refresh_token", refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      });
+    }
+
+    return { success: true, access_token };
+  } catch {
+    return { success: false };
   }
 }
 

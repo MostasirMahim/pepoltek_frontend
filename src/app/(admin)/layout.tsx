@@ -25,6 +25,8 @@ import {
   Link2,
   Stethoscope,
   Image as ImageIcon,
+  Building2,
+  Kanban,
 } from "@/components/ui/Icons";
 
 export interface ChildNavItem {
@@ -118,6 +120,17 @@ const ADMIN_NAV: NavItem[] = [
     label: "Requisition Allocations",
     href: "/admin/pods-management",
     icon: <Briefcase size={18} />,
+  },
+  {
+    label: "Candidate Pipeline & Kanban",
+    href: "/recruiter/applications",
+    badge: "KANBAN",
+    icon: <Kanban size={18} />,
+  },
+  {
+    label: "Client Organizations",
+    href: "/admin/clients",
+    icon: <Building2 size={18} />,
   },
   {
     label: "Compliance Vault",

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   Briefcase,
+  Calendar,
   Compass,
   FileText,
   Users,
@@ -42,6 +43,11 @@ const CANDIDATE_NAV: NavItem[] = [
     label: "Applications & Roles",
     href: "/candidate/applications",
     icon: <Briefcase size={18} />,
+  },
+  {
+    label: "Sprint Interviews",
+    href: "/candidate/interviews",
+    icon: <Calendar size={18} />,
   },
   {
     label: "Reverse Job Search",
@@ -292,11 +298,11 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* Live Sector Badge Capsule */}
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-[#bcd6fa]/70 bg-canvas/60 px-3 py-1.5 text-xs shadow-2xs">
-            <span className="h-2 w-2 rounded-full bg-signal animate-pulse" />
-            <span className="font-mono text-[11px] font-bold text-ink uppercase tracking-wider">
-              {currentProfile.primaryTrack === "healthcare" ? "Clinical Squad Network" : "Engineering Talent Network"}
+          {/* Active Industry Path */}
+          <div className="hidden lg:flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50/80 px-3 py-1 text-xs font-medium text-slate-700">
+            <span className={`h-2 w-2 rounded-full ${currentProfile.primaryTrack === "healthcare" ? "bg-emerald-500" : "bg-electric"}`} />
+            <span>
+              {currentProfile.primaryTrack === "healthcare" ? "Healthcare & Clinical Track" : "Technology & Engineering Track"}
             </span>
           </div>
         </div>
@@ -348,9 +354,9 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
               <div className="relative">
                 <div
                   className={`flex h-9 w-9 items-center justify-center rounded-xl font-display text-xs font-bold text-white shadow-xs ${
-                    activePersona === "alex"
-                      ? "bg-gradient-to-tr from-electric to-electric-bright"
-                      : "bg-gradient-to-tr from-signal to-emerald-400"
+                    currentProfile.primaryTrack === "healthcare"
+                      ? "bg-gradient-to-tr from-emerald-600 to-teal-500"
+                      : "bg-gradient-to-tr from-electric to-electric-bright"
                   }`}
                 >
                   {avatarInitials}
@@ -386,9 +392,9 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center gap-2.5">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-xl font-display text-sm font-bold text-white ${
-                        activePersona === "alex"
-                          ? "bg-gradient-to-tr from-electric to-electric-bright"
-                          : "bg-gradient-to-tr from-signal to-emerald-400"
+                        currentProfile.primaryTrack === "healthcare"
+                          ? "bg-gradient-to-tr from-emerald-600 to-teal-500"
+                          : "bg-gradient-to-tr from-electric to-electric-bright"
                       }`}
                     >
                       {avatarInitials}
@@ -664,9 +670,9 @@ function CandidateDashboardShell({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display text-xs font-bold text-white shadow-xs ${
-                    activePersona === "alex"
-                      ? "bg-gradient-to-tr from-electric to-electric-bright"
-                      : "bg-gradient-to-tr from-signal to-emerald-400"
+                    currentProfile.primaryTrack === "healthcare"
+                      ? "bg-gradient-to-tr from-emerald-600 to-teal-500"
+                      : "bg-gradient-to-tr from-electric to-electric-bright"
                   }`}
                 >
                   {avatarInitials}

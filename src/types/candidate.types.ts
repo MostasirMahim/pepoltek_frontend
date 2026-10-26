@@ -24,6 +24,7 @@ export interface CandidateProfile {
   readinessIndex: number; // 0 to 100
   atsCompatibilityScore: number; // 0 to 100
   technicalVettingScore: number; // 0 to 100
+  requisitionFitScore?: number; // 0 to 100
   vettingTier: "Tier 1: Elite Squad" | "Tier 2: Screened Specialist" | "Tier 3: General Talent";
   isOpenToPods: boolean;
   sprintAvailability: string;
@@ -66,7 +67,9 @@ export interface SprintPipelineItem {
   role: string;
   sector: "Technology" | "Healthcare";
   appliedDate: string;
-  currentStage: "Submitted" | "Screened" | "Technical Vetting" | "Client Panel" | "Deployed";
+  currentStage: "Market Mapping" | "Technical Vetting" | "Client Interview" | "Offer & Placement" | "Closed / Deployed" | string;
+  subStage?: string;
+  source?: string;
   stageIndex: number; // 1 to 5
   totalStages: number;
   rate: string;
@@ -85,6 +88,7 @@ export interface SprintPipelineItem {
 export interface UpcomingInterview {
   id: string;
   podName: string;
+  role?: string;
   dateString: string;
   timeString: string;
   type: string;
@@ -233,6 +237,7 @@ export interface CandidateDashboardTelemetry {
   readiness_tier?: string;
   readiness_index?: number;
   open_to_work: boolean;
+  match_score?: number;
   active_applications_count?: number;
   total_applications_count?: number;
   matched_roles_count?: number;

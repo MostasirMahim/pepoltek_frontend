@@ -26,7 +26,7 @@ export function RecruiterDashboardView({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-[#bcd6fa] bg-white p-6 sm:p-8 shadow-xs">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/30 bg-electric/10 px-3 py-0.5 text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
-            <span>Module 6: Recruiter Cockpit</span>
+            <span>HIRING OPERATIONS COCKPIT</span>
           </div>
           <h1 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-ink">
             Recruiter Cockpit &amp; Requisition Management Hub

@@ -112,7 +112,7 @@ export function CandidateCredentialsDrawer({ isOpen, onClose }: CandidateCredent
           <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#bcd6fa]/50 bg-canvas/30 shrink-0">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-signal/15 px-2.5 py-0.5 text-[10px] font-mono font-bold text-signal uppercase tracking-wider mb-1">
-                SRS CAN-04 &bull; VET-04
+                Verified Credentials Vault
               </div>
               <h2 className="font-display text-lg font-bold text-ink">
                 Licenses &amp; Professional Certifications

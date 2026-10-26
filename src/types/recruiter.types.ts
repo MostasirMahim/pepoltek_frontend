@@ -63,6 +63,11 @@ export interface RecruiterCandidate {
   engagement?: string;
   summary?: string;
   notes?: string;
+  profileStrength?: number;
+  readinessIndex?: number;
+  cvScore?: number;
+  vettingScore?: number;
+  readinessTier?: string;
 }
 
 export interface RecruiterInterview {

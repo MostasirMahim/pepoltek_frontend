@@ -18,6 +18,7 @@ import {
   RecruiterReferralRecord,
   updateRecruiterReferralAction,
 } from "@/actions/recruiter.actions";
+import { cleanJobTitle } from "@/lib/title-utils";
 
 interface RecruiterReferralsViewProps {
   initialData: RecruiterReferralsData | null;
@@ -551,7 +552,7 @@ export function RecruiterReferralsView({ initialData }: RecruiterReferralsViewPr
                     <option value="">Unassigned Requisition (General Talent Pool)</option>
                     {availableRequisitions.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.title} ({p.client_name}) {p.bounty_enabled ? `| Bounty: ${p.bounty_type_name || "Active"} ($${p.bounty_amount})` : "| No Bounty"}
+                        {cleanJobTitle(p.title)} ({p.client_name}){p.bounty_enabled ? ` · Bounty: $${p.bounty_amount}` : ""}
                       </option>
                     ))}
                   </select>

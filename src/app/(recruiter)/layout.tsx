@@ -16,6 +16,8 @@ import {
   Search,
   LogOut,
   ChevronDown,
+  Building2,
+  Kanban,
 } from "@/components/ui/Icons";
 
 interface NavItem {
@@ -40,6 +42,17 @@ const RECRUITER_NAV: NavItem[] = [
     label: "Requisitions & Jobs",
     href: "/recruiter/requisitions",
     icon: <Briefcase size={18} />,
+  },
+  {
+    label: "Candidate Applications & Kanban",
+    href: "/recruiter/applications",
+    badge: "KANBAN",
+    icon: <Kanban size={18} />,
+  },
+  {
+    label: "Client Organizations",
+    href: "/recruiter/clients",
+    icon: <Building2 size={18} />,
   },
   {
     label: "Vetted Talent Pool",

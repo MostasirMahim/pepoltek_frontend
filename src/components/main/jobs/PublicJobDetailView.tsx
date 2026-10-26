@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PublicJobDetail, applyPublicJobAction } from "@/actions/recruiter.actions";
 import {
@@ -23,6 +23,7 @@ import {
   Send,
   Building,
 } from "@/components/ui/Icons";
+import { cleanJobTitle } from "@/lib/title-utils";
 
 interface PublicJobDetailViewProps {
   job: PublicJobDetail;
@@ -40,6 +41,33 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applyResult, setApplyResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const [currentUser, setCurrentUser] = useState<{
+    fullName: string;
+    role: string;
+    email?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { getCurrentUserAction } = await import("@/actions/auth.actions");
+        const user = await getCurrentUserAction();
+        if (user) {
+          setCurrentUser({
+            fullName: user.fullName || "Candidate",
+            role: user.role || "CANDIDATE",
+            email: user.email,
+          });
+          setFullName(user.fullName || "");
+          setEmail(user.email || "");
+        }
+      } catch {
+        // Guest user
+      }
+    }
+    checkAuth();
+  }, []);
 
   const isHealth = (job.sector || "").toLowerCase().includes("health");
   const isGig = job.visibility === "published_gig";
@@ -112,7 +140,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
           </Link>
           <ChevronRight size={12} className="text-mist" />
           <span className="text-ink font-semibold truncate max-w-xs sm:max-w-md">
-            {job.title}
+            {cleanJobTitle(job.title)}
           </span>
         </nav>
 
@@ -142,9 +170,9 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     <span>Contract Sprint</span>
                   </span>
                 ) : isBounty ? (
-                  <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5 shadow-xs">
-                    <DollarSign size={12} />
-                    <span>{job.bounty_type_name ? `${job.bounty_type_name}: ` : "Referral Bounty: "}${bountyVal.toLocaleString()} Cash</span>
+                  <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5 shadow-2xs">
+                    <DollarSign size={12} className="text-amber-600" />
+                    <span>Referral Bounty: ${bountyVal.toLocaleString()}</span>
                   </span>
                 ) : (
                   <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/60 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5">
@@ -167,7 +195,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
               {/* Title & Organization */}
               <div>
                 <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0a1428] tracking-tight leading-tight">
-                  {job.title}
+                  {cleanJobTitle(job.title)}
                 </h1>
                 <div className="mt-2.5 flex flex-wrap items-center gap-y-2 gap-x-4 font-mono text-xs text-ink-soft">
                   <span className="inline-flex items-center gap-1 text-ink font-semibold">
@@ -586,7 +614,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                   Candidate Application
                 </span>
                 <h2 className="font-display text-lg font-bold text-[#0a1428] truncate max-w-sm sm:max-w-md">
-                  {job.title}
+                  {cleanJobTitle(job.title)}
                 </h2>
                 <p className="font-mono text-xs text-ink-soft">
                   REQ-{shortId} · ${job.budget_min || 95} - ${job.budget_max || 135}/hr
@@ -616,17 +644,72 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                   </div>
                   <p className="mt-1 text-xs leading-relaxed">{applyResult.text}</p>
                   {applyResult.type === "success" && (
-                    <button
-                      type="button"
-                      onClick={() => setIsApplyDrawerOpen(false)}
-                      className="mt-4 rounded-xl bg-signal px-4 py-2 font-display text-xs font-bold text-white shadow-xs cursor-pointer"
-                    >
-                      Close Drawer
-                    </button>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Link
+                        href="/candidate/applications"
+                        className="rounded-xl bg-electric px-4 py-2 font-display text-xs font-bold text-white shadow-xs hover:bg-ink transition-colors"
+                      >
+                        Open Applications Dashboard →
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setIsApplyDrawerOpen(false)}
+                        className="rounded-xl border border-[#bcd6fa] bg-white px-4 py-2 font-display text-xs font-semibold text-ink hover:bg-canvas transition-colors cursor-pointer"
+                      >
+                        Close Drawer
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : (
                 <form id="public-job-apply-form" onSubmit={handleApply} className="space-y-4">
+                  {/* Authenticated Candidate Card */}
+                  {currentUser ? (
+                    <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#0066FF] to-[#00D4FF] text-white font-bold flex items-center justify-center font-display text-sm shadow-xs">
+                          {currentUser.fullName.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-display font-bold text-ink text-sm">{currentUser.fullName}</h4>
+                            <span className="rounded bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">Verified Dossier</span>
+                          </div>
+                          <p className="font-mono text-xs text-ink-soft">{currentUser.email}</p>
+                        </div>
+                      </div>
+                      <Link href="/candidate/profile" target="_blank" className="text-xs font-mono text-electric hover:underline font-semibold">
+                        View Profile ↗
+                      </Link>
+                    </div>
+                  ) : (
+                    /* Guest Sign-in or Register Prompt */
+                    <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-amber-900">
+                          Have a Candidate Profile?
+                        </span>
+                        <Link
+                          href={`/login?redirect=/jobs/${job.id}`}
+                          className="rounded-lg bg-amber-600 px-3 py-1 font-display text-xs font-bold text-white hover:bg-amber-700 transition-colors"
+                        >
+                          Sign In to Quick Apply →
+                        </Link>
+                      </div>
+                      <p className="text-[11.5px] text-amber-900 leading-relaxed">
+                        Applying with a verified candidate profile gives your CV direct priority in our client review pipeline.
+                      </p>
+                      <div className="pt-0.5">
+                        <Link
+                          href={`/register?redirect=/jobs/${job.id}`}
+                          className="inline-block text-xs font-mono font-semibold text-amber-950 underline hover:text-electric"
+                        >
+                          Or Create Profile &amp; Upload CV →
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-1">
                     <label className="font-mono text-xs font-bold text-ink">
                       Full Legal Name <span className="text-red-500">*</span>

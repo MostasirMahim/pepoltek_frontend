@@ -91,7 +91,7 @@ export function CandidateDataRightsDrawer({ isOpen, onClose }: CandidateDataRigh
           <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#bcd6fa]/50 bg-canvas/30 shrink-0">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-electric/10 px-2.5 py-0.5 text-[10px] font-mono font-bold text-electric uppercase tracking-wider mb-1">
-                SRS CAN-09 &bull; GDPR &bull; CCPA
+                Data Privacy &bull; GDPR &bull; CCPA
               </div>
               <h2 className="font-display text-lg font-bold text-ink">
                 Data Rights &amp; Privacy Center

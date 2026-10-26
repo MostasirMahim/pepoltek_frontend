@@ -1,7 +1,10 @@
 import React from "react";
 import CaseStudiesClient from "./CaseStudiesClient";
-import { getContentBlockDetailAction } from "@/actions/content.actions";
+import { getPublicSiteContentAction } from "@/actions/content.actions";
 import type { PageHeaderData, CaseStudyItemData } from "@/components/admin/content/AdminCollectionEditor";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Technical Case Studies & Engineering Blueprints | Pepoltek Limited",
@@ -101,8 +104,11 @@ export default async function CaseStudiesPage() {
   let studies = DEFAULT_STUDIES;
 
   try {
-    const detail = await getContentBlockDetailAction("case_studies");
-    const liveData = (detail.data?.published?.data ?? detail.data?.latest?.data ?? {}) as {
+    const detail = await getPublicSiteContentAction<{
+      header?: PageHeaderData;
+      studies?: CaseStudyItemData[];
+    }>("case_studies");
+    const liveData = (detail.data ?? {}) as {
       header?: PageHeaderData;
       studies?: CaseStudyItemData[];
     };

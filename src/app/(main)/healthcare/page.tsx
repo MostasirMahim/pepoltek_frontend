@@ -16,7 +16,10 @@ import {
   FileText,
   Activity,
 } from "@/components/ui/Icons";
-import { getContentBlockDetailAction } from "@/actions/content.actions";
+import { getPublicSiteContentAction } from "@/actions/content.actions";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import { renderDynamicIcon } from "@/components/ui/DynamicIcon";
 import type { PageHeaderData, ServiceItemData } from "@/components/admin/content/AdminCollectionEditor";
 
@@ -134,8 +137,11 @@ export default async function HealthcarePage() {
   let servicesList = FALLBACK_SERVICES;
 
   try {
-    const detail = await getContentBlockDetailAction("healthcare_page");
-    const liveData = (detail.data?.published?.data ?? detail.data?.latest?.data ?? {}) as {
+    const detail = await getPublicSiteContentAction<{
+      header?: PageHeaderData;
+      services?: ServiceItemData[];
+    }>("healthcare_page");
+    const liveData = (detail.data ?? {}) as {
       header?: PageHeaderData;
       services?: ServiceItemData[];
     };

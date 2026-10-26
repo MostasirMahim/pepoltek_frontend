@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { apiGet, apiPost } from "@/lib/api";
 
 // ---------------------------------------------------------------------------
@@ -137,6 +138,25 @@ export async function publishContentBlockAction(
     if (response.error) {
       return { success: false, error: response.error.message };
     }
+
+    try {
+      if (key === "homepage") {
+        revalidatePath("/", "page");
+      } else if (key === "services_list") {
+        revalidatePath("/services", "page");
+      } else if (key === "healthcare_page") {
+        revalidatePath("/healthcare", "page");
+      } else if (key === "case_studies") {
+        revalidatePath("/case-studies", "page");
+      } else if (key === "about_page") {
+        revalidatePath("/about", "page");
+      }
+      revalidatePath("/(main)", "layout");
+      revalidatePath(`/admin/content/${key}`, "page");
+    } catch {
+      // Revalidation may fail in non-rendered mock contexts
+    }
+
     return { success: true, version: response.data?.version };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Publish failed.";
@@ -182,6 +202,25 @@ export async function rollbackContentBlockAction(
     if (response.error) {
       return { success: false, error: response.error.message };
     }
+
+    try {
+      if (key === "homepage") {
+        revalidatePath("/", "page");
+      } else if (key === "services_list") {
+        revalidatePath("/services", "page");
+      } else if (key === "healthcare_page") {
+        revalidatePath("/healthcare", "page");
+      } else if (key === "case_studies") {
+        revalidatePath("/case-studies", "page");
+      } else if (key === "about_page") {
+        revalidatePath("/about", "page");
+      }
+      revalidatePath("/(main)", "layout");
+      revalidatePath(`/admin/content/${key}`, "page");
+    } catch {
+      // Revalidation may fail in non-rendered mock contexts
+    }
+
     return { success: true, version: response.data?.version };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Rollback failed.";
@@ -198,7 +237,13 @@ export async function getPublicSiteContentAction<T = Record<string, unknown>>(
       version: number;
       data: T;
       updated_at: string;
-    }>(`content/site/${key}/`);
+    }>(`content/site/${key}/`, {
+      cache: "no-store",
+      next: {
+        revalidate: 0,
+        tags: [`content_${key}`, "cms_content"],
+      },
+    });
     if (response.error) {
       return { success: false, error: response.error.message };
     }

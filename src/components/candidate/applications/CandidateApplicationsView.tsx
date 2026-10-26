@@ -13,9 +13,13 @@ import {
   FileText,
   X,
   Zap,
+  Calendar,
+  ExternalLink,
 } from "@/components/ui/Icons";
 import { SprintPipelineItem } from "@/types/candidate.types";
 import { getCandidateApplicationsAction } from "@/actions/candidate.actions";
+
+import { useCandidatePersona } from "@/context/CandidatePersonaContext";
 
 interface CandidateApplicationsViewProps {
   initialApplications?: SprintPipelineItem[];
@@ -24,16 +28,17 @@ interface CandidateApplicationsViewProps {
 export function CandidateApplicationsView({
   initialApplications = [],
 }: CandidateApplicationsViewProps) {
-  const [filter, setFilter] = useState<string>("All");
+  const { currentProfile } = useCandidatePersona();
+  const isHealthcare = currentProfile.primaryTrack === "healthcare";
+
+  const [filter, setFilter] = useState<string>("All Stages");
   const [appsList, setAppsList] = useState<SprintPipelineItem[]>(initialApplications);
   const [selectedApp, setSelectedApp] = useState<SprintPipelineItem | null>(null);
   const [isVirtualRoomOpen, setIsVirtualRoomOpen] = useState(false);
   const [callActive, setCallActive] = useState(false);
 
   const filteredApps = appsList.filter((app) => {
-    if (filter === "All") return true;
-    if (filter === "Technology") return app.sector === "Technology";
-    if (filter === "Healthcare") return app.sector === "Healthcare";
+    if (filter === "All Stages") return true;
     return app.currentStage === filter;
   });
 
@@ -43,15 +48,15 @@ export function CandidateApplicationsView({
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0e2142] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-signal/40 bg-signal/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono text-signal">
-              <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-signal animate-pulse" />
-              <span>TRANSPARENT 5-STAGE SPRINT AUDIT TRAIL</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+              <span className={`h-2 w-2 rounded-full ${isHealthcare ? "bg-emerald-400" : "bg-electric-bright"}`} />
+              <span>{isHealthcare ? "Clinical Sprint Pipelines" : "Engineering Sprint Pipelines"}</span>
             </div>
-            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
+            <h1 className="mt-2 font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight">
               Application Pipelines &amp; Status
             </h1>
-            <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-gray-300 max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
-              Real-time telemetry across all your active enterprise job applications. Track every stage from initial discovery through technical vetting to placement.
+            <p className="mt-1 text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
+              Real-time telemetry across all your active enterprise job applications. Track every stage from initial discovery through vetting to client placement.
             </p>
           </div>
 
@@ -73,9 +78,9 @@ export function CandidateApplicationsView({
             <span className="text-sm sm:text-lg font-bold text-white">{appsList.length} Active</span>
           </div>
           <div className="rounded-xl bg-white/[0.04] sm:bg-transparent p-2 sm:p-0 border border-white/5 sm:border-0">
-            <span className="text-gray-400 block text-[9px] sm:text-[10px] uppercase truncate">CLIENT PANEL</span>
+            <span className="text-gray-400 block text-[9px] sm:text-[10px] uppercase truncate">CLIENT INTERVIEWS</span>
             <span className="text-sm sm:text-lg font-bold text-electric-bright">
-              {appsList.filter((a) => a.currentStage === "Client Panel").length} Roles
+              {appsList.filter((a) => a.currentStage === "Client Interview").length} Roles
             </span>
           </div>
           <div className="rounded-xl bg-white/[0.04] sm:bg-transparent p-2 sm:p-0 border border-white/5 sm:border-0">
@@ -102,12 +107,12 @@ export function CandidateApplicationsView({
       {/* Filter Tabs - Horizontally Scrollable on Mobile with Smooth Snap */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-[#bcd6fa] bg-white p-2.5 sm:p-3 shadow-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
-          {["All", "Technology", "Healthcare", "Technical Vetting", "Client Panel"].map((tab) => (
+          {["All Stages", "Market Mapping", "Technical Vetting", "Client Interview", "Closed / Deployed"].map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setFilter(tab)}
-              className={`shrink-0 rounded-lg sm:rounded-xl px-3 py-1.5 font-mono text-xs font-semibold transition-all cursor-pointer ${
+              className={`shrink-0 rounded-lg sm:rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                 filter === tab
                   ? "bg-ink text-white shadow-xs"
                   : "text-ink-soft hover:bg-canvas hover:text-ink"
@@ -155,6 +160,15 @@ export function CandidateApplicationsView({
                   <span className="rounded-full bg-canvas px-2.5 py-0.5 font-mono text-[10px] text-mist">
                     Applied {app.appliedDate}
                   </span>
+                  {app.source === "sourced" ? (
+                    <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 font-mono text-[10px] font-bold">
+                      Sourced by Recruiter
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 font-mono text-[10px] font-bold">
+                      Direct Application
+                    </span>
+                  )}
                 </div>
 
                 <h3 className="mt-2 font-display text-lg sm:text-xl font-bold text-ink group-hover:text-electric transition-colors">
@@ -197,7 +211,7 @@ export function CandidateApplicationsView({
 
               {/* Progress Bar with Steps */}
               <div className="grid grid-cols-5 gap-2">
-                {["Discovery", "Screened", "Technical Vetting", "Client Panel", "Deployed"].map((stage, idx) => {
+                {["Market Mapping", "Technical Vetting", "Client Interview", "Offer & Placement", "Closed / Integrated"].map((stage, idx) => {
                   const stepNumber = idx + 1;
                   const isCompleted = stepNumber < app.stageIndex;
                   const isCurrent = stepNumber === app.stageIndex;
@@ -348,16 +362,21 @@ export function CandidateApplicationsView({
                 </div>
               </div>
 
-              {/* Interview Briefing Box */}
+              {/* Active Stage Action Callout */}
               {selectedApp.interviewBrief && (
                 <div className="rounded-2xl border border-electric/40 bg-gradient-to-br from-electric/5 to-white p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-electric font-bold text-xs">
-                    <Video size={16} />
-                    <span>Technical Evaluation Details</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-electric font-bold text-xs">
+                      <Video size={16} />
+                      <span>Scheduled Client Panel Interview</span>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 font-mono text-[10px] font-semibold">
+                      Confirmed
+                    </span>
                   </div>
                   <div className="text-xs space-y-1">
                     <div>
-                      <strong className="text-ink">Interviewer:</strong> {selectedApp.interviewBrief.interviewerName} ({selectedApp.interviewBrief.interviewerTitle})
+                      <strong className="text-ink">Panel:</strong> {selectedApp.interviewBrief.interviewerName}
                     </div>
                     <div>
                       <strong className="text-ink">Scheduled:</strong> {selectedApp.interviewBrief.scheduledAt}
@@ -367,13 +386,60 @@ export function CandidateApplicationsView({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsVirtualRoomOpen(true)}
-                    className="w-full rounded-xl bg-electric py-2.5 font-display text-xs font-bold text-white hover:bg-electric-bright transition-all cursor-pointer shadow-xs text-center block"
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <a
+                      href={selectedApp.interviewBrief.meetingUrl || "https://meet.google.com/pepoltek-sprint"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 rounded-xl bg-electric py-2.5 font-display text-xs font-bold text-white hover:bg-electric-bright transition-all cursor-pointer shadow-xs text-center inline-flex items-center justify-center gap-1.5"
+                    >
+                      <Video size={14} />
+                      <span>Join Live Meeting</span>
+                      <ExternalLink size={12} />
+                    </a>
+                    <Link
+                      href="/candidate/interviews"
+                      className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-display text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors text-center inline-flex items-center justify-center gap-1"
+                    >
+                      <Calendar size={13} />
+                      <span>All Interviews</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {selectedApp.currentStage === "Technical Vetting" && !selectedApp.interviewBrief && (
+                <div className="rounded-2xl border border-signal/40 bg-signal/5 p-4 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-xs font-bold text-signal flex items-center gap-1.5">
+                      <Zap size={14} />
+                      Technical Vetting Assessment
+                    </span>
+                    <span className="rounded-full bg-signal/15 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">
+                      Pending
+                    </span>
+                  </div>
+                  <p className="text-xs text-ink-soft leading-relaxed">
+                    This requisition requires a verified technical scorecard. Launch the coding challenge or architecture diagnostic to clear vetting.
+                  </p>
+                  <Link
+                    href="/candidate/assessments"
+                    className="rounded-xl bg-signal px-3.5 py-2 font-display text-xs font-bold text-white hover:bg-emerald-600 transition-colors inline-flex items-center gap-1.5 shadow-xs"
                   >
-                    Open Virtual Interview Space
-                  </button>
+                    <span>Launch Technical Assessment</span>
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+              )}
+
+              {selectedApp.currentStage === "Market Mapping" && !selectedApp.interviewBrief && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-1.5">
+                  <span className="font-mono text-[10.5px] uppercase font-bold text-slate-500 tracking-wider block">
+                    Recruiter Screening In Progress
+                  </span>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Your profile and CV telemetry have been received by the talent matchmaking squad. When screening is verified, you will be notified to begin technical vetting.
+                  </p>
                 </div>
               )}
             </div>

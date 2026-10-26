@@ -28,7 +28,7 @@ export function CandidateDocumentsDrawer({ isOpen, onClose }: CandidateDocuments
       const validExtensions = [".pdf", ".docx", ".rtf"];
       const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
       if (!validExtensions.includes(ext)) {
-        setErrorMessage("Invalid format. Only PDF, DOCX, and RTF documents are accepted (SRS PAR-01).");
+        setErrorMessage("Invalid format. Only PDF, DOCX, and RTF documents are accepted.");
         setSelectedFile(null);
         return;
       }
@@ -94,7 +94,7 @@ export function CandidateDocumentsDrawer({ isOpen, onClose }: CandidateDocuments
           <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#bcd6fa]/50 bg-canvas/30 shrink-0">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-electric/10 px-2.5 py-0.5 text-[10px] font-mono font-bold text-electric uppercase tracking-wider mb-1">
-                SRS CAN-09 &bull; PAR-01
+                Verified Document Vault
               </div>
               <h2 className="font-display text-lg font-bold text-ink">
                 Documents &amp; Resume Versions

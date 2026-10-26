@@ -21,6 +21,7 @@ import { CandidateProfile } from "@/types/candidate.types";
 import { useCandidatePersona } from "@/context/CandidatePersonaContext";
 import { updateCandidateProfileAction } from "@/actions/candidate.actions";
 import { CandidateDataRightsDrawer } from "@/components/candidate/dashboard/drawers/CandidateDataRightsDrawer";
+import { CandidateBenchmarkScores } from "@/components/candidate/common/CandidateBenchmarkScores";
 
 const TECH_DOMAINS = [
   "Full Stack Systems & Real-Time Data Pipelines",
@@ -147,6 +148,17 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
   const availableDomains = formData.primaryTrack === "technology" ? TECH_DOMAINS : HEALTHCARE_DOMAINS;
   const availableSeniority = formData.primaryTrack === "technology" ? TECH_SENIORITY : HEALTHCARE_SENIORITY;
 
+  const avatarInitials = formData.fullName
+    ? formData.fullName
+        .trim()
+        .split(/\s+/)
+        .map((w) => w[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "CT";
+
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Top Profile Header Banner - Responsive Mobile & Desktop */}
@@ -156,12 +168,12 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
             <div className="relative shrink-0">
               <div
                 className={`flex h-13 w-13 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl font-display text-lg sm:text-3xl font-extrabold text-white shadow-md ${
-                  activePersona === "alex"
-                    ? "bg-gradient-to-tr from-electric to-electric-bright"
-                    : "bg-gradient-to-tr from-signal to-emerald-400"
+                  formData.primaryTrack === "healthcare"
+                    ? "bg-gradient-to-tr from-emerald-600 to-teal-500"
+                    : "bg-gradient-to-tr from-electric to-electric-bright"
                 }`}
               >
-                {activePersona === "alex" ? "AM" : "RH"}
+                {avatarInitials}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 sm:h-5 sm:w-5 rounded-full border-2 sm:border-3 border-white bg-signal" />
             </div>
@@ -171,11 +183,11 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
                 <h1 className="font-display text-lg sm:text-2xl lg:text-3xl font-extrabold text-ink truncate">
                   {formData.fullName}
                 </h1>
-                <span className="rounded-full bg-signal/15 border border-signal/30 px-2 py-0.5 font-mono text-[9px] sm:text-[10px] font-bold text-signal">
-                  {formData.vettingTier}
+                <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                  {formData.primaryTrack === "healthcare" ? "Healthcare & Clinical Track" : "Technology Specialist Track"}
                 </span>
-                <span className="rounded-full bg-canvas border border-[#bcd6fa] px-2 py-0.5 font-mono text-[9px] sm:text-[10px] font-semibold text-ink-soft">
-                  ID: {formData.id}
+                <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800">
+                  {formData.vettingTier}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-ink-soft mt-0.5 truncate">
@@ -201,7 +213,7 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
           <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-0 border-[#bcd6fa]/40">
             <div>
               <div className="font-mono text-[9.5px] sm:text-[10.5px] uppercase tracking-wider text-mist">
-                {activePersona === "alex" ? "Technical Vetting" : "Clinical Vetting"}
+                {formData.primaryTrack === "healthcare" ? "Clinical Vetting" : "Technical Vetting"}
               </div>
               <div className="font-display text-xl sm:text-2xl font-extrabold text-electric">
                 {formData.technicalVettingScore} <span className="text-xs font-normal text-mist">/ 100</span>
@@ -213,6 +225,17 @@ export function CandidateProfileView({ initialProfile }: CandidateProfileViewPro
           </div>
         </div>
       </div>
+
+      {/* 5 Core Candidate Benchmarks (CAN-08 & Business SRS 4.2) */}
+      <CandidateBenchmarkScores
+        readinessIndex={formData.readinessIndex}
+        atsCompatibilityScore={formData.atsCompatibilityScore}
+        technicalVettingScore={formData.technicalVettingScore}
+        readinessTier={formData.vettingTier}
+        requisitionFitScore={formData.requisitionFitScore || 94}
+        track={formData.primaryTrack}
+        variant="dashboard"
+      />
 
       {/* Save Success Alert Banner */}
       {savedSuccess && (

@@ -10,12 +10,16 @@ import {
   getRequisitionApplicantsAction,
   updateApplicationStageAction,
   scheduleInterviewAction,
+  getClientsAction,
+  createClientAction,
+  ClientItem,
   RequisitionApplicant,
 } from "@/actions/recruiter.actions";
 import {
   getPublicBountyTypesAction,
   BountyTypeItem,
 } from "@/actions/referral.actions";
+import { cleanJobTitle } from "@/lib/title-utils";
 import {
   Users,
   Search,
@@ -40,6 +44,7 @@ import {
   Check,
   AlertCircle,
   Sparkles,
+  Kanban,
 } from "@/components/ui/Icons";
 
 interface RecruiterPodsViewProps {
@@ -56,13 +61,81 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
   // Bounty Types Catalog from Backend
   const [bountyTypes, setBountyTypes] = useState<BountyTypeItem[]>([]);
 
+  // Registered Clients Directory (ATS-01)
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [isClientDrawerOpen, setIsClientDrawerOpen] = useState(false);
+  const [clientTab, setClientTab] = useState<"list" | "create">("list");
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const [clientSectorFilter, setClientSectorFilter] = useState("all");
+
+  // New Client Form Inputs
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientSector, setNewClientSector] = useState("technology");
+  const [newClientWebsite, setNewClientWebsite] = useState("");
+  const [newClientChannel, setNewClientChannel] = useState("email");
+  const [newClientContactName, setNewClientContactName] = useState("");
+  const [newClientContactEmail, setNewClientContactEmail] = useState("");
+  const [newClientContactPhone, setNewClientContactPhone] = useState("");
+  const [newClientContactRole, setNewClientContactRole] = useState("Hiring Lead");
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [clientActionMessage, setClientActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   useEffect(() => {
     getPublicBountyTypesAction().then((res) => {
       if (res.success && res.data) {
         setBountyTypes(res.data);
       }
     });
+
+    getClientsAction().then((res) => {
+      if (res.success && res.data) {
+        setClients(res.data);
+      }
+    });
   }, []);
+
+  const handleCreateClientSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim()) return;
+    setIsCreatingClient(true);
+    setClientActionMessage(null);
+
+    const res = await createClientAction({
+      name: newClientName.trim(),
+      sector: newClientSector,
+      website: newClientWebsite.trim(),
+      delivery_channel: newClientChannel,
+      primary_contact_name: newClientContactName.trim(),
+      primary_contact_email: newClientContactEmail.trim(),
+      primary_contact_phone: newClientContactPhone.trim(),
+      primary_contact_role: newClientContactRole.trim(),
+    });
+
+    setIsCreatingClient(false);
+    if (res.success && res.data) {
+      const created = res.data;
+      setClients((prev) => [created, ...prev]);
+      setFormClient(created.name);
+      setClientActionMessage({
+        type: "success",
+        text: `Client ${created.name} registered and selected for requisition.`,
+      });
+      setNewClientName("");
+      setNewClientWebsite("");
+      setNewClientContactName("");
+      setNewClientContactEmail("");
+      setNewClientContactPhone("");
+      setTimeout(() => {
+        setClientActionMessage(null);
+        setClientTab("list");
+      }, 1500);
+    } else {
+      setClientActionMessage({
+        type: "error",
+        text: res.error || "Failed to create client organization.",
+      });
+    }
+  };
 
   // Create / Edit Drawer State
   const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
@@ -182,7 +255,7 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
       setFormRequirements("4+ years of production experience with modern TypeScript and React/Next.js frameworks.\nExpertise in Tailwind CSS, responsive mobile-first typography, and modern CSS layout models.\nStrong command of web performance profiling (Core Web Vitals, bundle size reduction).\nPortfolio of production-grade modern web applications demonstrating rich aesthetic polish.");
       setFormNiceToHaves("Experience with Framer Motion or smooth interactive animation libraries.\nKnowledge of WCAG 2.1 AA accessibility guidelines and screen reader testing.\nFamiliarity with Next.js Server Actions and Edge Runtime.");
     } else if (presetType === "bounty") {
-      setFormTitle("Healthcare Data Platform Architect (Bounty)");
+      setFormTitle("Healthcare Data Platform Architect");
       setFormClient("Apex Health Systems");
       setFormSector("Healthcare & Clinical");
       setFormLevel("Lead/Architect");
@@ -634,7 +707,7 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/30 bg-electric/10 px-3 py-0.5 text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
             <Zap size={12} />
-            <span>MODULE 6: ATS REQUISITION &amp; PIPELINE MANAGEMENT (ATS-02)</span>
+            <span>REQUISITION &amp; PIPELINE MANAGEMENT</span>
           </div>
           <h1 className="mt-1 font-display text-2xl font-bold text-ink">
             Enterprise Requisitions &amp; Candidate Pipeline
@@ -652,6 +725,14 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
           >
             <span>Public Job Board</span>
             <ExternalLink size={12} />
+          </Link>
+
+          <Link
+            href="/recruiter/applications"
+            className="rounded-xl border border-blue-500/30 bg-blue-50/80 px-3.5 py-2 font-display text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors shadow-2xs inline-flex items-center gap-1.5"
+          >
+            <Kanban size={13} />
+            <span>Pipeline Kanban</span>
           </Link>
 
           <button
@@ -840,24 +921,23 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#bcd6fa] bg-white shadow-2xs overflow-hidden">
+        <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[#bcd6fa]/50 bg-canvas/40 font-mono text-[11px] text-mist uppercase tracking-wider">
-                  <th className="py-3 px-4 font-semibold">Requisition ID</th>
-                  <th className="py-3 px-4 font-semibold">Title &amp; Client Organization</th>
-                  <th className="py-3 px-4 font-semibold">Tier &amp; Budget</th>
-                  <th className="py-3 px-4 font-semibold">Model &amp; Incentive</th>
-                  <th className="py-3 px-4 font-semibold">Status &amp; Live</th>
-                  <th className="py-3 px-4 font-semibold">Candidate Pipeline</th>
-                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
+                <tr className="border-b border-slate-200 bg-slate-50/80 font-mono text-[10px] text-slate-500 uppercase tracking-wider select-none">
+                  <th className="py-2 px-3 font-semibold">ID</th>
+                  <th className="py-2 px-3 font-semibold">Requisition &amp; Client</th>
+                  <th className="py-2 px-3 font-semibold">Budget</th>
+                  <th className="py-2 px-3 font-semibold">Model</th>
+                  <th className="py-2 px-3 font-semibold">Status</th>
+                  <th className="py-2 px-3 font-semibold">Pipeline</th>
+                  <th className="py-2 px-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#bcd6fa]/30">
+              <tbody className="divide-y divide-slate-100">
                 {filteredPods.map((pod) => {
                   const isOpen = pod.status === "open" || pod.status === "Active Sprint";
-                  const isHealth = pod.type.toLowerCase().includes("health");
                   const isGig = pod.visibility === "published_gig";
                   const isBounty = pod.visibility === "bounty" || Number(pod.bountyAmount) > 0;
                   const appCount = pod.candidatesCount || 0;
@@ -865,177 +945,112 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
                   return (
                     <tr
                       key={pod.rawId || pod.id}
-                      className="hover:bg-[#f8faff] transition-colors group"
+                      className="hover:bg-slate-50/70 transition-colors group"
                     >
                       {/* Monospace Requisition ID */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="font-mono text-xs font-bold text-electric">
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <span className="font-mono text-[11px] font-medium text-slate-500 select-all">
                           {pod.id}
                         </span>
                       </td>
 
                       {/* Requisition Title & Client */}
-                      <td className="py-3.5 px-4 min-w-[240px]">
-                        <div className="flex items-center gap-2">
+                      <td className="py-2 px-3">
+                        <div className="min-w-[200px] max-w-[340px]">
                           <button
                             type="button"
                             onClick={() => handleOpenApplicants(pod)}
-                            className="font-display font-bold text-ink hover:text-electric text-left transition-colors cursor-pointer text-sm"
+                            className="font-medium text-[12px] text-slate-900 hover:text-electric transition-colors cursor-pointer text-left truncate block max-w-full leading-tight"
                           >
-                            {pod.name}
+                            {cleanJobTitle(pod.name)}
                           </button>
-                          <span
-                            className={`rounded-full px-2 py-0.5 font-mono text-[9px] font-bold shrink-0 ${
-                              isHealth
-                                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                : "bg-blue-50 text-blue-800 border border-blue-200"
-                            }`}
-                          >
-                            {isHealth ? "Healthcare" : "Tech"}
-                          </span>
-                        </div>
-                        <div className="text-xs text-ink-soft mt-0.5">
-                          {pod.clientName || "Enterprise Workspace Partner"} • <span className="font-mono text-mist text-[11px]">{pod.location || "100% Remote"}</span>
+                          <div className="text-[10.5px] text-slate-400 font-normal truncate mt-0.5 leading-tight">
+                            {pod.clientName || "Enterprise Partner"} · {pod.location || "100% Remote"}
+                          </div>
                         </div>
                       </td>
 
-                      {/* Seniority & Budget */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-medium text-ink">
-                          {pod.level || "Senior Tier"} (Single Hire)
-                        </div>
-                        <div className="font-mono text-[11px] text-mist mt-0.5">
+                      {/* Budget */}
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <span className="font-mono text-[11px] text-slate-700">
                           ${pod.budgetMin || 95} - ${pod.budgetMax || 135}/hr
-                        </div>
+                        </span>
                       </td>
 
-                      {/* Model & Incentive */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {isGig ? (
-                            <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
-                              <Zap size={10} />
-                              <span>Contract Gig</span>
-                            </span>
-                          ) : isBounty ? (
-                            <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
-                              <DollarSign size={10} />
-                              <span>Bounty: ${Number(pod.bountyAmount || 1500).toLocaleString()}</span>
-                            </span>
+                      {/* Model */}
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <span className="text-[11px] text-slate-600 font-medium">
+                          {isBounty ? (
+                            `$${Number(pod.bountyAmount || 1500).toLocaleString()} Bounty`
+                          ) : isGig ? (
+                            "Contract Gig"
                           ) : (
-                            <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/50 px-2 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
-                              <FileText size={10} />
-                              <span>Direct Hire</span>
-                            </span>
+                            "Direct Hire"
                           )}
-
-                          <span
-                            className={`rounded-full px-2 py-0.5 font-mono text-[9px] font-semibold ${
-                              pod.visibility === "bounty"
-                                ? "bg-amber-100 text-amber-900 border border-amber-200"
-                                : pod.visibility === "private"
-                                ? "bg-slate-100 text-slate-700 border border-slate-200"
-                                : "bg-canvas text-ink-soft border border-[#bcd6fa]/40"
-                            }`}
-                          >
-                            {pod.visibility === "bounty"
-                              ? "Bounty"
-                              : pod.visibility === "private"
-                              ? "Confidential"
-                              : pod.visibility === "published_gig"
-                              ? "Public Gig"
-                              : "Public Job"}
-                          </span>
-                        </div>
+                        </span>
                       </td>
 
-                      {/* Status & Live Toggle */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                      {/* Status */}
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold ${
-                              isOpen
-                                ? "bg-signal/10 text-signal border border-signal/30"
-                                : pod.status === "filled"
-                                ? "bg-blue-100 text-blue-800 border border-blue-300"
-                                : "bg-mist/20 text-ink-soft border border-mist/30"
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              isOpen ? "bg-emerald-500" : pod.status === "filled" ? "bg-blue-500" : "bg-slate-300"
                             }`}
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${
-                                isOpen ? "bg-signal animate-pulse" : "bg-mist"
-                              }`}
-                            />
-                            {pod.status.toUpperCase()}
+                          />
+                          <span>
+                            {isOpen ? "Active" : pod.status === "filled" ? "Filled" : "Paused"}
                           </span>
-
-                          <button
-                            type="button"
-                            onClick={() => handleTogglePodStatus(pod)}
-                            className={`rounded-lg px-2 py-0.5 font-mono text-[10px] font-semibold border transition-all cursor-pointer ${
-                              isOpen
-                                ? "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                                : "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                            }`}
-                            title={isOpen ? "Pause live posting (on hold)" : "Publish live"}
-                          >
-                            {isOpen ? "Pause" : "Publish"}
-                          </button>
                         </div>
                       </td>
 
                       {/* Candidate Pipeline Link */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="py-2 px-3 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleOpenApplicants(pod)}
-                          className="rounded-xl border border-electric/40 bg-electric/5 px-2.5 py-1 font-display text-xs font-bold text-electric hover:bg-electric hover:text-white transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs group/btn"
+                          className="inline-flex items-center gap-1 font-mono text-[11px] text-slate-600 hover:text-electric transition-colors cursor-pointer"
+                          title="Open Candidate Dossier"
                         >
-                          <Users size={12} className="group-hover/btn:scale-110 transition-transform" />
-                          <span>{appCount} Candidate{appCount === 1 ? "" : "s"}</span>
+                          <Users size={12} className="text-slate-400" />
+                          <span className="font-semibold text-slate-800">{appCount}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">applied</span>
                         </button>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3.5 px-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenApplicants(pod)}
-                            className="rounded-lg p-1.5 text-mist hover:text-electric hover:bg-canvas transition-colors cursor-pointer"
-                            title="Open Candidate Management Sheet"
-                          >
-                            <Eye size={15} />
-                          </button>
-
+                      <td className="py-2 px-3 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
                             onClick={() => handleOpenEditDrawer(pod)}
-                            className="rounded-lg p-1.5 text-mist hover:text-ink hover:bg-canvas transition-colors cursor-pointer"
+                            className="rounded p-1 text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                             title="Edit Requisition Post"
                           >
-                            <Edit size={15} />
+                            <Edit size={13} />
                           </button>
 
-                          <Link
-                            href="/jobs"
-                            target="_blank"
-                            className="rounded-lg p-1.5 text-mist hover:text-ink hover:bg-canvas transition-colors cursor-pointer"
-                            title="View Public Job Board Post"
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePodStatus(pod)}
+                            className={`rounded p-1 transition-colors cursor-pointer ${
+                              isOpen
+                                ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                            }`}
+                            title={isOpen ? "Pause live posting (on hold)" : "Publish live"}
                           >
-                            <ExternalLink size={14} />
-                          </Link>
-
-                          {isOpen && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePod(pod)}
-                              className="rounded-lg p-1.5 text-mist hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                              title="Cancel Requisition"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          )}
+                            {isOpen ? (
+                              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="6" y="4" width="4" height="16" />
+                                <rect x="14" y="4" width="4" height="16" />
+                              </svg>
+                            ) : (
+                              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                              </svg>
+                            )}
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1070,7 +1085,7 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
                     </span>
                   </div>
                   <h3 className="mt-1 font-display text-lg font-bold text-ink">
-                    {selectedPodForApplicants.name}
+                    {cleanJobTitle(selectedPodForApplicants.name)}
                   </h3>
                   <p className="text-xs text-ink-soft">
                     Client: <strong className="text-ink">{selectedPodForApplicants.clientName}</strong> • {selectedPodForApplicants.type} • Budget: ${selectedPodForApplicants.budgetMin || 95} - ${selectedPodForApplicants.budgetMax || 135}/hr
@@ -1515,14 +1530,32 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
             </div>
 
             {/* Drawer Footer */}
-            <div className="pt-4 border-t border-[#bcd6fa]/40 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setSelectedPodForApplicants(null)}
-                className="rounded-xl border border-[#bcd6fa] px-4 py-2 font-display text-xs font-semibold text-ink-soft hover:bg-canvas transition-colors cursor-pointer"
-              >
-                Close Drawer
-              </button>
+            <div className="pt-4 border-t border-[#bcd6fa]/40 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPodForApplicants(null)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 font-display text-xs font-semibold text-ink-soft hover:bg-canvas transition-colors cursor-pointer"
+                >
+                  Close Drawer
+                </button>
+
+                {selectedPodForApplicants.status !== "cancelled" && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (confirm("Are you sure you want to cancel and remove this requisition?")) {
+                        await handleDeletePod(selectedPodForApplicants);
+                        setSelectedPodForApplicants(null);
+                      }
+                    }}
+                    className="rounded-xl border border-rose-200 px-3.5 py-2 font-display text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Trash2 size={13} />
+                    <span>Cancel Requisition</span>
+                  </button>
+                )}
+              </div>
 
               <Link
                 href="/jobs"
@@ -1560,7 +1593,7 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
                     </span>
                   </div>
                   <h3 className="mt-1 font-display text-xl font-bold text-ink">
-                    {editingPod ? `Edit Requisition: ${editingPod.name}` : "Create Enterprise Requisition"}
+                    {editingPod ? `Edit Requisition: ${cleanJobTitle(editingPod.name)}` : "Create Enterprise Requisition"}
                   </h3>
                   <p className="text-xs text-ink-soft">
                     Configure requisition role, seniority tier, client demand, and public sync.
@@ -1636,17 +1669,37 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
                 {/* Client & Sector */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-mono text-[10px] text-mist uppercase font-semibold block mb-1">
-                      Client Organization *
-                    </label>
-                    <input
-                      type="text"
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-mono text-[10px] text-mist uppercase font-semibold block">
+                        Client Organization *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsClientDrawerOpen(true);
+                          setClientTab("create");
+                        }}
+                        className="font-mono text-[9.5px] font-bold text-electric hover:underline cursor-pointer"
+                      >
+                        + New Client
+                      </button>
+                    </div>
+                    <select
                       required
                       value={formClient}
                       onChange={(e) => setFormClient(e.target.value)}
-                      placeholder="e.g. Apex Cloud Systems"
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2.5 text-xs text-ink placeholder-mist focus:border-electric focus:outline-hidden"
-                    />
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:outline-hidden"
+                    >
+                      <option value="">Select registered client organization...</option>
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name} ({c.sector || "general"} · {c.delivery_channel.toUpperCase()})
+                        </option>
+                      ))}
+                      {formClient && !clients.some((c) => c.name === formClient) && (
+                        <option value={formClient}>{formClient}</option>
+                      )}
+                    </select>
                   </div>
 
                   <div>
@@ -1943,6 +1996,331 @@ export function RecruiterPodsView({ pods: initialPods }: RecruiterPodsViewProps)
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Right-Side Sheet Drawer: Client Records Management (ATS-01) */}
+      {isClientDrawerOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-ink/50 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col justify-between border-l border-[#bcd6fa] animate-in slide-in-from-right duration-300">
+            {/* Drawer Header */}
+            <div className="p-6 border-b border-[#bcd6fa]/40 bg-canvas/30 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-electric uppercase tracking-wider">
+                    CLIENT MANAGEMENT
+                  </span>
+                  <span className="rounded-full bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">
+                    ENTERPRISE PARTNER
+                  </span>
+                </div>
+                <h3 className="mt-1 font-display text-xl font-bold text-ink">
+                  Client Organizations &amp; Delivery Terms
+                </h3>
+                <p className="text-xs text-ink-soft">
+                  Staff-managed client directory with preferred delivery channels and primary hiring contacts.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsClientDrawerOpen(false)}
+                className="rounded-lg p-1.5 text-mist hover:text-ink hover:bg-canvas transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Sub-navigation Tabs */}
+            <div className="px-6 pt-4 border-b border-[#bcd6fa]/30 flex items-center gap-2 bg-canvas/10">
+              <button
+                type="button"
+                onClick={() => setClientTab("list")}
+                className={`pb-2.5 text-xs font-display font-semibold transition-colors border-b-2 cursor-pointer ${
+                  clientTab === "list"
+                    ? "border-electric text-electric"
+                    : "border-transparent text-mist hover:text-ink"
+                }`}
+              >
+                Registered Directory ({clients.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientTab("create")}
+                className={`pb-2.5 text-xs font-display font-semibold transition-colors border-b-2 cursor-pointer ${
+                  clientTab === "create"
+                    ? "border-electric text-electric"
+                    : "border-transparent text-mist hover:text-ink"
+                }`}
+              >
+                + Register New Client
+              </button>
+            </div>
+
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+              {clientActionMessage && (
+                <div
+                  className={`rounded-2xl p-4 border ${
+                    clientActionMessage.type === "success"
+                      ? "border-signal/30 bg-signal/10 text-signal"
+                      : "border-red-200 bg-red-50 text-red-700"
+                  }`}
+                >
+                  <p className="font-display font-bold text-xs">{clientActionMessage.text}</p>
+                </div>
+              )}
+
+              {clientTab === "list" ? (
+                <div className="space-y-3">
+                  {/* Search and Filters */}
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search size={13} className="absolute left-3 top-2.5 text-mist" />
+                      <input
+                        type="text"
+                        value={clientSearchTerm}
+                        onChange={(e) => setClientSearchTerm(e.target.value)}
+                        placeholder="Search clients by name, website, contacts..."
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white pl-8 pr-3 py-2 text-xs text-ink focus:border-electric focus:outline-none"
+                      />
+                    </div>
+                    <select
+                      value={clientSectorFilter}
+                      onChange={(e) => setClientSectorFilter(e.target.value)}
+                      className="rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-none"
+                    >
+                      <option value="all">All Sectors</option>
+                      <option value="technology">Technology</option>
+                      <option value="healthcare">Healthcare</option>
+                    </select>
+                  </div>
+
+                  {/* Client Cards List */}
+                  {clients.length === 0 ? (
+                    <div className="rounded-2xl border border-[#bcd6fa] bg-white p-8 text-center text-ink-soft">
+                      No client records found. Click "+ Register New Client" to add your first client.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {clients
+                        .filter((c) => {
+                          const q = clientSearchTerm.trim().toLowerCase();
+                          const matchesQ =
+                            !q ||
+                            c.name.toLowerCase().includes(q) ||
+                            (c.website && c.website.toLowerCase().includes(q)) ||
+                            c.contacts.some((ct) => ct.full_name.toLowerCase().includes(q) || ct.email.toLowerCase().includes(q));
+                          const matchesS =
+                            clientSectorFilter === "all" ||
+                            (c.sector && c.sector.toLowerCase().includes(clientSectorFilter));
+                          return matchesQ && matchesS;
+                        })
+                        .map((c) => (
+                          <div
+                            key={c.id}
+                            className="rounded-2xl border border-[#bcd6fa]/70 bg-white p-4 shadow-2xs hover:border-electric transition-colors space-y-3"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-display font-bold text-ink text-sm">{c.name}</h4>
+                                  <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 font-mono text-[9.5px] font-bold text-slate-700 uppercase">
+                                    {c.sector || "Tech"}
+                                  </span>
+                                  <span className="rounded-full bg-electric/10 text-electric border border-electric/20 px-2 py-0.5 font-mono text-[9.5px] font-bold uppercase">
+                                    {c.delivery_channel}
+                                  </span>
+                                </div>
+                                {c.website && (
+                                  <a
+                                    href={c.website}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="font-mono text-[11px] text-mist hover:text-electric inline-flex items-center gap-1 mt-0.5"
+                                  >
+                                    <span>{c.website}</span>
+                                    <ExternalLink size={10} />
+                                  </a>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormClient(c.name);
+                                  setIsClientDrawerOpen(false);
+                                  showToast(`Client ${c.name} selected for requisition.`);
+                                }}
+                                className="rounded-lg bg-electric/10 hover:bg-electric hover:text-white text-electric px-2.5 py-1 text-xs font-semibold font-display transition-colors cursor-pointer"
+                              >
+                                Select for Job
+                              </button>
+                            </div>
+
+                            {/* Contacts & Requisitions Summary */}
+                            <div className="grid grid-cols-2 gap-2 rounded-xl bg-canvas/40 p-2.5 font-mono text-[11px]">
+                              <div>
+                                <span className="text-mist block text-[9.5px] uppercase">Primary Contact:</span>
+                                {c.contacts.length > 0 ? (
+                                  <span className="text-ink font-semibold">
+                                    {c.contacts[0].full_name} ({c.contacts[0].role_title || "Lead"})
+                                  </span>
+                                ) : (
+                                  <span className="text-mist">No contacts recorded</span>
+                                )}
+                              </div>
+                              <div>
+                                <span className="text-mist block text-[9.5px] uppercase">Active Requisitions:</span>
+                                <span className="text-electric font-bold">
+                                  {c.active_requisitions_count || 0} Open Positions
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Create Client Record Form */
+                <form id="create-client-form" onSubmit={handleCreateClientSubmit} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10.5px] font-bold text-ink block">
+                      Company / Organization Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      placeholder="e.g. Apex Financial Cloud Systems"
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-mono text-[10.5px] font-bold text-ink block">
+                        Industry Sector Track
+                      </label>
+                      <select
+                        value={newClientSector}
+                        onChange={(e) => setNewClientSector(e.target.value)}
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
+                      >
+                        <option value="technology">Technology &amp; Software SDLC</option>
+                        <option value="healthcare">Healthcare &amp; Clinical Systems</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-mono text-[10.5px] font-bold text-ink block">
+                        Website URL
+                      </label>
+                      <input
+                        type="url"
+                        value={newClientWebsite}
+                        onChange={(e) => setNewClientWebsite(e.target.value)}
+                        placeholder="https://apexsystems.io"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10.5px] font-bold text-ink block">
+                      Preferred Shortlist Delivery Channel
+                    </label>
+                    <select
+                      value={newClientChannel}
+                      onChange={(e) => setNewClientChannel(e.target.value)}
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
+                    >
+                      <option value="email">Email Submission Package (PDF &amp; Markdown)</option>
+                      <option value="im">Instant Messaging / Slack Connect</option>
+                      <option value="client_ats">Client ATS CSV Upload (Workday/Greenhouse)</option>
+                      <option value="portal">Client Portal (Post-GTM Dedicated Tenant)</option>
+                    </select>
+                  </div>
+
+                  {/* Primary Contact Details */}
+                  <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/30 p-4 space-y-3">
+                    <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-electric block">
+                      Primary Hiring Contact (Optional)
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-mono text-[10px] text-mist block mb-1">Contact Name</label>
+                        <input
+                          type="text"
+                          value={newClientContactName}
+                          onChange={(e) => setNewClientContactName(e.target.value)}
+                          placeholder="e.g. Jordan Lee"
+                          className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-mono text-[10px] text-mist block mb-1">Contact Email</label>
+                        <input
+                          type="email"
+                          value={newClientContactEmail}
+                          onChange={(e) => setNewClientContactEmail(e.target.value)}
+                          placeholder="jordan@apexsystems.io"
+                          className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-mono text-[10px] text-mist block mb-1">Phone / WhatsApp</label>
+                        <input
+                          type="tel"
+                          value={newClientContactPhone}
+                          onChange={(e) => setNewClientContactPhone(e.target.value)}
+                          placeholder="+1 (555) 019-2831"
+                          className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-mono text-[10px] text-mist block mb-1">Role Title</label>
+                        <input
+                          type="text"
+                          value={newClientContactRole}
+                          onChange={(e) => setNewClientContactRole(e.target.value)}
+                          placeholder="VP of Engineering"
+                          className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Drawer Footer Actions */}
+            <div className="p-6 border-t border-[#bcd6fa]/40 bg-canvas/30 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setIsClientDrawerOpen(false)}
+                className="rounded-xl border border-[#bcd6fa] px-4 py-2.5 font-display text-xs font-semibold text-ink-soft hover:bg-canvas transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+
+              {clientTab === "create" && (
+                <button
+                  type="submit"
+                  form="create-client-form"
+                  disabled={isCreatingClient || !newClientName.trim()}
+                  className="rounded-xl bg-ink px-5 py-2.5 font-display text-xs font-bold text-white shadow-xs hover:bg-electric transition-colors disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  {isCreatingClient ? "Registering Client..." : "Create Client Record"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

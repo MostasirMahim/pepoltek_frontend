@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { applyPublicJobAction } from "@/actions/recruiter.actions";
+import { getCurrentUserAction, AuthUser } from "@/actions/auth.actions";
 import {
   Search,
   Briefcase,
@@ -15,6 +16,7 @@ import {
   DollarSign,
   ArrowRight,
 } from "@/components/ui/Icons";
+import { cleanJobTitle } from "@/lib/title-utils";
 
 export interface PublicJob {
   id: string;
@@ -49,6 +51,25 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
   const [sectorFilter, setSectorFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedJob, setSelectedJob] = useState<PublicJob | null>(null);
+
+  // Authenticated user state
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const u = await getCurrentUserAction();
+        if (u) {
+          setCurrentUser(u);
+          setFullName(u.fullName || "");
+          setEmail(u.email || "");
+        }
+      } catch {
+        // Guest user
+      }
+    }
+    loadUser();
+  }, []);
 
   // Application form state
   const [fullName, setFullName] = useState("");
@@ -253,9 +274,9 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
                           <span>Contract Gig</span>
                         </span>
                       ) : isBounty ? (
-                        <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
-                          <DollarSign size={11} />
-                          <span>{job.bounty_type_name ? `${job.bounty_type_name}: ` : "Bounty: "}${Number(job.bounty_amount || 1500).toLocaleString()}</span>
+                        <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1 shadow-2xs">
+                          <DollarSign size={11} className="text-amber-600" />
+                          <span>Referral Bounty: ${Number(job.bounty_amount || 1500).toLocaleString()}</span>
                         </span>
                       ) : (
                         <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/50 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
@@ -276,7 +297,7 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
 
                     <Link href={`/jobs/${job.id}`} className="block group">
                       <h2 className="font-display text-xl font-bold text-ink group-hover:text-electric transition-colors">
-                        {job.title}
+                        {cleanJobTitle(job.title)}
                       </h2>
                     </Link>
 
@@ -337,138 +358,224 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
         )}
       </div>
 
-      {/* Application Drawer / Modal */}
+      {/* Right-Side Sheet Drawer: Job Application */}
       {selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-[#bcd6fa] bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#bcd6fa]/40 pb-3">
-              <div>
-                <span className="font-mono text-[10px] uppercase font-bold text-electric">
-                  Rapid Candidate Application
-                </span>
-                <h2 className="font-display text-lg font-bold text-ink">{selectedJob.title}</h2>
-                <p className="text-xs text-ink-soft">
-                  {selectedJob.location || "100% Remote"} | ${selectedJob.budget_min || 95} - ${selectedJob.budget_max || 135}/hr
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedJob(null)}
-                className="text-mist hover:text-ink p-1 rounded-lg hover:bg-canvas transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {applyResult && (
-              <div
-                className={`rounded-xl border p-3.5 text-xs font-medium flex items-center justify-between ${
-                  applyResult.type === "success"
-                    ? "border-signal/30 bg-signal/10 text-signal"
-                    : "border-red-200 bg-red-50 text-red-700"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={15} />
-                  <span>{applyResult.text}</span>
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-ink/40 backdrop-blur-xs animate-in fade-in-0 duration-150"
+          onClick={() => setSelectedJob(null)}
+        >
+          <div
+            className="w-full max-w-lg bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto thin-scrollbar animate-in slide-in-from-right duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-6">
+              {/* Drawer Header */}
+              <div className="flex items-start justify-between border-b border-slate-200/80 pb-4">
+                <div>
+                  <span className="font-mono text-[10px] uppercase font-bold text-electric">
+                    Application Dossier Submission
+                  </span>
+                  <h2 className="font-display text-xl font-bold text-ink mt-1">
+                    {cleanJobTitle(selectedJob.title)}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {selectedJob.client_name || "Enterprise Partner"} · {selectedJob.location || "100% Remote"} · ${selectedJob.budget_min || 95} - ${selectedJob.budget_max || 135}/hr
+                  </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setApplyResult(null)}
-                  className="p-1 hover:opacity-75 cursor-pointer ml-3 text-mist hover:text-ink"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            <form onSubmit={handleApply} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-mist mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Mahim Rahad"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-mist mb-1">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. specialist@pepoltek.com"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-mist mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-mist mb-1">
-                  Portfolio / GitHub / LinkedIn URL
-                </label>
-                <input
-                  type="url"
-                  value={portfolioUrl}
-                  onChange={(e) => setPortfolioUrl(e.target.value)}
-                  placeholder="https://github.com/..."
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-[11px] uppercase tracking-wider text-mist mb-1">
-                  Candidate Note / Qualifications
-                </label>
-                <textarea
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Briefly describe your experience with the required stack or clinical rota..."
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#bcd6fa]/40">
-                <button
-                  type="button"
-                  disabled={isSubmitting}
                   onClick={() => setSelectedJob(null)}
-                  className="rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-1.5 font-display text-xs font-semibold text-ink hover:bg-canvas transition-colors cursor-pointer"
+                  className="rounded-xl p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="rounded-xl bg-electric px-5 py-2 font-display text-xs font-semibold text-white hover:bg-electric-bright shadow-xs transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
-                >
-                  <span>{isSubmitting ? "Submitting Application..." : "Submit Application to ATS"}</span>
-                  <ArrowRight size={13} />
+                  <X size={18} />
                 </button>
               </div>
-            </form>
+
+              {applyResult ? (
+                <div
+                  className={`rounded-2xl p-5 border space-y-4 ${
+                    applyResult.type === "success"
+                      ? "border-emerald-200 bg-emerald-50/70 text-emerald-900"
+                      : "border-rose-200 bg-rose-50 text-rose-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 font-display font-bold text-sm">
+                    <CheckCircle size={18} className={applyResult.type === "success" ? "text-emerald-600" : "text-rose-600"} />
+                    <span>{applyResult.type === "success" ? "Application Successfully Submitted!" : "Submission Error"}</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-700">
+                    {applyResult.text}
+                  </p>
+                  {applyResult.type === "success" && (
+                    <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                      <Link
+                        href="/candidate/applications"
+                        className="rounded-xl bg-electric px-4 py-2.5 font-display text-xs font-bold text-white hover:bg-ink transition-colors text-center shadow-xs"
+                      >
+                        Track in Candidate Dashboard →
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedJob(null)}
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-display text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer text-center"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <form onSubmit={handleApply} className="space-y-4 text-xs">
+                  {/* Authenticated Candidate Profile Banner */}
+                  {currentUser ? (
+                    <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-electric to-[#00D4FF] text-white font-bold flex items-center justify-center font-display text-sm shadow-xs">
+                            {currentUser.fullName ? currentUser.fullName.slice(0, 2).toUpperCase() : "CA"}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-display font-bold text-ink text-sm">
+                                {currentUser.fullName}
+                              </h4>
+                              <span className="rounded-full bg-signal/15 px-2 py-0.5 font-mono text-[9px] font-bold text-signal">
+                                Verified Profile
+                              </span>
+                            </div>
+                            <p className="font-mono text-xs text-ink-soft">{currentUser.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-electric/15 text-[11px] text-slate-600 flex items-center gap-1.5">
+                        <CheckCircle size={13} className="text-emerald-600 shrink-0" />
+                        <span>Applying with your active candidate telemetry and uploaded CV dossier.</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-900 flex items-center justify-between">
+                      <div>
+                        <span className="font-bold block">Already registered with Pepoltek?</span>
+                        <span className="text-[11px] text-amber-800">Sign in to 1-Click apply with your verified profile.</span>
+                      </div>
+                      <Link
+                        href="/auth/login"
+                        className="rounded-lg bg-ink px-3 py-1.5 font-display text-xs font-semibold text-white hover:bg-electric transition-colors shrink-0"
+                      >
+                        Sign In
+                      </Link>
+                    </div>
+                  )}
+
+                  {!currentUser && (
+                    <>
+                      <div>
+                        <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="e.g. Mahim Rahad"
+                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="e.g. specialist@pepoltek.com"
+                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div>
+                    <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                      Phone Number {currentUser ? "(Verified from Profile)" : "(Optional)"}
+                    </label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                      Portfolio / GitHub / LinkedIn URL
+                    </label>
+                    <input
+                      type="url"
+                      value={portfolioUrl}
+                      onChange={(e) => setPortfolioUrl(e.target.value)}
+                      placeholder="https://github.com/..."
+                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
+                      Candidate Note / Pitch
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Briefly describe your experience with the required stack or availability..."
+                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200/80">
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => setSelectedJob(null)}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 font-display text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="rounded-xl bg-electric px-5 py-2 font-display text-xs font-bold text-white hover:bg-electric-bright shadow-xs transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                    >
+                      <span>
+                        {isSubmitting
+                          ? "Submitting Application..."
+                          : currentUser
+                          ? "Submit with Verified Profile"
+                          : "Submit Application to ATS"}
+                      </span>
+                      <ArrowRight size={13} />
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+              <span>Ref: {selectedJob.id}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedJob(null)}
+                className="hover:text-slate-700 cursor-pointer"
+              >
+                Close Drawer
+              </button>
+            </div>
           </div>
         </div>
       )}

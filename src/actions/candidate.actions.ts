@@ -46,6 +46,11 @@ export interface CandidateIntakePayload {
   skills?: string[];
   portfolio_url?: string;
   github_url?: string;
+  linkedin_url?: string;
+  linkedin_profile?: string;
+  current_job_title?: string;
+  current_location?: string;
+  target_compensation?: string;
   resume_text?: string;
 }
 
@@ -438,3 +443,82 @@ export async function submitCandidateIntakeAction(
     };
   }
 }
+
+/**
+ * Public/Intake CV extraction and AI parsing action.
+ */
+export async function parseCandidateCvAction(formData: FormData): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+  ai_available?: boolean;
+  ai_warning?: string | null;
+}> {
+  try {
+    const response = await apiUpload<any>("candidates/intake/parse-cv/", formData);
+    if (response.error) {
+      return {
+        success: false,
+        error: response.error.message || "Failed to parse CV.",
+        ai_available: false,
+        ai_warning: "AI credits out of quota or AI service unavailable.",
+      };
+    }
+
+    const payload = response.data?.data || response.data;
+    return {
+      success: true,
+      data: payload,
+      ai_available: payload?.ai_available ?? true,
+      ai_warning: payload?.ai_warning ?? null,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "Network error while parsing CV.",
+      ai_available: false,
+      ai_warning: "AI credits out of quota or AI service unavailable.",
+    };
+  }
+}
+
+export interface CandidateInterviewItem {
+  id: string;
+  application_id: string;
+  role: string;
+  client_name: string;
+  sector: string;
+  location: string;
+  type: string;
+  panel: string;
+  time: string;
+  meeting_link: string;
+  status: string;
+  stage: string;
+  sub_stage: string;
+}
+
+/**
+ * Fetch candidate scheduled sprint and client interviews (SRS ATS-08, CAN-08).
+ */
+export async function getCandidateInterviewsAction(): Promise<CandidateActionResult<CandidateInterviewItem[]>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<CandidateInterviewItem[]>("candidates/interviews/", { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    return { success: true, data: Array.isArray(response.data) ? response.data : [] };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to load interviews.",
+      },
+    };
+  }
+}
+

@@ -16,6 +16,7 @@ import {
   AdminPodRecord,
   AdminJobRequisition,
 } from "@/types/admin.types";
+import { cleanJobTitle } from "@/lib/title-utils";
 
 const STAGES: AdminPodRecord["stage"][] = [
   "Sprint 1 Assembly",
@@ -258,7 +259,7 @@ export function AdminPodsView({
                       {req.status}
                     </span>
                   </div>
-                  <h3 className="mt-1 font-display text-base font-bold text-ink">{req.title}</h3>
+                  <h3 className="mt-1 font-display text-base font-bold text-ink">{cleanJobTitle(req.title)}</h3>
                   <p className="text-xs text-ink-soft">
                     Client: <strong className="text-ink">{req.clientName}</strong> • Target Rate: {req.budgetHourlyRate}
                   </p>

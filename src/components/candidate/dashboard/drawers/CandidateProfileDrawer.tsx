@@ -183,16 +183,12 @@ export function CandidateProfileDrawer({ isOpen, onClose }: CandidateProfileDraw
 
               <div>
                 <label className="block text-[11px] font-mono font-bold text-ink-soft uppercase tracking-wider mb-1">
-                  Primary Track
+                  Assigned Industry Path
                 </label>
-                <select
-                  value={sector}
-                  onChange={(e) => setSector(e.target.value as "technology" | "healthcare")}
-                  className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2 text-xs font-semibold text-ink focus:border-electric focus:outline-none"
-                >
-                  <option value="technology">Technology &amp; Cloud Systems</option>
-                  <option value="healthcare">Healthcare &amp; Clinical Informatics</option>
-                </select>
+                <div className="w-full rounded-xl border border-[#bcd6fa] bg-slate-50 px-3.5 py-2 text-xs font-semibold text-ink flex items-center justify-between">
+                  <span>{sector === "healthcare" ? "Healthcare & Clinical Track" : "Technology Specialist Track"}</span>
+                  <span className="text-[10px] font-mono text-mist uppercase">Fixed at Intake</span>
+                </div>
               </div>
             </div>
 

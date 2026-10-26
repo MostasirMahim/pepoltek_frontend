@@ -5,8 +5,11 @@ import Link from "next/link";
 import { RecruiterCandidate, RecruiterPod } from "@/types/recruiter.types";
 import {
   createShortlistSubmissionAction,
+  sourceCandidateForRequisitionAction,
   ShortlistSubmissionItemInput,
 } from "@/actions/recruiter.actions";
+import { UserPlus, Building2, Send, Check } from "lucide-react";
+import { cleanJobTitle } from "@/lib/title-utils";
 import {
   Users,
   Search,
@@ -21,6 +24,7 @@ import {
   DollarSign,
   FileText,
 } from "@/components/ui/Icons";
+import { CandidateBenchmarkScores } from "@/components/candidate/common/CandidateBenchmarkScores";
 
 interface RecruiterCandidatesViewProps {
   candidates: RecruiterCandidate[];
@@ -57,6 +61,45 @@ export function RecruiterCandidatesView({
   const [maskContact, setMaskContact] = useState<boolean>(true);
   const [includeVetting, setIncludeVetting] = useState<boolean>(true);
   const [includeRates, setIncludeRates] = useState<boolean>(true);
+
+  // Candidate Sourcing Drawer State (Stage 2: Market Mapping / Sourced)
+  const [sourcingCandidate, setSourcingCandidate] = useState<RecruiterCandidate | null>(null);
+  const [sourcingRequisitionId, setSourcingRequisitionId] = useState<string>(
+    pods.length > 0 ? pods[0].id : ""
+  );
+  const [sourcingNote, setSourcingNote] = useState<string>("");
+  const [isSourcingSubmitting, setIsSourcingSubmitting] = useState(false);
+  const [sourcingResult, setSourcingResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const handleSourceCandidate = async () => {
+    if (!sourcingCandidate || !sourcingRequisitionId) return;
+    setIsSourcingSubmitting(true);
+    setSourcingResult(null);
+
+    const res = await sourceCandidateForRequisitionAction({
+      candidate_id: sourcingCandidate.id,
+      requisition_id: sourcingRequisitionId,
+      note: sourcingNote.trim() || `Candidate sourced from talent directory by recruiter`,
+    });
+
+    setIsSourcingSubmitting(false);
+    if (res.success) {
+      setSourcingResult({
+        type: "success",
+        message: `${sourcingCandidate.name} has been successfully sourced into the Market Mapping pipeline!`,
+      });
+      setTimeout(() => {
+        setSourcingCandidate(null);
+        setSourcingResult(null);
+        setSourcingNote("");
+      }, 1800);
+    } else {
+      setSourcingResult({
+        type: "error",
+        message: res.error || "Failed to source candidate.",
+      });
+    }
+  };
 
   // Submission execution state
   const [isSubmittingShortlist, setIsSubmittingShortlist] = useState<boolean>(false);
@@ -266,7 +309,7 @@ export function RecruiterCandidatesView({
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-electric/30 bg-electric/10 px-3 py-0.5 text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
             <Users size={12} />
-            <span>MODULE 6: ATS TALENT DIRECTORY</span>
+            <span>VETTED TALENT DIRECTORY</span>
           </div>
           <h1 className="mt-2 font-display text-2xl font-bold text-ink">
             Pre-Vetted Talent Directory
@@ -497,10 +540,25 @@ export function RecruiterCandidatesView({
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => handleAddToPod(cand, e)}
-                      className="rounded-xl bg-ink px-3.5 py-1.5 font-display text-xs font-semibold text-white hover:bg-electric transition-colors shadow-xs cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSourcingCandidate(cand);
+                        if (pods.length > 0) setSourcingRequisitionId(pods[0].id);
+                        setSourcingResult(null);
+                      }}
+                      className="rounded-xl border border-electric/40 bg-electric/10 text-electric hover:bg-electric hover:text-white px-2.5 py-1.5 font-display text-xs font-semibold transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
+                      title="Source candidate into requisition pipeline"
                     >
-                      + Assign
+                      <UserPlus size={13} />
+                      <span>Source</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleAddToPod(cand, e)}
+                      className="rounded-xl bg-ink px-3 py-1.5 font-display text-xs font-semibold text-white hover:bg-electric transition-colors shadow-xs cursor-pointer"
+                    >
+                      + Shortlist
                     </button>
                   </div>
                 </div>
@@ -568,7 +626,7 @@ export function RecruiterCandidatesView({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-electric uppercase tracking-wider">
-                      MODULE 6: ATS CLIENT SUBMISSION (ATS-06 &amp; D-01)
+                      CLIENT SUBMISSION PACKAGE
                     </span>
                   </div>
                   <h2 className="mt-1 font-display text-xl font-bold text-ink">
@@ -639,15 +697,11 @@ export function RecruiterCandidatesView({
                         {pods.length > 0 ? (
                           pods.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.name} ({p.id})
+                              {cleanJobTitle(p.name)} ({p.clientName || "Enterprise Client"})
                             </option>
                           ))
                         ) : (
-                          <>
-                            <option value="REQ-FINTECH-01">Fintech Core Architecture Requisition</option>
-                            <option value="REQ-HEALTH-02">EMR FHIR Clinical Data Requisition</option>
-                            <option value="REQ-CLOUD-03">AWS Multi-Region SRE Requisition</option>
-                          </>
+                          <option value="">No active requisitions found</option>
                         )}
                         <option value="custom">Custom Client Requisition</option>
                       </select>
@@ -670,7 +724,7 @@ export function RecruiterCandidatesView({
                   {/* Delivery Channel */}
                   <div>
                     <label className="block font-mono text-[11px] uppercase tracking-wider text-mist mb-1.5">
-                      Delivery Channel (per SRS D-01)
+                      Delivery Channel
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
@@ -702,7 +756,7 @@ export function RecruiterCandidatesView({
                       <div className="flex items-center gap-2">
                         <ShieldCheck size={16} className="text-electric" />
                         <span className="font-display font-bold text-ink">
-                          Privacy &amp; Escrow Contact Masking (ATS-06)
+                          Privacy &amp; Escrow Contact Masking
                         </span>
                       </div>
                       <span className="rounded-full bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">
@@ -1047,6 +1101,17 @@ export function RecruiterCandidatesView({
                 </button>
               </div>
 
+              {/* 5 Core Candidate Benchmarks (CAN-08 & Business SRS 4.2) */}
+              <CandidateBenchmarkScores
+                readinessIndex={selectedCandidate.readinessIndex || selectedCandidate.profileStrength || 88}
+                atsCompatibilityScore={selectedCandidate.cvScore || 90}
+                technicalVettingScore={selectedCandidate.vettingScore || 92}
+                readinessTier={selectedCandidate.readinessTier || "Tier 2: Screened Specialist"}
+                requisitionFitScore={parseInt(selectedCandidate.matchScore) || 95}
+                track={selectedCandidate.sector === "Healthcare" ? "healthcare" : "technology"}
+                variant="dossier"
+              />
+
               {/* Dossier Tabs */}
               <div className="flex gap-2 border-b border-[#bcd6fa]/30 pb-2">
                 {[
@@ -1224,6 +1289,19 @@ export function RecruiterCandidatesView({
                       <button
                         type="button"
                         onClick={() => {
+                          setSourcingCandidate(selectedCandidate);
+                          if (pods.length > 0) setSourcingRequisitionId(pods[0].id);
+                          setSourcingResult(null);
+                        }}
+                        className="w-full rounded-xl bg-electric py-2.5 font-display text-xs font-bold text-white shadow-xs hover:bg-electric-bright transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <UserPlus size={14} />
+                        <span>Source for Requisition Pipeline</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
                           handleAddToPod(selectedCandidate);
                           setSelectedCandidate(null);
                         }}
@@ -1266,6 +1344,136 @@ export function RecruiterCandidatesView({
                   + Add to Shortlist
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Right-Side Sheet Drawer: Candidate Sourcing (Stage 2: Market Mapping) */}
+      {sourcingCandidate && (
+        <div className="fixed inset-0 z-50 overflow-hidden bg-ink/50 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col justify-between border-l border-[#bcd6fa] animate-in slide-in-from-right duration-300">
+            {/* Drawer Header */}
+            <div className="p-6 border-b border-[#bcd6fa]/40 bg-canvas/30 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-electric uppercase tracking-wider">
+                    RECRUITER SOURCING
+                  </span>
+                  <span className="rounded-full bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">
+                    STAGE 2: MARKET MAPPING
+                  </span>
+                </div>
+                <h3 className="mt-1 font-display text-lg font-bold text-ink">
+                  Source {sourcingCandidate.name}
+                </h3>
+                <p className="text-xs text-ink-soft">
+                  {sourcingCandidate.title} · {sourcingCandidate.sector} · Match Fit: {sourcingCandidate.matchScore}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSourcingCandidate(null)}
+                className="rounded-lg p-1.5 text-mist hover:text-ink hover:bg-canvas transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Drawer Content Form */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+              {sourcingResult ? (
+                <div
+                  className={`rounded-2xl p-4 border ${
+                    sourcingResult.type === "success"
+                      ? "border-signal/30 bg-signal/10 text-signal"
+                      : "border-red-200 bg-red-50 text-red-700"
+                  }`}
+                >
+                  <p className="font-display font-bold text-sm">
+                    {sourcingResult.type === "success" ? "Candidate Successfully Sourced!" : "Sourcing Notice"}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed">{sourcingResult.message}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Target Requisition Selector */}
+                  <div className="space-y-1">
+                    <label className="font-mono text-[11px] font-bold text-ink block">
+                      Target Client Requisition <span className="text-red-500">*</span>
+                    </label>
+                    {pods.length === 0 ? (
+                      <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-amber-900 text-xs">
+                        No active requisitions found. Please create an active requisition first.
+                      </div>
+                    ) : (
+                      <select
+                        value={sourcingRequisitionId}
+                        onChange={(e) => setSourcingRequisitionId(e.target.value)}
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
+                      >
+                        {pods.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {cleanJobTitle(p.name)} ({p.clientName || "Enterprise Client"} · {p.budgetMin ? `$${p.budgetMin}-$${p.budgetMax}/hr` : "Market Rate"})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Sourcing Notes */}
+                  <div className="space-y-1">
+                    <label className="font-mono text-[11px] font-bold text-ink block">
+                      Recruiter Sourcing Evaluation Notes
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={sourcingNote}
+                      onChange={(e) => setSourcingNote(e.target.value)}
+                      placeholder="Add recruiter rationale, relevant past accomplishments, and why this candidate fits the requisition requirements..."
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Pipeline Context Alert */}
+                  <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-electric font-display font-bold">
+                      <ShieldCheck size={16} />
+                      <span>Pipeline Stage Synchronization</span>
+                    </div>
+                    <p className="text-ink-soft leading-relaxed text-[11.5px]">
+                      Sourcing attaches this candidate to the requisition under <strong>Market Mapping (Sourced)</strong>. The candidate will appear in the requisition pipeline Kanban, and their dashboard will reflect this assignment.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Drawer Footer Actions */}
+            <div className="p-6 border-t border-[#bcd6fa]/40 bg-canvas/30 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setSourcingCandidate(null)}
+                className="rounded-xl border border-[#bcd6fa] px-4 py-2.5 font-display text-xs font-semibold text-ink-soft hover:bg-canvas transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSourceCandidate}
+                disabled={isSourcingSubmitting || pods.length === 0 || !!sourcingResult}
+                className="rounded-xl bg-electric px-5 py-2.5 font-display text-xs font-bold text-white shadow-xs hover:bg-electric-bright disabled:opacity-50 transition-all cursor-pointer flex items-center gap-2"
+              >
+                {isSourcingSubmitting ? (
+                  <span>Sourcing Candidate...</span>
+                ) : (
+                  <>
+                    <UserPlus size={14} />
+                    <span>Attach to Pipeline</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

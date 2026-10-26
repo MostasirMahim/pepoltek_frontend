@@ -133,10 +133,13 @@ export function CandidateAcademyView({
       <div className="rounded-2xl sm:rounded-3xl border border-[#bcd6fa] bg-white p-4 sm:p-6 lg:p-8 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-5">
           <div>
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-electric/30 bg-electric/10 px-2.5 py-0.5 text-[9.5px] sm:text-[11px] font-mono font-semibold text-electric uppercase tracking-widest">
-              <span>Talent Upskilling Ecosystem</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700">
+              <span className={`h-2 w-2 rounded-full ${currentProfile.primaryTrack === "healthcare" ? "bg-emerald-500" : "bg-electric"}`} />
+              <span>
+                {currentProfile.primaryTrack === "healthcare" ? "Healthcare & Clinical Academy" : "Technology & Engineering Academy"}
+              </span>
             </div>
-            <h1 className="mt-1.5 sm:mt-2.5 font-display text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-ink">
+            <h1 className="mt-2 font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-ink">
               Pepoltek Talent Academy
             </h1>
             <p className="mt-1 text-[11.5px] sm:text-xs md:text-sm text-ink-soft max-w-2xl leading-normal sm:leading-relaxed line-clamp-2 sm:line-clamp-none">

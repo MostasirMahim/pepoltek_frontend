@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { RegisterWizardView } from "@/components/auth/RegisterWizardView";
+import { CandidateIntakeRegisterView } from "@/components/auth/CandidateIntakeRegisterView";
 
 export const metadata: Metadata = {
   title: "Candidate Registration & Talent Intake | Pepoltek RPO",
@@ -12,12 +12,12 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#f4f7fb] text-slate-500 text-sm font-sans">
+        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] text-slate-500 text-sm font-sans">
           Loading Candidate Registration...
         </div>
       }
     >
-      <RegisterWizardView />
+      <CandidateIntakeRegisterView />
     </Suspense>
   );
 }
