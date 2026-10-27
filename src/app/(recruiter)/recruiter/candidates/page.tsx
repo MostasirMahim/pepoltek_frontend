@@ -6,8 +6,8 @@ import {
 } from "@/actions/recruiter.actions";
 
 export const metadata: Metadata = {
-  title: "Pre-Vetted Talent Directory | Pepoltek Recruiter",
-  description: "Browse pre-screened software engineering and healthcare talent ready for pod deployment.",
+  title: "Talent Pool (Candidates) | Pepoltek Recruiter",
+  description: "Browse candidate talent pool across software engineering and healthcare sectors sourced directly from live database profiles.",
 };
 
 export default async function RecruiterCandidatesPage() {

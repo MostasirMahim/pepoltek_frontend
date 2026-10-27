@@ -3,9 +3,31 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, Sparkles, LogOut, ChevronDown, LayoutDashboard, User, ArrowUpRight } from "lucide-react";
+import {
+  Briefcase,
+  Sparkles,
+  LogOut,
+  ChevronDown,
+  LayoutDashboard,
+  User,
+  ArrowUpRight,
+  Code,
+  Users,
+  Globe,
+  ShieldCheck,
+  Activity,
+  Building2,
+  Zap,
+  DollarSign,
+  FileCheck,
+  Clock,
+  CheckCircle2,
+  Search,
+} from "lucide-react";
 import { AnimatedChevrons } from "@/components/ui/AnimatedChevrons";
 import { logoutAction } from "@/actions/auth.actions";
+import { getPublicSiteContentAction } from "@/actions/content.actions";
+import HireFastModal from "@/components/main/HireFastModal";
 
 interface DropdownItem {
   title: string;
@@ -366,7 +388,45 @@ const NAV_DATA: NavSection[] = [
   },
 ];
 
+function getDynamicIcon(iconName?: string) {
+  switch (iconName) {
+    case "Code":
+      return <Code size={15} />;
+    case "Users":
+      return <Users size={15} />;
+    case "Globe":
+      return <Globe size={15} />;
+    case "Briefcase":
+      return <Briefcase size={15} />;
+    case "Sparkles":
+      return <Sparkles size={15} />;
+    case "ShieldCheck":
+      return <ShieldCheck size={15} />;
+    case "Activity":
+      return <Activity size={15} />;
+    case "Building2":
+      return <Building2 size={15} />;
+    case "Zap":
+      return <Zap size={15} />;
+    case "DollarSign":
+      return <DollarSign size={15} />;
+    case "FileCheck":
+      return <FileCheck size={15} />;
+    case "Clock":
+      return <Clock size={15} />;
+    case "CheckCircle2":
+      return <CheckCircle2 size={15} />;
+    case "Search":
+      return <Search size={15} />;
+    case "User":
+      return <User size={15} />;
+    default:
+      return <Briefcase size={15} />;
+  }
+}
+
 export default function Header() {
+  const [navData, setNavData] = useState<NavSection[]>(NAV_DATA);
   const [scrolled, setScrolled] = useState(false);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -379,6 +439,45 @@ export default function Header() {
   } | null>(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const [hireModalOpen, setHireModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadDynamicNav() {
+      try {
+        const res = await getPublicSiteContentAction<any>("site_navigation");
+        if (
+          res.success &&
+          res.data?.sections &&
+          Array.isArray(res.data.sections) &&
+          res.data.sections.length > 0
+        ) {
+          const transformed: NavSection[] = res.data.sections.map((sec: any) => ({
+            label: sec.label,
+            href: sec.href,
+            eyebrow: sec.eyebrow,
+            layout: sec.layout || "single",
+            items: (sec.items || []).map((it: any) => ({
+              title: it.title,
+              desc: it.desc,
+              href: it.href,
+              badge: it.badge,
+              icon: typeof it.icon === "string" ? getDynamicIcon(it.icon) : (it.icon || <Briefcase size={15} />),
+            })),
+            spotlight: sec.spotlight || {
+              headline: "Enterprise Workforce Solutions",
+              sub: "Verified candidates deployed in 2 to 7 days.",
+              cta: "Explore Solutions",
+              href: sec.href,
+            },
+          }));
+          setNavData(transformed);
+        }
+      } catch {
+        // Fallback to static NAV_DATA
+      }
+    }
+    loadDynamicNav();
+  }, []);
 
   useEffect(() => {
     async function checkAuth() {
@@ -565,7 +664,7 @@ export default function Header() {
           className="hidden items-center gap-0.5 xl:gap-1.5 lg:flex shrink-0"
           onMouseLeave={handleMouseLeave}
         >
-          {NAV_DATA.map((section, idx) => {
+          {navData.map((section, idx) => {
             const isOpen = activeMenu === idx;
             return (
               <div
@@ -819,13 +918,14 @@ export default function Header() {
                 Log in
               </Link>
 
-              <Link
-                href="/contact"
+              <button
+                type="button"
+                onClick={() => setHireModalOpen(true)}
                 className="group inline-flex items-center gap-1.5 sm:gap-2 justify-center whitespace-nowrap rounded-xl bg-[#0a1428] px-3 py-1.5 xs:px-3.5 xs:py-2 sm:px-4.5 sm:py-2 font-display text-[11px] xs:text-xs sm:text-sm font-semibold text-white shadow-[0_6px_16px_-4px_rgba(10,20,40,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric hover:shadow-[0_8px_20px_-4px_rgba(10,132,255,0.5)] cursor-pointer"
               >
                 <span>Hire & Deploy</span>
                 <AnimatedChevrons size={11} count={3} />
-              </Link>
+              </button>
             </>
           )}
 
@@ -947,7 +1047,7 @@ export default function Header() {
 
           {/* Navigation Accordion Sections */}
           <div className="flex flex-col gap-1.5">
-            {NAV_DATA.map((section, sIdx) => {
+            {navData.map((section, sIdx) => {
               const isExpanded = mobileExpanded === sIdx;
               return (
                 <div key={section.label} className="rounded-xl border border-[#bcd6fa]/40 bg-white/70 overflow-hidden">
@@ -997,17 +1097,23 @@ export default function Header() {
 
           {/* Bottom Primary CTA */}
           <div className="mt-4 pt-3 border-t border-[#bcd6fa]/40">
-            <Link
-              href="/contact"
-              onClick={() => setMobileOpen(false)}
-              className="group flex items-center justify-center gap-2 w-full rounded-xl bg-[#0a1428] py-3 font-display text-xs font-semibold text-white shadow-xs hover:bg-electric transition-colors"
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                setHireModalOpen(true);
+              }}
+              className="group flex items-center justify-center gap-2 w-full rounded-xl bg-[#0a1428] py-3 font-display text-xs font-semibold text-white shadow-xs hover:bg-electric transition-colors cursor-pointer"
             >
-              <span>Hire & Deploy with Pepoltek</span>
+              <span>I Want to Hire Fast</span>
               <AnimatedChevrons size={11} count={3} />
-            </Link>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Dynamic Hire Fast Modal */}
+      <HireFastModal isOpen={hireModalOpen} onClose={() => setHireModalOpen(false)} />
     </header>
   );
 }

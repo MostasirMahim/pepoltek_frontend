@@ -83,9 +83,9 @@ const BLOCK_META: Record<
   },
   site_navigation: {
     icon: <Link2 size={18} />,
-    description: "Top navigation menu links and dropdown items.",
-    group: "Site Config",
-    schemaHint: "{ links: [{ label, href, children?: [{ label, href }] }] }",
+    description: "Header navigation sections, mega-menu submenus, order serials, and public pages directory.",
+    group: "Navigation & Menus",
+    schemaHint: "{ sections: [{ label, href, eyebrow, layout, serial, items: [{ title, desc, href, badge, icon, serial }], spotlight: {} }] }",
   },
   contact_info: {
     icon: <Phone size={18} />,

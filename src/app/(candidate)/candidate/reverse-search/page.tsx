@@ -1,6 +1,10 @@
 import { Metadata } from "next";
 import { CandidateReverseSearchView } from "@/components/candidate/reverse-search/CandidateReverseSearchView";
-import { getReverseSearchMatchesAction } from "@/actions/matching.actions";
+import {
+  getReverseSearchMatchesAction,
+  getCandidatePitchRequestsAction,
+  PitchRequestItem,
+} from "@/actions/matching.actions";
 import { ReverseSearchMatch } from "@/types/candidate.types";
 
 export const metadata: Metadata = {
@@ -10,29 +14,48 @@ export const metadata: Metadata = {
 
 export default async function CandidateReverseSearchPage() {
   let initialMatches: ReverseSearchMatch[] = [];
+  let initialPitchRequests: PitchRequestItem[] = [];
 
   try {
-    const res = await getReverseSearchMatchesAction();
-    if (res.success && res.data && res.data.length > 0) {
-      initialMatches = res.data.map((item, idx) => ({
+    const [matchesRes, pitchRes] = await Promise.all([
+      getReverseSearchMatchesAction(),
+      getCandidatePitchRequestsAction(),
+    ]);
+
+    if (matchesRes.success && matchesRes.data && matchesRes.data.length > 0) {
+      initialMatches = matchesRes.data.map((item, idx) => ({
         id: item.id || `MATCH-BE-${idx}`,
+        requisition_id: item.requisition_id || item.id,
         clientOrgAnonymized: item.company_masked || "Enterprise Client (Confidential)",
         role: item.title,
+        level: item.level || "Senior",
+        location: item.location || "100% Remote",
         sector: item.sector === "healthcare" ? "Healthcare & Med-Tech" : "Enterprise IT",
         matchScore: item.match_score || 95,
         skillOverlap: item.skills || ["Next.js", "TypeScript", "Node.js"],
         timezoneOverlap: item.timezone_overlap || "4h guaranteed live overlap",
         compensation: item.rate_range || "$85 - $110 / hr",
-        engagement: "C2C",
+        engagement: item.engagement || "C2C Direct Sprint",
         sprintVelocity: "7-Day Sprint Ready",
         authorized: item.pitch_status === "authorized",
         authorizedAt: item.pitch_status === "authorized" ? "Verified" : undefined,
-        description: "Matched based on verified skills, timezone alignment, and work authorization.",
+        pitch_status: item.pitch_status,
+        description: item.description || "Matched based on verified skills, timezone alignment, and work authorization.",
       }));
+    }
+
+    if (pitchRes.success && pitchRes.data) {
+      initialPitchRequests = pitchRes.data;
     }
   } catch {
     // Fallback gracefully
   }
 
-  return <CandidateReverseSearchView initialMatches={initialMatches} />;
+  return (
+    <CandidateReverseSearchView
+      initialMatches={initialMatches}
+      initialPitchRequests={initialPitchRequests}
+    />
+  );
 }
+

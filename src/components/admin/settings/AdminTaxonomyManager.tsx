@@ -14,6 +14,7 @@ import {
   Users,
   FileText,
 } from "@/components/ui/Icons";
+import { ChevronDown, Layers } from "lucide-react";
 import {
   TaxonomyMatrix,
   updateTaxonomiesAction,
@@ -26,6 +27,9 @@ import {
   SeniorityOption,
   WorkAuthOption,
   EngagementOption,
+  AssessmentCategoryOption,
+  ValidatorSpecializationOption,
+  InterviewFormatOption,
 } from "@/types/taxonomy.types";
 
 interface AdminTaxonomyManagerProps {
@@ -36,7 +40,16 @@ interface AdminTaxonomyManagerProps {
   author?: string;
 }
 
-type TaxonomyTab = "sectors" | "domains" | "skills" | "seniorities" | "workAuths" | "engagements";
+type TaxonomyTab =
+  | "skills"
+  | "domains"
+  | "seniorities"
+  | "sectors"
+  | "workAuths"
+  | "engagements"
+  | "assessmentCategories"
+  | "validatorSpecializations"
+  | "interviewFormats";
 
 export function AdminTaxonomyManager({
   initialVersion,
@@ -45,7 +58,12 @@ export function AdminTaxonomyManager({
   publishedAt,
   author,
 }: AdminTaxonomyManagerProps) {
-  const [matrix, setMatrix] = useState<TaxonomyMatrix>(initialMatrix);
+  const [matrix, setMatrix] = useState<TaxonomyMatrix>({
+    ...initialMatrix,
+    assessmentCategories: initialMatrix.assessmentCategories || [],
+    validatorSpecializations: initialMatrix.validatorSpecializations || [],
+    interviewFormats: initialMatrix.interviewFormats || [],
+  });
   const [activeVersion, setActiveVersion] = useState<number>(initialVersion);
   const [activeTab, setActiveTab] = useState<TaxonomyTab>("skills");
   const [sectorFilter, setSectorFilter] = useState<"all" | "technology" | "healthcare">("all");
@@ -62,7 +80,7 @@ export function AdminTaxonomyManager({
   const [formId, setFormId] = useState("");
   const [formLabel, setFormLabel] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [formSectorId, setFormSectorId] = useState<"technology" | "healthcare">("technology");
+  const [formSectorId, setFormSectorId] = useState<string>("technology");
   const [formBadge, setFormBadge] = useState("");
   const [formHeadline, setFormHeadline] = useState("");
   const [formIconName, setFormIconName] = useState("Zap");
@@ -73,6 +91,7 @@ export function AdminTaxonomyManager({
   const [formCanonicalAuth, setFormCanonicalAuth] = useState("us_citizen");
   const [formRegion, setFormRegion] = useState("US");
   const [formCanonicalEngagement, setFormCanonicalEngagement] = useState("w2");
+  const [formDurationMinutes, setFormDurationMinutes] = useState<number>(60);
 
   // Notification Toast
   const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -89,17 +108,20 @@ export function AdminTaxonomyManager({
 
     // Provide helpful ID prefix based on active tab
     const prefixMap: Record<TaxonomyTab, string> = {
-      sectors: "sec-",
-      domains: "dom-tech-",
       skills: "sk-",
+      domains: "dom-tech-",
       seniorities: "lvl-tech-",
+      sectors: "sec-",
       workAuths: "auth-",
       engagements: "eng-",
+      assessmentCategories: "cat-",
+      validatorSpecializations: "val-",
+      interviewFormats: "fmt-",
     };
     setFormId(prefixMap[activeTab] || "");
     setFormLabel("");
     setFormDescription("");
-    setFormSectorId("technology");
+    setFormSectorId(["assessmentCategories", "interviewFormats"].includes(activeTab) ? "both" : "technology");
     setFormBadge("");
     setFormHeadline("");
     setFormIconName("Zap");
@@ -110,9 +132,11 @@ export function AdminTaxonomyManager({
     setFormCanonicalAuth("us_citizen");
     setFormRegion("US");
     setFormCanonicalEngagement("w2");
+    setFormDurationMinutes(60);
 
     setIsEditSheetOpen(true);
   };
+
 
   const openEditSheet = (item: any) => {
     setIsCreateMode(false);
@@ -132,6 +156,7 @@ export function AdminTaxonomyManager({
     setFormCanonicalAuth(item.canonicalAuth || "us_citizen");
     setFormRegion(item.region || "US");
     setFormCanonicalEngagement(item.canonicalEngagement || "w2");
+    setFormDurationMinutes(item.durationMinutes || 60);
 
     setIsEditSheetOpen(true);
   };
@@ -144,13 +169,12 @@ export function AdminTaxonomyManager({
     }
 
     const cleanId = formId.trim().toLowerCase().replace(/\s+/g, "-");
-
     const updated = { ...matrix };
 
     if (activeTab === "sectors") {
       const item: SectorOption = {
         id: cleanId,
-        code: formSectorId,
+        code: formSectorId as any,
         label: formLabel.trim(),
         description: formDescription.trim(),
         badge: formBadge.trim() || "Enterprise Roles",
@@ -166,7 +190,7 @@ export function AdminTaxonomyManager({
         : [];
       const item: DomainOption = {
         id: cleanId,
-        sectorId: formSectorId,
+        sectorId: formSectorId as any,
         label: formLabel.trim(),
         description: formDescription.trim(),
         recommendedSkills: skillsArray,
@@ -177,7 +201,7 @@ export function AdminTaxonomyManager({
     } else if (activeTab === "skills") {
       const item: SkillOption = {
         id: cleanId,
-        sectorId: formSectorId,
+        sectorId: formSectorId as any,
         label: formLabel.trim(),
         isPopular: formIsPopular,
       };
@@ -187,7 +211,7 @@ export function AdminTaxonomyManager({
     } else if (activeTab === "seniorities") {
       const item: SeniorityOption = {
         id: cleanId,
-        sectorId: formSectorId,
+        sectorId: formSectorId as any,
         label: formLabel.trim(),
         yearsRange: formYearsRange.trim(),
         canonicalLevel: formCanonicalLevel as any,
@@ -218,6 +242,43 @@ export function AdminTaxonomyManager({
       updated.engagements = isCreateMode
         ? [...updated.engagements, item]
         : updated.engagements.map((e) => (e.id === editingItem.id ? item : e));
+    } else if (activeTab === "assessmentCategories") {
+      const item: AssessmentCategoryOption = {
+        id: cleanId,
+        label: formLabel.trim(),
+        sectorId: formSectorId as any,
+        badge: formBadge.trim() || "Assessment",
+        description: formDescription.trim(),
+      };
+      const existing = updated.assessmentCategories || [];
+      updated.assessmentCategories = isCreateMode
+        ? [...existing, item]
+        : existing.map((c) => (c.id === editingItem.id ? item : c));
+    } else if (activeTab === "validatorSpecializations") {
+      const item: ValidatorSpecializationOption = {
+        id: cleanId,
+        label: formLabel.trim(),
+        sectorId: formSectorId as any,
+        badge: formBadge.trim() || "Specialist",
+        description: formDescription.trim(),
+      };
+      const existing = updated.validatorSpecializations || [];
+      updated.validatorSpecializations = isCreateMode
+        ? [...existing, item]
+        : existing.map((v) => (v.id === editingItem.id ? item : v));
+    } else if (activeTab === "interviewFormats") {
+      const item: InterviewFormatOption = {
+        id: cleanId,
+        label: formLabel.trim(),
+        sectorId: formSectorId as any,
+        badge: formBadge.trim() || "Interview Round",
+        durationMinutes: Number(formDurationMinutes) || 60,
+        description: formDescription.trim(),
+      };
+      const existing = updated.interviewFormats || [];
+      updated.interviewFormats = isCreateMode
+        ? [...existing, item]
+        : existing.map((v) => (v.id === editingItem.id ? item : v));
     }
 
     setMatrix(updated);
@@ -237,6 +298,15 @@ export function AdminTaxonomyManager({
     if (activeTab === "seniorities") updated.seniorities = updated.seniorities.filter((s) => s.id !== id);
     if (activeTab === "workAuths") updated.workAuths = updated.workAuths.filter((w) => w.id !== id);
     if (activeTab === "engagements") updated.engagements = updated.engagements.filter((e) => e.id !== id);
+    if (activeTab === "assessmentCategories") {
+      updated.assessmentCategories = (updated.assessmentCategories || []).filter((c) => c.id !== id);
+    }
+    if (activeTab === "validatorSpecializations") {
+      updated.validatorSpecializations = (updated.validatorSpecializations || []).filter((v) => v.id !== id);
+    }
+    if (activeTab === "interviewFormats") {
+      updated.interviewFormats = (updated.interviewFormats || []).filter((v) => v.id !== id);
+    }
 
     setMatrix(updated);
     setHasUnsavedChanges(true);
@@ -245,7 +315,7 @@ export function AdminTaxonomyManager({
 
   const handlePublishMatrix = () => {
     startTransition(async () => {
-      const note = `Admin published version containing ${matrix.skills.length} skills, ${matrix.domains.length} domains, ${matrix.seniorities.length} levels.`;
+      const note = `Admin published version containing ${matrix.skills.length} skills, ${matrix.domains.length} domains, ${(matrix.validatorSpecializations || []).length} validator specializations.`;
       const res = await updateTaxonomiesAction(matrix, note);
 
       if (res.success) {
@@ -283,11 +353,20 @@ export function AdminTaxonomyManager({
     else if (activeTab === "seniorities") items = matrix.seniorities;
     else if (activeTab === "workAuths") items = matrix.workAuths;
     else if (activeTab === "engagements") items = matrix.engagements;
+    else if (activeTab === "assessmentCategories") items = matrix.assessmentCategories || [];
+    else if (activeTab === "validatorSpecializations") items = matrix.validatorSpecializations || [];
+    else if (activeTab === "interviewFormats") items = matrix.interviewFormats || [];
 
     return items.filter((item) => {
       // Sector filter (where applicable)
       if (sectorFilter !== "all") {
-        if ("sectorId" in item && item.sectorId !== sectorFilter) return false;
+        if ("sectorId" in item) {
+          if (item.sectorId === "both" || item.sectorId === "all") {
+            // matches both sectors
+          } else if (item.sectorId !== sectorFilter) {
+            return false;
+          }
+        }
         if ("code" in item && item.code !== sectorFilter) return false;
       }
       // Search query
@@ -303,16 +382,31 @@ export function AdminTaxonomyManager({
   const currentItems = getFilteredItems();
 
   const tabCounts = {
-    sectors: matrix.sectors.length,
-    domains: matrix.domains.length,
     skills: matrix.skills.length,
+    domains: matrix.domains.length,
     seniorities: matrix.seniorities.length,
+    sectors: matrix.sectors.length,
     workAuths: matrix.workAuths.length,
     engagements: matrix.engagements.length,
+    assessmentCategories: (matrix.assessmentCategories || []).length,
+    validatorSpecializations: (matrix.validatorSpecializations || []).length,
+    interviewFormats: (matrix.interviewFormats || []).length,
   };
 
+  const tabDefinitions: { id: TaxonomyTab; label: string; count: number }[] = [
+    { id: "skills", label: "Skills & Specialties", count: tabCounts.skills },
+    { id: "domains", label: "Domains & Specialist Tracks", count: tabCounts.domains },
+    { id: "seniorities", label: "Seniority Levels", count: tabCounts.seniorities },
+    { id: "sectors", label: "Sectors", count: tabCounts.sectors },
+    { id: "workAuths", label: "Work Authorizations", count: tabCounts.workAuths },
+    { id: "engagements", label: "Engagement Models", count: tabCounts.engagements },
+    { id: "assessmentCategories", label: "Assessment Categories", count: tabCounts.assessmentCategories },
+    { id: "validatorSpecializations", label: "Validator Specializations", count: tabCounts.validatorSpecializations },
+    { id: "interviewFormats", label: "Interview Formats & Rounds", count: tabCounts.interviewFormats },
+  ];
+
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 font-enterprise">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -322,12 +416,12 @@ export function AdminTaxonomyManager({
           </div>
           <div className="flex items-center gap-3 mt-2">
             <h1 className="font-display text-2xl font-bold text-ink">Candidate Choice Matrix &amp; Taxonomies</h1>
-            <span className="rounded-full bg-ink px-2.5 py-0.5 font-mono text-xs font-bold text-white shadow-xs">
+            <span className="rounded-full bg-ink px-2.5 py-0.5 font-enterprise text-xs font-bold text-white shadow-2xs">
               v{activeVersion}
             </span>
           </div>
           <p className="text-xs text-ink-soft">
-            Manage sectors, domains, skills, seniorities, visas, and engagement models live across candidate registration and onboarding without code redeployments.
+            Manage sectors, domains, skills, seniorities, visas, engagement models, and vetting categories live without code redeployments.
           </p>
         </div>
 
@@ -335,14 +429,14 @@ export function AdminTaxonomyManager({
           <button
             type="button"
             onClick={() => setIsHistorySheetOpen(true)}
-            className="rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2.5 font-display text-xs font-semibold text-ink-soft hover:bg-canvas transition-colors cursor-pointer"
+            className="rounded-xl border border-[#bcd6fa] bg-white px-3.5 py-2.5 font-enterprise text-xs font-semibold text-ink-soft hover:bg-canvas transition-colors cursor-pointer shadow-2xs"
           >
             History &amp; Rollback
           </button>
           <button
             type="button"
             onClick={openCreateSheet}
-            className="rounded-xl border border-electric bg-electric/10 px-3.5 py-2.5 font-display text-xs font-semibold text-electric hover:bg-electric hover:text-white transition-all cursor-pointer"
+            className="rounded-xl border border-electric bg-electric/10 px-3.5 py-2.5 font-enterprise text-xs font-semibold text-electric hover:bg-electric hover:text-white transition-all cursor-pointer shadow-2xs"
           >
             + Add Choice
           </button>
@@ -350,7 +444,7 @@ export function AdminTaxonomyManager({
             type="button"
             disabled={isPending || !hasUnsavedChanges}
             onClick={handlePublishMatrix}
-            className={`rounded-xl px-4 py-2.5 font-display text-xs font-bold shadow-xs transition-all cursor-pointer ${
+            className={`rounded-xl px-4 py-2.5 font-enterprise text-xs font-bold shadow-2xs transition-all cursor-pointer ${
               hasUnsavedChanges
                 ? "bg-signal text-white hover:bg-emerald-600 animate-pulse"
                 : "bg-ink text-white hover:bg-electric disabled:opacity-40"
@@ -386,52 +480,48 @@ export function AdminTaxonomyManager({
             type="button"
             disabled={isPending}
             onClick={handlePublishMatrix}
-            className="rounded-xl bg-amber-700 px-3.5 py-1.5 font-display text-xs font-bold text-white hover:bg-amber-800 transition-colors cursor-pointer shadow-xs"
+            className="rounded-xl bg-amber-700 px-3.5 py-1.5 font-enterprise text-xs font-bold text-white hover:bg-amber-800 transition-colors cursor-pointer shadow-2xs"
           >
             Publish Now (v{activeVersion + 1})
           </button>
         </div>
       )}
 
-      {/* Category Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#bcd6fa]/50 pb-3">
-        {[
-          { id: "skills", label: "Skills & Specialties", count: tabCounts.skills },
-          { id: "domains", label: "Domains & Specialist Tracks", count: tabCounts.domains },
-          { id: "seniorities", label: "Seniority Levels", count: tabCounts.seniorities },
-          { id: "sectors", label: "Sectors", count: tabCounts.sectors },
-          { id: "workAuths", label: "Work Authorizations", count: tabCounts.workAuths },
-          { id: "engagements", label: "Engagement Models", count: tabCounts.engagements },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => {
-              setActiveTab(tab.id as TaxonomyTab);
-              setSearchQuery("");
-            }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 font-display text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === tab.id
-                ? "bg-ink text-white shadow-xs"
-                : "bg-white border border-[#bcd6fa] text-ink-soft hover:bg-canvas hover:text-ink"
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={`rounded-full px-2 py-0.2 font-mono text-[10px] ${
-                activeTab === tab.id ? "bg-white/20 text-white" : "bg-canvas text-mist"
-              }`}
+      {/* Choice Group Selector Bar: Prominent and high/wide dropdown, no horizontal scrollbar pills */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#bcd6fa]/50 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+          <label className="font-enterprise text-xs font-bold uppercase tracking-wider text-ink-soft shrink-0">
+            Active Choice Group:
+          </label>
+          <div className="relative w-full sm:w-96">
+            <select
+              value={activeTab}
+              onChange={(e) => {
+                setActiveTab(e.target.value as TaxonomyTab);
+                setSearchQuery("");
+              }}
+              className="w-full h-12 font-enterprise text-sm font-bold text-ink bg-white border-2 border-[#bcd6fa] rounded-xl pl-4 pr-10 focus:border-electric focus:outline-hidden cursor-pointer shadow-xs appearance-none transition-colors"
             >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+              {tabDefinitions.map((tab) => (
+                <option key={tab.id} value={tab.id} className="py-1">
+                  {tab.label} ({tab.count} items)
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={18} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-soft" />
+          </div>
+        </div>
+
+        <div className="text-xs text-ink-soft">
+          Showing <span className="font-bold text-ink">{currentItems.length}</span> of{" "}
+          <span className="font-bold text-ink">{tabCounts[activeTab] || 0}</span> configured choices
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#bcd6fa] bg-white p-3 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#bcd6fa] bg-white p-3 shadow-2xs">
         <div className="flex items-center gap-2">
-          {["skills", "domains", "seniorities", "sectors"].includes(activeTab) && (
+          {["skills", "domains", "seniorities", "sectors", "assessmentCategories", "validatorSpecializations", "interviewFormats"].includes(activeTab) && (
             <div className="flex items-center gap-1">
               {[
                 { id: "all", label: "All Sectors" },
@@ -442,7 +532,7 @@ export function AdminTaxonomyManager({
                   key={s.id}
                   type="button"
                   onClick={() => setSectorFilter(s.id as any)}
-                  className={`rounded-lg px-2.5 py-1 font-mono text-[11px] font-semibold transition-all cursor-pointer ${
+                  className={`rounded-lg px-2.5 py-1 font-enterprise text-xs font-semibold transition-all cursor-pointer ${
                     sectorFilter === s.id
                       ? "bg-electric text-white"
                       : "text-ink-soft hover:bg-canvas"
@@ -463,10 +553,10 @@ export function AdminTaxonomyManager({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search ID, label, description..."
-              className="w-56 sm:w-64 rounded-xl border border-[#bcd6fa] bg-canvas/40 pl-8 pr-3 py-1.5 font-mono text-xs text-ink placeholder:text-mist focus:border-electric focus:bg-white focus:outline-hidden"
+              className="w-56 sm:w-64 rounded-xl border border-[#bcd6fa] bg-canvas/40 pl-8 pr-3 py-1.5 font-enterprise text-xs text-ink placeholder:text-mist focus:border-electric focus:bg-white focus:outline-hidden"
             />
           </div>
-          <span className="font-mono text-[11px] text-mist pr-2 hidden sm:inline">
+          <span className="font-enterprise text-xs text-mist pr-2 hidden sm:inline">
             Showing {currentItems.length} items
           </span>
         </div>
@@ -479,8 +569,8 @@ export function AdminTaxonomyManager({
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-canvas border border-[#bcd6fa]/50 text-mist mb-2">
               <Search size={20} />
             </div>
-            <div className="font-display text-sm font-bold text-ink">No Choices Found</div>
-            <p className="text-xs text-mist mt-1">
+            <div className="font-enterprise text-sm font-bold text-ink">No Choices Found</div>
+            <p className="text-xs text-mist mt-1 font-enterprise">
               Try adjusting your search query or add a new choice item using the button above.
             </p>
           </div>
@@ -489,54 +579,66 @@ export function AdminTaxonomyManager({
             <div
               key={item.id}
               onClick={() => openEditSheet(item)}
-              className="group relative rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-xs hover:border-electric hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+              className="group relative rounded-2xl border border-[#bcd6fa] bg-white p-5 shadow-2xs hover:border-electric hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-mono text-[10px] font-bold text-electric bg-electric/10 px-2 py-0.5 rounded-md">
+                  <span className="font-enterprise text-[11px] font-bold text-electric bg-electric/10 px-2.5 py-0.5 rounded-md">
                     {item.id}
                   </span>
                   {"sectorId" in item && (
                     <span
-                      className={`font-mono text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                      className={`font-enterprise text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
                         item.sectorId === "technology"
                           ? "bg-blue-50 text-blue-700"
-                          : "bg-emerald-50 text-emerald-700"
+                          : item.sectorId === "healthcare"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-purple-50 text-purple-700"
                       }`}
                     >
                       {item.sectorId}
                     </span>
                   )}
                   {"code" in item && (
-                    <span className="font-mono text-[10px] uppercase font-bold bg-ink/10 text-ink px-2 py-0.5 rounded-full">
+                    <span className="font-enterprise text-[10px] uppercase font-bold bg-ink/10 text-ink px-2 py-0.5 rounded-full">
                       {item.code}
                     </span>
                   )}
                   {"region" in item && (
-                    <span className="font-mono text-[10px] uppercase font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                    <span className="font-enterprise text-[10px] uppercase font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
                       {item.region}
+                    </span>
+                  )}
+                  {item.badge && (
+                    <span className="font-enterprise text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
+                      {item.badge}
+                    </span>
+                  )}
+                  {"durationMinutes" in item && (
+                    <span className="font-enterprise text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                      ⏱ {item.durationMinutes} Mins
                     </span>
                   )}
                 </div>
 
-                <h3 className="font-display text-sm font-bold text-ink mt-2 group-hover:text-electric transition-colors">
+                <h3 className="font-enterprise text-sm font-bold text-ink mt-2 group-hover:text-electric transition-colors">
                   {item.label}
                 </h3>
 
                 {item.headline && (
-                  <p className="text-[11px] font-semibold text-ink-soft mt-0.5 line-clamp-1">
+                  <p className="text-[11px] font-semibold text-ink-soft mt-0.5 line-clamp-1 font-enterprise">
                     {item.headline}
                   </p>
                 )}
 
                 {item.description && (
-                  <p className="text-xs text-mist mt-1 line-clamp-2">
+                  <p className="text-xs text-mist mt-1 line-clamp-2 font-enterprise">
                     {item.description}
                   </p>
                 )}
 
                 {item.yearsRange && (
-                  <div className="mt-2 text-[11px] font-mono text-ink font-semibold">
+                  <div className="mt-2 text-xs font-enterprise text-ink font-semibold">
                     Experience Range: <span className="text-electric">{item.yearsRange}</span>
                   </div>
                 )}
@@ -546,13 +648,13 @@ export function AdminTaxonomyManager({
                     {item.recommendedSkills.slice(0, 4).map((sk: string) => (
                       <span
                         key={sk}
-                        className="rounded-md bg-canvas px-1.5 py-0.5 font-mono text-[9px] text-ink-soft"
+                        className="rounded-md bg-canvas px-1.5 py-0.5 font-enterprise text-[10px] text-ink-soft"
                       >
                         {sk}
                       </span>
                     ))}
                     {item.recommendedSkills.length > 4 && (
-                      <span className="text-[9px] text-mist font-mono self-center">
+                      <span className="text-[10px] text-mist font-enterprise self-center">
                         +{item.recommendedSkills.length - 4} more
                       </span>
                     )}
@@ -561,7 +663,7 @@ export function AdminTaxonomyManager({
               </div>
 
               <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#bcd6fa]/40">
-                <span className="text-[11px] font-mono text-mist group-hover:text-electric transition-colors">
+                <span className="text-xs font-enterprise text-mist group-hover:text-electric transition-colors">
                   Click to edit
                 </span>
                 <button
@@ -585,7 +687,7 @@ export function AdminTaxonomyManager({
           onClick={() => setIsEditSheetOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto thin-scrollbar"
+            className="w-full max-w-lg bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto thin-scrollbar font-enterprise animate-in slide-in-from-right duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-6">
@@ -593,18 +695,20 @@ export function AdminTaxonomyManager({
               <div className="flex items-start justify-between border-b border-[#bcd6fa]/40 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-electric uppercase">
-                      {activeTab}
+                    <span className="font-enterprise text-xs font-bold text-electric uppercase">
+                      {activeTab === "assessmentCategories" ? "VETTING CATEGORY" : activeTab}
                     </span>
-                    <span className="rounded-full bg-signal/15 px-2.5 py-0.5 font-mono text-[10px] font-bold text-signal">
+                    <span className="rounded-full bg-signal/15 px-2.5 py-0.5 font-enterprise text-[10px] font-bold text-signal">
                       {isCreateMode ? "New Choice Item" : "Editing Item"}
                     </span>
                   </div>
                   <h2 className="font-display text-xl font-bold text-ink mt-1.5">
-                    {isCreateMode ? `Add ${activeTab.slice(0, -1)} Choice` : `Edit ${formLabel}`}
+                    {isCreateMode
+                      ? `Add ${activeTab === "assessmentCategories" ? "Assessment Category" : activeTab.slice(0, -1)} Choice`
+                      : `Edit ${formLabel}`}
                   </h2>
-                  <p className="text-xs text-ink-soft">
-                    Changes take effect immediately across registration and onboarding once the matrix is published.
+                  <p className="text-xs text-ink-soft font-enterprise">
+                    Changes take effect immediately across registration, vetting templates, and onboarding once the matrix is published.
                   </p>
                 </div>
 
@@ -618,10 +722,10 @@ export function AdminTaxonomyManager({
               </div>
 
               {/* Form Body */}
-              <form id="taxonomy-item-form" onSubmit={handleSaveItem} className="space-y-4 text-xs">
+              <form id="taxonomy-item-form" onSubmit={handleSaveItem} className="space-y-4 text-xs font-enterprise">
                 {/* ID */}
                 <div className="space-y-1">
-                  <label className="font-mono text-[11px] font-semibold text-ink block">
+                  <label className="font-enterprise text-xs font-semibold text-ink block">
                     Unique Choice ID * {isCreateMode ? "(Immutable once referenced)" : "(Read-Only)"}
                   </label>
                   <input
@@ -630,14 +734,14 @@ export function AdminTaxonomyManager({
                     disabled={!isCreateMode}
                     value={formId}
                     onChange={(e) => setFormId(e.target.value)}
-                    placeholder="e.g. sk-langchain or dom-tech-ai"
-                    className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3 py-2 font-mono text-xs text-ink focus:border-electric focus:bg-white focus:outline-hidden disabled:opacity-60"
+                    placeholder="e.g. cat-system-design or sk-langchain"
+                    className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:bg-white focus:outline-hidden disabled:opacity-60"
                   />
                 </div>
 
                 {/* Label */}
                 <div className="space-y-1">
-                  <label className="font-mono text-[11px] font-semibold text-ink block">
+                  <label className="font-enterprise text-xs font-semibold text-ink block">
                     Display Label *
                   </label>
                   <input
@@ -645,21 +749,21 @@ export function AdminTaxonomyManager({
                     required
                     value={formLabel}
                     onChange={(e) => setFormLabel(e.target.value)}
-                    placeholder="e.g. Distributed Systems & MLOps"
-                    className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-hidden"
+                    placeholder="e.g. System Design & Distributed Architecture"
+                    className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                   />
                 </div>
 
                 {/* Sector Scope (for Sectors, Domains, Skills, Seniorities) */}
                 {["sectors", "domains", "skills", "seniorities"].includes(activeTab) && (
                   <div className="space-y-1">
-                    <label className="font-mono text-[11px] font-semibold text-ink block">
+                    <label className="font-enterprise text-xs font-semibold text-ink block">
                       Sector Track
                     </label>
                     <select
                       value={formSectorId}
-                      onChange={(e) => setFormSectorId(e.target.value as any)}
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
+                      onChange={(e) => setFormSectorId(e.target.value)}
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden cursor-pointer"
                     >
                       <option value="technology">Technology &amp; Software Engineering</option>
                       <option value="healthcare">Healthcare &amp; Clinical Specialists</option>
@@ -667,17 +771,106 @@ export function AdminTaxonomyManager({
                   </div>
                 )}
 
+                {/* Tab Specific: Assessment Categories */}
+                {activeTab === "assessmentCategories" && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
+                        Sector Scope (Applicable Industry)
+                      </label>
+                      <select
+                        value={formSectorId}
+                        onChange={(e) => setFormSectorId(e.target.value)}
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden cursor-pointer"
+                      >
+                        <option value="both">Both / Cross-Sector (All)</option>
+                        <option value="technology">Technology &amp; Software Engineering</option>
+                        <option value="healthcare">Healthcare &amp; Clinical Specialists</option>
+                      </select>
+                      <span className="text-[11px] text-mist font-enterprise block">
+                        Determines whether this category appears in Technology templates, Healthcare templates, or both.
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
+                        Badge Pill
+                      </label>
+                      <input
+                        type="text"
+                        value={formBadge}
+                        onChange={(e) => setFormBadge(e.target.value)}
+                        placeholder="e.g. Architecture Review or Clinical Governance"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Tab Specific: Interview Formats & Rounds */}
+                {activeTab === "interviewFormats" && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
+                        Sector Scope (Applicable Industry)
+                      </label>
+                      <select
+                        value={formSectorId}
+                        onChange={(e) => setFormSectorId(e.target.value)}
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden cursor-pointer"
+                      >
+                        <option value="both">Both / Cross-Sector (All Roles)</option>
+                        <option value="technology">Technology &amp; Software Engineering</option>
+                        <option value="healthcare">Healthcare &amp; Clinical Specialists</option>
+                      </select>
+                      <span className="text-[11px] text-mist font-enterprise block">
+                        Determines whether this interview format appears for Technology jobs, Healthcare jobs, or all roles.
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="font-enterprise text-xs font-semibold text-ink block">
+                          Badge Pill
+                        </label>
+                        <input
+                          type="text"
+                          value={formBadge}
+                          onChange={(e) => setFormBadge(e.target.value)}
+                          placeholder="e.g. Hands-on Code or Clinical Panel"
+                          className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="font-enterprise text-xs font-semibold text-ink block">
+                          Duration (Minutes)
+                        </label>
+                        <input
+                          type="number"
+                          min="15"
+                          max="180"
+                          step="15"
+                          value={formDurationMinutes}
+                          onChange={(e) => setFormDurationMinutes(parseInt(e.target.value, 10) || 60)}
+                          placeholder="60"
+                          className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 {/* Description */}
                 <div className="space-y-1">
-                  <label className="font-mono text-[11px] font-semibold text-ink block">
-                    Description &amp; Onboarding Guidance
+                  <label className="font-enterprise text-xs font-semibold text-ink block">
+                    Description &amp; Onboarding / Vetting Guidance
                   </label>
                   <textarea
                     rows={3}
                     value={formDescription}
                     onChange={(e) => setFormDescription(e.target.value)}
-                    placeholder="Explain what qualifies a specialist for this choice..."
-                    className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 text-xs text-ink focus:border-electric focus:outline-hidden"
+                    placeholder="Explain what competencies or skills this choice evaluates..."
+                    className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                   />
                 </div>
 
@@ -685,7 +878,7 @@ export function AdminTaxonomyManager({
                 {activeTab === "sectors" && (
                   <>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Headline Subtitle
                       </label>
                       <input
@@ -693,11 +886,11 @@ export function AdminTaxonomyManager({
                         value={formHeadline}
                         onChange={(e) => setFormHeadline(e.target.value)}
                         placeholder="e.g. Full-Stack, Cloud Architecture &amp; MLOps"
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Badge Pill
                       </label>
                       <input
@@ -705,7 +898,7 @@ export function AdminTaxonomyManager({
                         value={formBadge}
                         onChange={(e) => setFormBadge(e.target.value)}
                         placeholder="e.g. Enterprise Roles"
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                       />
                     </div>
                   </>
@@ -714,7 +907,7 @@ export function AdminTaxonomyManager({
                 {/* Tab Specific: Domains */}
                 {activeTab === "domains" && (
                   <div className="space-y-1">
-                    <label className="font-mono text-[11px] font-semibold text-ink block">
+                    <label className="font-enterprise text-xs font-semibold text-ink block">
                       Recommended Skill IDs (Comma-Separated)
                     </label>
                     <input
@@ -722,9 +915,9 @@ export function AdminTaxonomyManager({
                       value={formRecommendedSkills}
                       onChange={(e) => setFormRecommendedSkills(e.target.value)}
                       placeholder="e.g. sk-react, sk-nextjs, sk-typescript"
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-mono text-xs text-ink focus:border-electric focus:outline-hidden"
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                     />
-                    <span className="text-[10px] text-mist block">
+                    <span className="text-[10px] text-mist font-enterprise block">
                       Referenced skills are highlighted during onboarding intake.
                     </span>
                   </div>
@@ -740,7 +933,7 @@ export function AdminTaxonomyManager({
                       onChange={(e) => setFormIsPopular(e.target.checked)}
                       className="rounded border-[#bcd6fa] text-electric focus:ring-electric"
                     />
-                    <label htmlFor="skill-popular" className="font-mono text-xs font-semibold text-ink cursor-pointer">
+                    <label htmlFor="skill-popular" className="font-enterprise text-xs font-semibold text-ink cursor-pointer">
                       Mark as Popular / Quick-Pick Skill
                     </label>
                   </div>
@@ -750,7 +943,7 @@ export function AdminTaxonomyManager({
                 {activeTab === "seniorities" && (
                   <>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Years Experience Range
                       </label>
                       <input
@@ -758,17 +951,17 @@ export function AdminTaxonomyManager({
                         value={formYearsRange}
                         onChange={(e) => setFormYearsRange(e.target.value)}
                         placeholder="e.g. 5 to 8 Years"
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Canonical Level
                       </label>
                       <select
                         value={formCanonicalLevel}
                         onChange={(e) => setFormCanonicalLevel(e.target.value)}
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
                       >
                         <option value="junior">Junior (1-2 yrs)</option>
                         <option value="mid">Mid-Level (3-5 yrs)</option>
@@ -785,13 +978,13 @@ export function AdminTaxonomyManager({
                 {activeTab === "workAuths" && (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Canonical Auth Key
                       </label>
                       <select
                         value={formCanonicalAuth}
                         onChange={(e) => setFormCanonicalAuth(e.target.value)}
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
                       >
                         <option value="us_citizen">US Citizen</option>
                         <option value="green_card">Green Card</option>
@@ -801,13 +994,13 @@ export function AdminTaxonomyManager({
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Jurisdiction / Region
                       </label>
                       <select
                         value={formRegion}
                         onChange={(e) => setFormRegion(e.target.value)}
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
                       >
                         <option value="US">United States</option>
                         <option value="UK">United Kingdom</option>
@@ -822,13 +1015,13 @@ export function AdminTaxonomyManager({
                 {activeTab === "engagements" && (
                   <>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Canonical Engagement Type
                       </label>
                       <select
                         value={formCanonicalEngagement}
                         onChange={(e) => setFormCanonicalEngagement(e.target.value)}
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs font-semibold text-ink focus:border-electric focus:outline-hidden"
                       >
                         <option value="w2">W2 Contract</option>
                         <option value="c2c">Corp-to-Corp (C2C)</option>
@@ -837,7 +1030,7 @@ export function AdminTaxonomyManager({
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="font-mono text-[11px] font-semibold text-ink block">
+                      <label className="font-enterprise text-xs font-semibold text-ink block">
                         Badge Label
                       </label>
                       <input
@@ -845,7 +1038,7 @@ export function AdminTaxonomyManager({
                         value={formBadge}
                         onChange={(e) => setFormBadge(e.target.value)}
                         placeholder="e.g. US Payroll"
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 text-xs text-ink focus:border-electric focus:outline-hidden"
+                        className="w-full rounded-xl border border-[#bcd6fa] bg-white px-3 py-2 font-enterprise text-xs text-ink focus:border-electric focus:outline-hidden"
                       />
                     </div>
                   </>
@@ -858,14 +1051,14 @@ export function AdminTaxonomyManager({
               <button
                 type="button"
                 onClick={() => setIsEditSheetOpen(false)}
-                className="rounded-xl px-4 py-2.5 font-display text-xs font-semibold text-ink-soft hover:bg-canvas cursor-pointer"
+                className="rounded-xl px-4 py-2.5 font-enterprise text-xs font-semibold text-ink-soft hover:bg-canvas cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 form="taxonomy-item-form"
-                className="rounded-xl bg-electric px-5 py-2.5 font-display text-xs font-bold text-white hover:bg-electric-bright transition-all cursor-pointer shadow-xs"
+                className="rounded-xl bg-electric px-5 py-2.5 font-enterprise text-xs font-bold text-white hover:bg-electric-bright transition-all cursor-pointer shadow-2xs"
               >
                 Save to Matrix Draft
               </button>
@@ -881,14 +1074,14 @@ export function AdminTaxonomyManager({
           onClick={() => setIsHistorySheetOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto thin-scrollbar"
+            className="w-full max-w-md bg-white h-full shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto thin-scrollbar font-enterprise animate-in slide-in-from-right duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-6">
               <div className="flex items-start justify-between border-b border-[#bcd6fa]/40 pb-4">
                 <div>
                   <h2 className="font-display text-xl font-bold text-ink">Taxonomy Version History</h2>
-                  <p className="text-xs text-ink-soft">
+                  <p className="text-xs text-ink-soft font-enterprise">
                     All prior versions are immutable. You can roll back to any historical ruleset without data loss.
                   </p>
                 </div>
@@ -903,45 +1096,43 @@ export function AdminTaxonomyManager({
 
               <div className="space-y-3">
                 {initialHistory.length === 0 ? (
-                  <p className="text-xs text-mist italic">
-                    Currently operating on Version {activeVersion}. No previous versions recorded.
-                  </p>
+                  <p className="text-xs text-mist font-enterprise">No historical versions available.</p>
                 ) : (
-                  initialHistory.map((h) => (
+                  initialHistory.map((h: any) => (
                     <div
                       key={h.version}
-                      className={`rounded-2xl border p-4 text-xs space-y-2 ${
+                      className={`rounded-2xl border p-4 text-xs font-enterprise flex items-center justify-between gap-3 ${
                         h.is_active
-                          ? "border-signal bg-signal/5"
-                          : "border-[#bcd6fa]/60 bg-canvas/30"
+                          ? "border-signal/50 bg-signal/5"
+                          : "border-[#bcd6fa] bg-white hover:border-electric"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-ink">v{h.version}</span>
+                          <span className="font-enterprise font-bold text-ink">Version {h.version}</span>
                           {h.is_active && (
-                            <span className="rounded-full bg-signal/15 px-2 py-0.2 font-mono text-[9px] font-bold text-signal">
-                              Active
+                            <span className="rounded-full bg-signal/15 px-2 py-0.2 font-enterprise text-[10px] font-bold text-signal">
+                              ACTIVE
                             </span>
                           )}
                         </div>
-                        <span className="font-mono text-[10px] text-mist">{h.created_at?.split("T")[0]}</span>
+                        <p className="text-[11px] text-mist mt-0.5 font-enterprise">
+                          {new Date(h.created_at).toLocaleDateString()} by {h.author}
+                        </p>
+                        {h.notes && (
+                          <p className="text-[11px] text-ink-soft mt-1 line-clamp-1 font-enterprise">
+                            {h.notes}
+                          </p>
+                        )}
                       </div>
-
-                      <p className="text-[11px] text-ink-soft">
-                        Published by <span className="font-semibold text-ink">{h.author}</span>
-                      </p>
-
-                      {h.notes && <p className="text-[10px] text-mist italic">{h.notes}</p>}
 
                       {!h.is_active && (
                         <button
                           type="button"
-                          disabled={isPending}
                           onClick={() => handleRollback(h.version)}
-                          className="w-full rounded-xl border border-electric/40 bg-white py-1.5 font-display text-[11px] font-bold text-electric hover:bg-electric hover:text-white transition-all cursor-pointer mt-1"
+                          className="rounded-xl border border-[#bcd6fa] bg-white px-3 py-1.5 font-enterprise text-[11px] font-bold text-electric hover:bg-electric hover:text-white transition-all cursor-pointer shadow-2xs shrink-0"
                         >
-                          Rollback to Version {h.version}
+                          Rollback
                         </button>
                       )}
                     </div>
@@ -950,11 +1141,11 @@ export function AdminTaxonomyManager({
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#bcd6fa]/40 flex justify-end">
+            <div className="pt-6 border-t border-[#bcd6fa]/40">
               <button
                 type="button"
                 onClick={() => setIsHistorySheetOpen(false)}
-                className="rounded-xl px-4 py-2 font-display text-xs font-semibold text-ink-soft hover:bg-canvas cursor-pointer"
+                className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/40 py-2.5 font-enterprise text-xs font-semibold text-ink hover:bg-canvas transition-colors cursor-pointer"
               >
                 Close History
               </button>

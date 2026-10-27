@@ -4,19 +4,21 @@ import {
   getRecruiterPodsAction,
   getRecruiterCandidatesAction,
   getRecruiterAnalyticsAction,
+  getRecruiterReferralsAction,
 } from "@/actions/recruiter.actions";
 import { RecruiterShortlist } from "@/types/recruiter.types";
 
 export const metadata: Metadata = {
-  title: "Recruiter Cockpit & Pod Deployment Hub | Pepoltek",
-  description: "Manage sprint engineering pods and clinical staffing squads with 7-day deployment SLA.",
+  title: "Recruiter Cockpit & Requisition Hub | Pepoltek",
+  description: "Manage sprint engineering squads and clinical staffing squads with 7-day deployment SLA.",
 };
 
 export default async function RecruiterDashboardPage() {
-  const [pods, candidates, analytics] = await Promise.all([
+  const [pods, candidates, analytics, referralsData] = await Promise.all([
     getRecruiterPodsAction(),
     getRecruiterCandidatesAction(),
     getRecruiterAnalyticsAction(),
+    getRecruiterReferralsAction(),
   ]);
 
   const shortlists: RecruiterShortlist[] = candidates.slice(0, 3).map((c) => ({
@@ -33,6 +35,7 @@ export default async function RecruiterDashboardPage() {
       pods={pods}
       shortlists={shortlists}
       analytics={analytics}
+      referralsData={referralsData}
     />
   );
 }

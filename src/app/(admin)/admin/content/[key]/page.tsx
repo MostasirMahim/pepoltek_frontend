@@ -7,6 +7,7 @@ import {
 import { AdminContentEditor } from "@/components/admin/content/AdminContentEditor";
 import { AdminHomepageSplitEditor } from "@/components/admin/content/AdminHomepageSplitEditor";
 import { AdminCollectionEditor } from "@/components/admin/content/AdminCollectionEditor";
+import { AdminNavigationEditor } from "@/components/admin/content/AdminNavigationEditor";
 
 // All valid content keys from the backend SiteContent.Key choices
 const VALID_KEYS: Record<string, string> = {
@@ -63,6 +64,16 @@ export default async function AdminContentEditorPage({ params }: Props) {
       <AdminCollectionEditor
         contentKey={key}
         keyLabel={VALID_KEYS[key]}
+        blockDetail={blockDetail}
+        history={history}
+      />
+    );
+  }
+
+  // Dedicated interactive Navigation Menu manager with Public Pages Directory
+  if (key === "site_navigation") {
+    return (
+      <AdminNavigationEditor
         blockDetail={blockDetail}
         history={history}
       />

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import PageHero from "@/components/main/PageHero";
 import { applyPublicJobAction } from "@/actions/recruiter.actions";
 import { getCurrentUserAction, AuthUser } from "@/actions/auth.actions";
 import {
@@ -15,6 +17,7 @@ import {
   ExternalLink,
   DollarSign,
   ArrowRight,
+  Clock,
 } from "@/components/ui/Icons";
 import { cleanJobTitle } from "@/lib/title-utils";
 
@@ -46,6 +49,7 @@ interface PublicJobsViewProps {
 }
 
 export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
+  const router = useRouter();
   const [jobs] = useState<PublicJob[]>(initialJobs);
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("all");
@@ -61,8 +65,6 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
         const u = await getCurrentUserAction();
         if (u) {
           setCurrentUser(u);
-          setFullName(u.fullName || "");
-          setEmail(u.email || "");
         }
       } catch {
         // Guest user
@@ -71,11 +73,7 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
     loadUser();
   }, []);
 
-  // Application form state
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [portfolioUrl, setPortfolioUrl] = useState("");
+  // Application note state
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applyResult, setApplyResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -103,12 +101,21 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
     return matchesSector && matchesType && matchesSearch;
   });
 
+  const handleApplyClick = (job: PublicJob) => {
+    if (!currentUser) {
+      router.push(`/login?callbackUrl=/jobs`);
+      return;
+    }
+    setSelectedJob(job);
+    setApplyResult(null);
+  };
+
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedJob) return;
 
-    if (!fullName.trim() || !email.trim()) {
-      setApplyResult({ type: "error", text: "Please enter your Full Name and Email." });
+    if (!currentUser) {
+      router.push(`/login?callbackUrl=/jobs`);
       return;
     }
 
@@ -116,10 +123,8 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
     setApplyResult(null);
 
     const res = await applyPublicJobAction(selectedJob.id, {
-      full_name: fullName.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      portfolio_url: portfolioUrl.trim(),
+      full_name: currentUser.fullName || "Verified Candidate",
+      email: currentUser.email || "",
       notes: notes.trim(),
     });
 
@@ -128,40 +133,63 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
     if (res.success) {
       setApplyResult({
         type: "success",
-        text: "Application submitted successfully. Our staffing team has logged your submission in the ATS pipeline.",
+        text: "Application submitted successfully! Your verified profile and dossier have been attached to this requisition in the ATS.",
       });
-      setFullName("");
-      setEmail("");
-      setPhone("");
-      setPortfolioUrl("");
       setNotes("");
     } else {
       setApplyResult({
         type: "error",
-        text: res.error || "Failed to submit application. Please check your information.",
+        text: res.error || "Failed to submit application. Please check your connection and try again.",
       });
     }
   };
 
   return (
-    <div className="min-h-screen bg-canvas pt-24 pb-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl border border-[#bcd6fa] bg-gradient-to-br from-white via-white to-canvas/80 p-8 sm:p-12 shadow-sm">
-          <div className="relative z-10 max-w-3xl space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-electric/30 bg-electric/10 px-3 py-1 font-mono text-xs font-semibold text-electric uppercase tracking-wider">
-              <span>Verified Enterprise Openings</span>
-            </div>
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
-              Production Engineering Teams &amp; Clinical Rotas
-            </h1>
-            <p className="text-sm sm:text-base text-ink-soft leading-relaxed">
-              Join elite software engineering squads and compliance-cleared healthcare teams deployed with 7-day velocity and transparent compensation.
-            </p>
-          </div>
+    <div className="relative min-h-screen bg-canvas">
+      {/* High-Fidelity PageHero with Ambient Grid, Pen-Curve Underline & Live Telemetry Cards */}
+      <PageHero
+        eyebrow="Verified Enterprise Openings"
+        title="Production Engineering Teams &"
+        highlightedText="Clinical Rotas"
+        description="Join elite software engineering squads and compliance-cleared healthcare teams deployed with 7-day velocity, transparent compensation, and 100% verified contracts."
+        stats={[
+          {
+            value: "2 to 7 Days",
+            label: "Sprint Shortlist Velocity",
+            icon: <Clock size={20} />,
+          },
+          {
+            value: "100%",
+            label: "Verified Contracts & Rates",
+            icon: <ShieldCheck size={20} />,
+          },
+          {
+            value: "Up to $2,000",
+            label: "Community Referral Bounty",
+            icon: <DollarSign size={20} />,
+          },
+        ]}
+        actions={[
+          {
+            label: "Explore Openings",
+            href: "#job-search",
+            primary: true,
+          },
+          {
+            label: "Submit Your Resume",
+            href: "/register",
+          },
+        ]}
+        proofPills={[
+          "W2 & C2C Compliant",
+          "4 to 8 Hrs Live Overlap",
+          "90-Day Placement Guarantee",
+          "HIPAA Title II Certified",
+        ]}
+      />
 
-          <div className="absolute -right-12 -bottom-12 h-64 w-64 rounded-full bg-electric/5 blur-3xl" />
-        </div>
+      {/* Main Content Area */}
+      <div id="job-search" className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-8">
 
         {/* Search & Dual Filters */}
         <div className="space-y-3">
@@ -253,7 +281,7 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
                     <div className="flex flex-wrap items-center gap-2">
                       {/* Sector badge */}
                       <span
-                        className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold ${
+                        className={`rounded-full px-2.5 py-0.5 font-enterprise text-[10px] font-bold ${
                           isHealth
                             ? "bg-teal-50 text-teal-700 border border-teal-200"
                             : "bg-electric/10 text-electric border border-electric/30"
@@ -263,34 +291,34 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
                       </span>
 
                       {/* Role Tier Badge */}
-                      <span className="rounded-full bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 font-mono text-[10px] font-bold">
+                      <span className="rounded-full bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 font-enterprise text-[10px] font-bold">
                         {job.level || "Senior Tier"}
                       </span>
 
                       {/* Type badge */}
                       {isGig ? (
-                        <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
+                        <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 font-enterprise text-[10px] font-bold inline-flex items-center gap-1">
                           <Zap size={11} />
                           <span>Contract Gig</span>
                         </span>
                       ) : isBounty ? (
-                        <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1 shadow-2xs">
+                        <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 font-enterprise text-[10px] font-bold inline-flex items-center gap-1 shadow-2xs">
                           <DollarSign size={11} className="text-amber-600" />
                           <span>Referral Bounty: ${Number(job.bounty_amount || 1500).toLocaleString()}</span>
                         </span>
                       ) : (
-                        <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/50 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
+                        <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/50 px-2.5 py-0.5 font-enterprise text-[10px] font-bold inline-flex items-center gap-1">
                           <Briefcase size={11} />
                           <span>Specialist Role</span>
                         </span>
                       )}
 
-                      <span className="rounded-full bg-signal/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-signal inline-flex items-center gap-1">
+                      <span className="rounded-full bg-signal/10 px-2.5 py-0.5 font-enterprise text-[10px] font-bold text-signal inline-flex items-center gap-1">
                         <ShieldCheck size={11} />
                         <span>Verified Requisition</span>
                       </span>
 
-                      <span className="font-mono text-xs text-mist">
+                      <span className="font-enterprise text-xs text-mist">
                         {job.location || "100% Remote"}
                       </span>
                     </div>
@@ -310,7 +338,7 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
                       {(job.skills || []).map((s) => (
                         <span
                           key={s}
-                          className="rounded-md bg-canvas/60 border border-[#bcd6fa]/50 px-2.5 py-0.5 font-mono text-[11px] font-medium text-ink"
+                          className="rounded-md bg-canvas/60 border border-[#bcd6fa]/50 px-2.5 py-0.5 font-enterprise text-[11px] font-medium text-ink"
                         >
                           {s}
                         </span>
@@ -320,12 +348,12 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
 
                   <div className="flex flex-col md:items-end justify-between gap-3 shrink-0 border-t md:border-t-0 md:border-l border-[#bcd6fa]/40 pt-4 md:pt-0 md:pl-6">
                     <div>
-                      <div className="font-mono text-xs text-mist">Compensation Rate</div>
+                      <div className="font-enterprise text-xs text-mist">Compensation Rate</div>
                       <div className="font-display text-lg font-bold text-ink">
                         ${job.budget_min || 95} - ${job.budget_max || 135}
-                        <span className="text-xs font-mono font-normal text-mist"> /hr</span>
+                        <span className="text-xs font-enterprise font-normal text-mist"> /hr</span>
                       </div>
-                      <div className="font-mono text-[11px] text-signal font-semibold">
+                      <div className="font-enterprise text-[11px] text-signal font-semibold">
                         {job.engagement || (isGig ? "Contract Sprint" : "Direct Hire Specialist")}
                       </div>
                     </div>
@@ -340,10 +368,7 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
 
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedJob(job);
-                          setApplyResult(null);
-                        }}
+                        onClick={() => handleApplyClick(job)}
                         className="rounded-xl bg-ink px-4 py-2.5 font-display text-xs font-semibold text-white hover:bg-electric shadow-xs transition-colors cursor-pointer text-center inline-flex items-center gap-1.5"
                       >
                         <span>Apply</span>
@@ -372,7 +397,7 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
               {/* Drawer Header */}
               <div className="flex items-start justify-between border-b border-slate-200/80 pb-4">
                 <div>
-                  <span className="font-mono text-[10px] uppercase font-bold text-electric">
+                  <span className="font-enterprise text-[10px] uppercase font-bold text-electric">
                     Application Dossier Submission
                   </span>
                   <h2 className="font-display text-xl font-bold text-ink mt-1">
@@ -424,117 +449,60 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
                     </div>
                   )}
                 </div>
-              ) : (
-                <form onSubmit={handleApply} className="space-y-4 text-xs">
+              ) : currentUser ? (
+                <form onSubmit={handleApply} className="space-y-4 text-xs font-enterprise">
                   {/* Authenticated Candidate Profile Banner */}
-                  {currentUser ? (
-                    <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-electric to-[#00D4FF] text-white font-bold flex items-center justify-center font-display text-sm shadow-xs">
-                            {currentUser.fullName ? currentUser.fullName.slice(0, 2).toUpperCase() : "CA"}
+                  <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-electric to-[#00D4FF] text-white font-bold flex items-center justify-center font-display text-sm shadow-xs">
+                          {currentUser.fullName ? currentUser.fullName.slice(0, 2).toUpperCase() : "CA"}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-display font-bold text-ink text-sm">
+                              {currentUser.fullName}
+                            </h4>
+                            <span className="rounded-full bg-signal/15 px-2 py-0.5 font-enterprise text-[9px] font-bold text-signal">
+                              Verified Profile
+                            </span>
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-display font-bold text-ink text-sm">
-                                {currentUser.fullName}
-                              </h4>
-                              <span className="rounded-full bg-signal/15 px-2 py-0.5 font-mono text-[9px] font-bold text-signal">
-                                Verified Profile
-                              </span>
-                            </div>
-                            <p className="font-mono text-xs text-ink-soft">{currentUser.email}</p>
-                          </div>
+                          <p className="font-enterprise text-xs text-ink-soft">{currentUser.email}</p>
                         </div>
                       </div>
-                      <div className="pt-2 border-t border-electric/15 text-[11px] text-slate-600 flex items-center gap-1.5">
-                        <CheckCircle size={13} className="text-emerald-600 shrink-0" />
-                        <span>Applying with your active candidate telemetry and uploaded CV dossier.</span>
-                      </div>
                     </div>
-                  ) : (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-900 flex items-center justify-between">
-                      <div>
-                        <span className="font-bold block">Already registered with Pepoltek?</span>
-                        <span className="text-[11px] text-amber-800">Sign in to 1-Click apply with your verified profile.</span>
-                      </div>
-                      <Link
-                        href="/auth/login"
-                        className="rounded-lg bg-ink px-3 py-1.5 font-display text-xs font-semibold text-white hover:bg-electric transition-colors shrink-0"
-                      >
-                        Sign In
-                      </Link>
+                    <div className="pt-2 border-t border-electric/15 text-[11px] text-slate-600 flex items-center gap-1.5">
+                      <CheckCircle size={13} className="text-emerald-600 shrink-0" />
+                      <span>Applying with your active candidate telemetry, skills, and uploaded CV dossier.</span>
                     </div>
-                  )}
-
-                  {!currentUser && (
-                    <>
-                      <div>
-                        <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                          Full Name *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="e.g. Mahim Rahad"
-                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                          Email Address *
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="e.g. specialist@pepoltek.com"
-                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div>
-                    <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                      Phone Number {currentUser ? "(Verified from Profile)" : "(Optional)"}
-                    </label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                    />
                   </div>
 
-                  <div>
-                    <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                      Portfolio / GitHub / LinkedIn URL
-                    </label>
-                    <input
-                      type="url"
-                      value={portfolioUrl}
-                      onChange={(e) => setPortfolioUrl(e.target.value)}
-                      placeholder="https://github.com/..."
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
-                    />
+                  {/* Target Opening Overview Card */}
+                  <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/40 p-3.5 space-y-1">
+                    <div className="text-[10px] uppercase font-bold text-mist tracking-wider">
+                      Position Overview
+                    </div>
+                    <div className="font-bold text-sm text-ink">{cleanJobTitle(selectedJob.title)}</div>
+                    <div className="text-xs text-ink-soft flex items-center gap-2 flex-wrap">
+                      <span>{selectedJob.client_name || "Enterprise Partner"}</span>
+                      <span>·</span>
+                      <span>${selectedJob.budget_min || 95} - ${selectedJob.budget_max || 135}/hr</span>
+                      <span>·</span>
+                      <span>{selectedJob.location || "100% Remote"}</span>
+                    </div>
                   </div>
 
+                  {/* Candidate Note / Pitch */}
                   <div>
-                    <label className="block font-mono text-[11px] uppercase tracking-wider text-slate-500 mb-1">
-                      Candidate Note / Pitch
+                    <label className="block font-enterprise text-xs font-semibold text-ink mb-1">
+                      Candidate Note / Pitch (Optional)
                     </label>
                     <textarea
                       rows={3}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Briefly describe your experience with the required stack or availability..."
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
+                      placeholder="Briefly highlight your experience with the required tech stack or immediate availability..."
+                      className="w-full rounded-xl border border-[#bcd6fa] bg-white p-2.5 font-medium text-ink focus:border-electric focus:outline-hidden"
                     />
                   </div>
 
@@ -555,18 +523,34 @@ export function PublicJobsView({ initialJobs }: PublicJobsViewProps) {
                       <span>
                         {isSubmitting
                           ? "Submitting Application..."
-                          : currentUser
-                          ? "Submit with Verified Profile"
-                          : "Submit Application to ATS"}
+                          : "Submit with Verified Profile"}
                       </span>
                       <ArrowRight size={13} />
                     </button>
                   </div>
                 </form>
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 space-y-3">
+                  <div className="font-display font-bold text-sm text-amber-900">
+                    Authentication Required
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    Please sign in to submit an application using your verified candidate profile and technical CV dossier.
+                  </p>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/login?callbackUrl=/jobs`)}
+                      className="rounded-xl bg-ink px-4 py-2 font-display text-xs font-bold text-white hover:bg-electric transition-colors"
+                    >
+                      Sign In to Apply →
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
-            <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400 font-enterprise">
               <span>Ref: {selectedJob.id}</span>
               <button
                 type="button"

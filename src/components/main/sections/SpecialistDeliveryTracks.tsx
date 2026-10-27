@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { MagicBento, ParticleCard } from "@/components/ui/MagicBento";
 
 /* ---------- in-view hook ---------- */
@@ -577,276 +578,163 @@ const HEALTH_TRACK: SectorTrack = {
   ],
 };
 
-/* Harmonic color variants for numbers:
-   - Tech: Monochromatic Blue/Cyan shades (zero purple, zero green)
-   - Health: Monochromatic Teal/Mint shades (zero purple, zero orange) */
-const TECH_NUM_STYLES = [
-  { border: "border-sky-400/60", bg: "bg-sky-400/15", text: "text-sky-300" },
-  { border: "border-sky-500/60", bg: "bg-sky-500/15", text: "text-sky-300" },
-  { border: "border-blue-400/60", bg: "bg-blue-400/15", text: "text-blue-300" },
-  { border: "border-blue-500/60", bg: "bg-blue-500/15", text: "text-blue-200" },
-  { border: "border-indigo-400/60", bg: "bg-indigo-400/15", text: "text-indigo-200" },
-];
 
-const HEALTH_NUM_STYLES = [
-  { border: "border-teal-500/60", bg: "bg-teal-500/15", text: "text-teal-700" },
-  { border: "border-teal-600/60", bg: "bg-teal-600/15", text: "text-teal-800" },
-  { border: "border-emerald-500/60", bg: "bg-emerald-500/15", text: "text-emerald-700" },
-  { border: "border-teal-700/60", bg: "bg-teal-700/15", text: "text-teal-800" },
-  { border: "border-teal-500/60", bg: "bg-teal-500/15", text: "text-teal-700" },
-];
 
-/* ---------- Full-Width Horizontal Track Banner: Technology & SDLC RPO (Text Left / Visual Right) ---------- */
-function TechHorizontalBanner() {
+/* ---------- Unified Symmetrical Dual-Track Banner (Single Row Flex) ---------- */
+function DualTrackUnifiedBanner() {
   return (
-    <div
-      className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#1e40af]/40 bg-[#001c4d] bg-cover bg-right lg:bg-center shadow-[0_16px_40px_-15px_rgba(2,37,93,0.55)] transition-all duration-300 hover:border-cyan-400/50 hover:shadow-[0_24px_55px_-12px_rgba(10,132,255,0.45)]"
-      style={{ backgroundImage: `url('${TECH_TRACK.bgImage}')` }}
-    >
-      {/* Mobile/Tablet fade gradient to guarantee 100% text legibility */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#001c4d] via-[#001c4d]/92 to-transparent lg:via-[#001c4d]/40 lg:to-transparent" />
-      {/* Top subtle glow edge */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-cyan-400/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <div className="group relative mt-4 sm:mt-5 overflow-hidden rounded-3xl border border-[#bcd6fa]/70 bg-white shadow-[0_20px_50px_-20px_rgba(2,37,93,0.12)] transition-all duration-300 font-enterprise">
+      <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-[#bcd6fa]/50 items-stretch">
+        {/* ========================================================= */}
+        {/* LEFT COLUMN: Technology & SDLC RPO                        */}
+        {/* ========================================================= */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#e0f0ff]/60 via-[#edf6ff]/35 to-white/70 p-4 sm:p-5 lg:p-6 flex flex-col justify-between">
+          {/* Soft ambient corner glow */}
+          <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
 
-      {/* Content wrapper: occupies left ~62% on desktop so right-side 3D laptop is fully visible */}
-      <div className="relative z-10 w-full lg:w-[64%] xl:w-[61%] flex flex-col justify-between gap-3.5 sm:gap-4 p-5 sm:p-6 lg:p-7">
-        {/* Header Block */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Tech Code Emblem */}
-            <div className="relative flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-[#001b44] ring-1 ring-cyan-400/40 shadow-[0_0_12px_rgba(56,189,248,0.3)]">
-              <svg viewBox="0 0 24 24" className="h-5 w-5 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="16 18 22 12 16 6" />
-                <polyline points="8 6 2 12 8 18" />
-                <line x1="14" y1="4" x2="10" y2="20" stroke="#38bdf8" strokeWidth="2" />
-              </svg>
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-display text-[17px] sm:text-[20px] lg:text-[21px] font-extrabold leading-tight text-white">
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            {/* 1. HEADER: Badge, Title & Subtitle */}
+            <div className="border-b border-[#bcd6fa]/30 pb-2.5 mb-3">
+              <span className="inline-block rounded-full bg-[#0084ff] px-2.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-white shadow-xs">
+                {TECH_TRACK.badge}
+              </span>
+              <h3 className="mt-1 font-display text-lg sm:text-xl xl:text-2xl font-extrabold tracking-tight text-[#0a1428] leading-tight">
                 {TECH_TRACK.label}
               </h3>
-              <p className="mt-0.5 font-mono text-[10.5px] sm:text-[11.5px] font-medium text-cyan-300/90 truncate">
+              <p className="mt-0.5 text-[11px] sm:text-xs font-medium text-slate-500">
                 {TECH_TRACK.verifierText}
               </p>
             </div>
-          </div>
 
-          <span className="shrink-0 rounded-full bg-[#0369a1]/70 border border-cyan-400/40 px-3 py-1 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-cyan-200 backdrop-blur-xs">
-            {TECH_TRACK.badge}
-          </span>
-        </div>
-
-        {/* 5 Capability Pillars (Unified Blue/Cyan Palette, Transparent Border Circles) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 sm:gap-y-3.5 my-1">
-          {/* Left Column: 1, 2, 3 */}
-          <div className="flex flex-col gap-3">
-            {TECH_TRACK.capabilities.slice(0, 3).map((c, i) => (
-              <div key={c.title} className="flex items-start gap-2.5">
-                <span
-                  className={`flex h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 items-center justify-center rounded-full border ${TECH_NUM_STYLES[i].border} ${TECH_NUM_STYLES[i].bg} font-mono text-[10px] sm:text-[10.5px] font-bold ${TECH_NUM_STYLES[i].text} shadow-xs mt-0.5`}
-                >
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-display text-[12px] sm:text-[13px] font-bold leading-snug text-white">
-                    {c.title}
-                  </h4>
-                  <p className="mt-0.5 text-[10px] sm:text-[10.5px] leading-snug text-[#cbd5e1]">
-                    {c.body}
-                  </p>
+            {/* 2. MAIN: Graphic (Left) + 5 Capability Pillars (Right) */}
+            <div className="flex-1 flex flex-col md:flex-row items-center gap-4 sm:gap-5 xl:gap-6">
+              {/* 3D Tech Graphic */}
+              <div className="relative w-full md:w-[38%] lg:w-[34%] shrink-0 flex items-center justify-center">
+                <div className="relative w-full max-w-[200px] sm:max-w-[220px] xl:max-w-[230px] aspect-[505/818] h-[220px] sm:h-[250px] xl:h-[270px]">
+                  <Image
+                    src="/assets/homepage/banner/tech.png"
+                    alt="Technology & SDLC RPO - 3D Technical Evaluation Hub"
+                    fill
+                    sizes="(max-width: 768px) 200px, 230px"
+                    className="object-contain object-center drop-shadow-[0_16px_32px_rgba(56,189,248,0.25)] transition-transform duration-500 group-hover:scale-[1.02]"
+                    priority
+                  />
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* Right Column: 4, 5 (Unified Blue/Cyan variants instead of teal/purple) */}
-          <div className="flex flex-col gap-3">
-            {TECH_TRACK.capabilities.slice(3, 5).map((c, i) => (
-              <div key={c.title} className="flex items-start gap-2.5">
-                <span
-                  className={`flex h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 items-center justify-center rounded-full border ${TECH_NUM_STYLES[i + 3].border} ${TECH_NUM_STYLES[i + 3].bg} font-mono text-[10px] sm:text-[10.5px] font-bold ${TECH_NUM_STYLES[i + 3].text} shadow-xs mt-0.5`}
-                >
-                  {i + 4}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-display text-[12px] sm:text-[13px] font-bold leading-snug text-white">
-                    {c.title}
-                  </h4>
-                  <p className="mt-0.5 text-[10px] sm:text-[10.5px] leading-snug text-[#cbd5e1]">
-                    {c.body}
-                  </p>
-                </div>
+              {/* 5 Capability Pillars */}
+              <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+                {TECH_TRACK.capabilities.map((c, i) => (
+                  <div key={c.title} className="flex items-start gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#bfdbfe]/70 border border-[#93c5fd] font-enterprise text-[10px] font-bold text-[#0066cc] shadow-2xs mt-0.5">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-display text-[12px] sm:text-[12.5px] font-bold leading-snug text-[#0a1428]">
+                        {c.title}
+                      </h4>
+                      <p className="text-[9.5px] sm:text-[10px] leading-snug text-slate-500 mt-0.5">
+                        {c.body}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Stack Tags Strip */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-white/10">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-cyan-300 mr-1.5">
-            STACK:
-          </span>
-          {TECH_TRACK.essentialTags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-blue-400/30 bg-[#0c234b]/85 px-2.5 py-0.5 sm:px-3 sm:py-1 font-mono text-[10px] sm:text-[10.5px] font-medium text-white shadow-2xs backdrop-blur-xs"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Full-Width Horizontal Track Banner: Healthcare & Clinical RPO with Heart + Pulse Animation ---------- */
-function HealthHorizontalBanner() {
-  return (
-    <div
-      className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-teal-500/25 bg-[#eafaf6] bg-cover bg-left lg:bg-center shadow-[0_16px_40px_-15px_rgba(13,148,136,0.22)] transition-all duration-300 hover:border-teal-500/50 hover:shadow-[0_24px_55px_-12px_rgba(13,148,136,0.35)]"
-      style={{ backgroundImage: `url('${HEALTH_TRACK.bgImage}')` }}
-    >
-      {/* Mobile/Tablet fade gradient to guarantee 100% text legibility */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#eafaf6] via-[#eafaf6]/92 to-transparent lg:via-[#eafaf6]/40 lg:to-transparent" />
-      {/* Top subtle glow edge */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-teal-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-      {/* Content wrapper: occupies right ~62% on desktop (ml-auto) so left-side 3D stethoscope/hospital is fully visible */}
-      <div className="relative z-10 w-full lg:w-[64%] xl:w-[61%] lg:ml-auto flex flex-col justify-between gap-3.5 sm:gap-4 p-5 sm:p-6 lg:p-7">
-        {/* Header Block with Heart + Pulse Curve + Rotating Concentric Radar Rings */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Authentic Animated Healthcare Emblem (Heart + ECG Curve + Orbiting Radar Rings) */}
-            <div className="relative flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-white/95 border border-teal-500/30 shadow-[0_2px_12px_-2px_rgba(13,148,136,0.22)] ring-4 ring-teal-500/[0.08]">
-              <svg viewBox="0 0 48 48" className="h-full w-full overflow-visible">
-                {/* Outer rotating dashed orbital radar ring */}
-                <circle
-                  cx="24"
-                  cy="24"
-                  r="21"
-                  fill="none"
-                  stroke="#0d9488"
-                  strokeWidth="1"
-                  strokeDasharray="2.5 3.5"
-                  className="animate-[spin_20s_linear_infinite]"
-                  style={{ transformOrigin: "24px 24px" }}
-                />
-                {/* Orbiting pulse dot on outer ring */}
-                <g className="animate-[spin_20s_linear_infinite]" style={{ transformOrigin: "24px 24px" }}>
-                  <circle cx="24" cy="3" r="1.8" fill="#0d9488" filter="drop-shadow(0 0 3px rgba(13,148,136,0.6))" />
-                </g>
-
-                {/* Inner dashed ring */}
-                <circle
-                  cx="24"
-                  cy="24"
-                  r="16"
-                  fill="none"
-                  stroke="#14b8a6"
-                  strokeWidth="0.8"
-                  strokeDasharray="1.5 2.5"
-                  opacity="0.6"
-                />
-
-                {/* Pulsing Heart Outline with ECG wave line passing through */}
-                <g className="animate-[pulse_2.2s_ease-in-out_infinite]" style={{ transformOrigin: "24px 24px" }}>
-                  {/* Heart Shape */}
-                  <path
-                    d="M 24 16.5 C 22.5 13.5, 18 13, 16 16.5 C 13.5 21, 17.5 25, 24 29 C 30.5 25, 34.5 21, 32 16.5 C 30 13, 25.5 13.5, 24 16.5 Z"
-                    fill="#0d9488"
-                    fillOpacity="0.08"
-                    stroke="#0d9488"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {/* ECG Pulse Curve Line inside heart */}
-                  <path
-                    d="M 17.5 22.5 H 20.5 L 22 18.5 L 24 26.5 L 25.5 20.5 L 27 22.5 H 30.5"
-                    fill="none"
-                    stroke="#0f766e"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
-              </svg>
             </div>
 
-            <div className="min-w-0">
-              <h3 className="font-display text-[17px] sm:text-[20px] lg:text-[21px] font-extrabold leading-tight text-[#0a1428]">
+            {/* 3. FOOTER: Stack Tags across full card width */}
+            <div className="pt-2.5 sm:pt-3 mt-3 sm:mt-4 border-t border-[#bcd6fa]/30">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#0084ff] shrink-0 mr-1 flex items-center gap-1">
+                  STACK:
+                </span>
+                {TECH_TRACK.essentialTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-[#93c5fd]/70 bg-[#eff6ff] px-2.5 py-0.5 text-[9.5px] sm:text-[10px] font-semibold text-[#1e40af] shadow-2xs whitespace-nowrap hover:bg-[#dbeafe] transition-colors"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* RIGHT COLUMN: Healthcare & Clinical RPO                   */}
+        {/* ========================================================= */}
+        <div className="relative overflow-hidden bg-gradient-to-bl from-[#d1fae5]/50 via-[#f0fdf4]/35 to-white/70 p-4 sm:p-5 lg:p-6 flex flex-col justify-between">
+          {/* Soft ambient corner glow */}
+          <div className="pointer-events-none absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-emerald-400/15 blur-3xl" />
+
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            {/* 1. HEADER: Badge, Title & Subtitle */}
+            <div className="border-b border-[#a7f3d0]/40 pb-2.5 mb-3">
+              <span className="inline-block rounded-full bg-[#10b981] px-2.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-white shadow-xs">
+                {HEALTH_TRACK.badge}
+              </span>
+              <h3 className="mt-1 font-display text-lg sm:text-xl xl:text-2xl font-extrabold tracking-tight text-[#0a1428] leading-tight">
                 {HEALTH_TRACK.label}
               </h3>
-              <p className="mt-0.5 font-mono text-[10.5px] sm:text-[11.5px] font-medium text-[#0d9488] truncate">
+              <p className="mt-0.5 text-[11px] sm:text-xs font-medium text-slate-500">
                 {HEALTH_TRACK.verifierText}
               </p>
             </div>
-          </div>
 
-          <span className="shrink-0 rounded-full bg-[#0d9488] border border-teal-600 px-3 py-1 font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
-            {HEALTH_TRACK.badge}
-          </span>
-        </div>
+            {/* 2. MAIN: 5 Capability Pillars (Left) + Graphic (Right) */}
+            <div className="flex-1 flex flex-col-reverse md:flex-row items-center gap-4 sm:gap-5 xl:gap-6">
+              {/* 5 Capability Pillars */}
+              <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+                {HEALTH_TRACK.capabilities.map((c, i) => (
+                  <div key={c.title} className="flex items-start gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#a7f3d0]/70 border border-[#6ee7b7] font-enterprise text-[10px] font-bold text-[#047857] shadow-2xs mt-0.5">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-display text-[12px] sm:text-[12.5px] font-bold leading-snug text-[#0a1428]">
+                        {c.title}
+                      </h4>
+                      <p className="text-[9.5px] sm:text-[10px] leading-snug text-slate-500 mt-0.5">
+                        {c.body}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-        {/* 5 Capability Pillars (Unified Teal/Mint Palette, Transparent Border Circles) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 sm:gap-y-3.5 my-1">
-          {/* Left Column: 1, 2, 3 */}
-          <div className="flex flex-col gap-3">
-            {HEALTH_TRACK.capabilities.slice(0, 3).map((c, i) => (
-              <div key={c.title} className="flex items-start gap-2.5">
-                <span
-                  className={`flex h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 items-center justify-center rounded-full border ${HEALTH_NUM_STYLES[i].border} ${HEALTH_NUM_STYLES[i].bg} font-mono text-[10px] sm:text-[10.5px] font-bold ${HEALTH_NUM_STYLES[i].text} shadow-xs mt-0.5`}
-                >
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-display text-[12px] sm:text-[13px] font-bold leading-snug text-[#0a1428]">
-                    {c.title}
-                  </h4>
-                  <p className="mt-0.5 text-[10px] sm:text-[10.5px] leading-snug text-[#475569]">
-                    {c.body}
-                  </p>
+              {/* 3D Healthcare Graphic */}
+              <div className="relative w-full md:w-[38%] lg:w-[34%] shrink-0 flex items-center justify-center">
+                <div className="relative w-full max-w-[200px] sm:max-w-[220px] xl:max-w-[230px] aspect-[499/818] h-[220px] sm:h-[250px] xl:h-[270px]">
+                  <Image
+                    src="/assets/homepage/banner/health.png"
+                    alt="Healthcare & Clinical RPO - 3D Hospital & Clinical Ops Hub"
+                    fill
+                    sizes="(max-width: 768px) 200px, 230px"
+                    className="object-contain object-center drop-shadow-[0_16px_32px_rgba(16,185,129,0.25)] transition-transform duration-500 group-hover:scale-[1.02]"
+                    priority
+                  />
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Right Column: 4, 5 (Unified Teal/Mint variants) */}
-          <div className="flex flex-col gap-3">
-            {HEALTH_TRACK.capabilities.slice(3, 5).map((c, i) => (
-              <div key={c.title} className="flex items-start gap-2.5">
-                <span
-                  className={`flex h-5 w-5 sm:h-5.5 sm:w-5.5 shrink-0 items-center justify-center rounded-full border ${HEALTH_NUM_STYLES[i + 3].border} ${HEALTH_NUM_STYLES[i + 3].bg} font-mono text-[10px] sm:text-[10.5px] font-bold ${HEALTH_NUM_STYLES[i + 3].text} shadow-xs mt-0.5`}
-                >
-                  {i + 4}
+            {/* 3. FOOTER: Stack Tags across full card width */}
+            <div className="pt-2.5 sm:pt-3 mt-3 sm:mt-4 border-t border-[#a7f3d0]/40">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-wider text-[#10b981] shrink-0 mr-1 flex items-center gap-1">
+                  STACK:
                 </span>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-display text-[12px] sm:text-[13px] font-bold leading-snug text-[#0a1428]">
-                    {c.title}
-                  </h4>
-                  <p className="mt-0.5 text-[10px] sm:text-[10.5px] leading-snug text-[#475569]">
-                    {c.body}
-                  </p>
-                </div>
+                {HEALTH_TRACK.essentialTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-[#99f6e4]/70 bg-[#f0fdfa] px-2.5 py-0.5 text-[9.5px] sm:text-[10px] font-semibold text-[#0f766e] shadow-2xs whitespace-nowrap hover:bg-[#ccfbf1] transition-colors"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-
-        {/* Stack Tags Strip */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-[#0d9488]/15">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#0f766e] mr-1.5">
-            STACK:
-          </span>
-          {HEALTH_TRACK.essentialTags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-teal-500/25 bg-white/80 px-2.5 py-0.5 sm:px-3 sm:py-1 font-mono text-[10px] sm:text-[10.5px] font-medium text-[#0f766e] shadow-2xs backdrop-blur-xs"
-            >
-              {tag}
-            </span>
-          ))}
         </div>
       </div>
     </div>
@@ -1232,17 +1120,10 @@ export default function SpecialistDeliveryTracks({ content }: { content?: Specia
           </div>
 
           {/* ================================================================= */}
-          {/* ROW 2: Dual Specialization Tracks as Full-Width Horizontal Banners*/}
-          {/* Stacked in 1 Column: Tech (Text Left / Visual Right)              */}
-          {/*                      Healthcare (Visual Left / Text Right)        */}
+          {/* ROW 2: Dual Specialization Tracks in Single-Row Symmetrical Flex */}
+          {/* Technology on Left (3D Laptop Wing) | Healthcare on Right (3D Hospital Wing) */}
           {/* ================================================================= */}
-          <div className="mt-5 sm:mt-6 flex flex-col gap-4 sm:gap-5">
-            {/* Track 1: Technology & SDLC RPO (Text Left / 3D Visual on Right) */}
-            <TechHorizontalBanner />
-
-            {/* Track 2: Healthcare & Clinical RPO (3D Visual on Left / Text Right) */}
-            <HealthHorizontalBanner />
-          </div>
+          <DualTrackUnifiedBanner />
         </MagicBento>
       </div>
 

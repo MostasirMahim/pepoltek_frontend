@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { logoutAction } from "@/actions/auth.actions";
+import { Calendar, Inbox } from "lucide-react";
 import {
   Activity,
   Users,
@@ -126,6 +127,24 @@ const ADMIN_NAV: NavItem[] = [
     href: "/recruiter/applications",
     badge: "KANBAN",
     icon: <Kanban size={18} />,
+  },
+  {
+    label: "Assessments & Vetting",
+    href: "/admin/assessments",
+    badge: "VETTING",
+    icon: <ShieldCheck size={18} />,
+  },
+  {
+    label: "Sprint Interviews",
+    href: "/admin/interviews",
+    badge: "STAGE 4",
+    icon: <Calendar size={18} />,
+  },
+  {
+    label: "Inquiries & Leads",
+    href: "/admin/leads",
+    badge: "INBOUND",
+    icon: <Inbox size={18} />,
   },
   {
     label: "Client Organizations",

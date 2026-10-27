@@ -172,6 +172,24 @@ export async function submitDirectReferralAction(payload: {
   }
 }
 
+export async function requestReferralPayoutAction(payload: {
+  payout_method: string;
+  recipient_details: string;
+}): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPost<any>("referrals/request-payout/", payload, { cookieHeader });
+    if (response.data) {
+      return { success: true, data: response.data };
+    }
+    return { success: false, error: response.error?.message || "Failed to request payout." };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to request payout." };
+  }
+}
+
 export interface AdminReferralRecord {
   id: string; // REF-XXXXXXXX
   raw_id: string; // UUID

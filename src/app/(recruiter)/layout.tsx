@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Building2,
   Kanban,
+  ShieldCheck,
 } from "@/components/ui/Icons";
 
 interface NavItem {
@@ -55,7 +56,7 @@ const RECRUITER_NAV: NavItem[] = [
     icon: <Building2 size={18} />,
   },
   {
-    label: "Vetted Talent Pool",
+    label: "Talent Pool (Candidates)",
     href: "/recruiter/candidates",
     icon: <Users size={18} />,
   },
@@ -63,6 +64,12 @@ const RECRUITER_NAV: NavItem[] = [
     label: "Sprint Interviews",
     href: "/recruiter/interviews",
     icon: <Clock size={18} />,
+  },
+  {
+    label: "Assessments & Vetting",
+    href: "/recruiter/assessments",
+    badge: "NEW",
+    icon: <ShieldCheck size={18} />,
   },
   {
     label: "Referral Network",
@@ -245,7 +252,7 @@ export default function RecruiterDashboardLayout({
                     className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-canvas hover:text-ink"
                   >
                     <Users size={14} className="text-mist" />
-                    <span>Pre-Vetted Talent Directory</span>
+                    <span>Talent Pool (Candidates)</span>
                   </Link>
                   <Link
                     href="/recruiter/interviews"
@@ -272,7 +279,7 @@ export default function RecruiterDashboardLayout({
                       <LogOut size={13} />
                       <span>Sign Out</span>
                     </div>
-                    <span className="font-mono text-[10px] text-mist">RecruiterOS</span>
+                    <span className="font-enterprise text-[10px] text-mist font-medium">RecruiterOS</span>
                   </button>
                 </div>
               </div>
@@ -289,7 +296,7 @@ export default function RecruiterDashboardLayout({
           <div className="shrink-0 mb-4 rounded-2xl border border-electric/25 bg-gradient-to-br from-electric/5 to-canvas p-3.5 shadow-2xs">
             <div className="flex items-center justify-between text-xs font-semibold">
               <span className="text-ink font-display">Sprint Capacity</span>
-              <span className="font-mono text-xs font-bold text-electric">4 Active Requisitions</span>
+              <span className="font-enterprise text-xs font-bold text-electric">4 Active Requisitions</span>
             </div>
             <div className="mt-2 h-1.5 w-full rounded-full bg-canvas overflow-hidden border border-[#bcd6fa]/40">
               <div className="h-full rounded-full bg-gradient-to-r from-electric to-cyan-500 w-[75%]" />
@@ -326,7 +333,7 @@ export default function RecruiterDashboardLayout({
                   </div>
                   {item.badge && (
                     <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold ${
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-enterprise font-bold ${
                         active
                           ? "bg-electric text-white"
                           : "bg-canvas text-ink-soft border border-[#bcd6fa]/50"
@@ -340,23 +347,41 @@ export default function RecruiterDashboardLayout({
             })}
           </nav>
 
-          {/* Bottom Static Escrow and Sign Out Box (shrink-0) */}
-          <div className="shrink-0 pt-3 border-t border-[#bcd6fa]/40 mt-3">
-            <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/60 p-3 text-xs">
+          {/* Bottom Enterprise Talent Engine Card (Small Height, Sleek & Relatable) */}
+          <div className="shrink-0 pt-3 border-t border-[#bcd6fa]/40 mt-3 font-enterprise">
+            <div className="rounded-xl border border-[#bcd6fa]/70 bg-gradient-to-br from-white via-canvas/40 to-canvas/70 p-2.5 shadow-2xs hover:border-electric/40 transition-colors">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-mist">Escrow Balance</span>
-                <span className="font-mono text-[9px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.2 rounded border border-emerald-200">
-                  FDIC
+                <div className="flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                    Talent Engine
+                  </span>
+                </div>
+                <span className="rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700">
+                  AI Active
                 </span>
               </div>
-              <div className="font-display text-sm font-bold text-ink mt-0.5">$48,500.00</div>
-              <p className="text-[10.5px] text-ink-soft mt-1 leading-snug">
-                4 Active Requisition sprints covered by guarantee.
-              </p>
+
+              <div className="mt-1 flex items-baseline justify-between">
+                <div className="text-xs font-bold text-ink">
+                  Candidate Directory
+                </div>
+                <span className="text-[10px] font-semibold text-electric">
+                  Live DB Pool
+                </span>
+              </div>
+
+              <div className="mt-1 flex items-center justify-between text-[10px] text-mist border-t border-[#bcd6fa]/30 pt-1">
+                <span>ATS Connected</span>
+                <span className="font-semibold text-signal">Database Live</span>
+              </div>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between px-1 text-[11px] text-mist font-medium">
-              <span>Enterprise SLA 99.8%</span>
+            <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-mist font-medium">
+              <span>RecruiterOS v2.4</span>
               <button
                 type="button"
                 onClick={async () => {

@@ -376,6 +376,22 @@ export function CandidateIntakeRegisterView() {
     }
   }, [otpTimer]);
 
+  // Stage 4 Pre-Submission Email Edit State
+  const [isEditingPreSubmitEmail, setIsEditingPreSubmitEmail] = useState<boolean>(false);
+  const [preSubmitEmailInput, setPreSubmitEmailInput] = useState<string>("");
+
+  const handleSavePreSubmitEmail = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const clean = preSubmitEmailInput.trim().toLowerCase();
+    if (!clean || !clean.includes("@")) {
+      showToast("Please enter a valid email address.", "error");
+      return;
+    }
+    setEmail(clean);
+    setIsEditingPreSubmitEmail(false);
+    showToast("Contact email updated for dossier registration.", "info");
+  };
+
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -874,55 +890,134 @@ export function CandidateIntakeRegisterView() {
           })}
         </div>
 
-        <div className="flex gap-8 lg:gap-10">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 
-          {/* LEFT SIDEBAR: Vertical Stepper (desktop) */}
-          <aside className="hidden lg:flex flex-col w-48 shrink-0 pt-1">
-            <nav className="space-y-0.5">
-              {[
-                { n: 1, label: "Specialization", sub: "Select your track" },
-                { n: 2, label: "CV & Resume", sub: "Upload & analyze" },
-                { n: 3, label: "Assessment", sub: "Review profile" },
-                { n: 4, label: "Completion", sub: "Finalize account" },
-              ].map(({ n, label, sub }, idx) => {
-                const isDone = currentStage > n;
-                const isActive = currentStage === n;
-                return (
-                  <div key={n} className="relative">
-                    <div className={`relative overflow-hidden flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all duration-300 ${isActive ? "border-2 border-blue-500 bg-white shadow-md shadow-blue-500/15 ring-2 ring-blue-500/15" : isDone ? "border border-blue-100/90 bg-blue-50/50 hover:bg-blue-50/80" : "border border-transparent hover:border-slate-200 hover:bg-slate-50/80"}`}>
-                      {isActive && (
-                        <>
-                          <div
-                            className="absolute inset-0 bg-cover bg-left-top pointer-events-none opacity-90"
-                            style={{ backgroundImage: "url('/assets/register/bg_card_top.png')" }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-r from-blue-50/70 via-white/50 to-transparent pointer-events-none" />
-                        </>
-                      )}
-                      <div className="relative z-10 flex items-center gap-3 w-full">
-                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-all ${isActive ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-500/30 ring-2 ring-blue-100" : isDone ? "bg-blue-600 text-white" : "border border-slate-200 bg-white text-slate-400"}`}>
-                          {isDone ? <CheckCircle size={14} /> : n}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className={`text-xs font-bold leading-tight ${isActive ? "text-slate-900 font-extrabold" : isDone ? "text-blue-700 font-bold" : "text-slate-500 font-medium"}`}>{label}</div>
-                          <div className={`text-[10px] leading-tight mt-0.5 ${isActive ? "text-blue-600 font-bold" : isDone ? "text-blue-400 font-medium" : "text-slate-400"}`}>{sub}</div>
-                        </div>
-                        {isActive && <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse shrink-0" />}
-                      </div>
-                    </div>
-                    {idx < 3 && (
-                      <div className="flex justify-start pl-[22px]">
-                        <div className={`w-px h-1.5 ${isDone ? "bg-blue-300" : "bg-slate-200"}`} />
-                      </div>
-                    )}
+          {/* LEFT SIDEBAR: Bounded Sticky Progress & Stepper Panel */}
+          <aside className="hidden lg:flex flex-col w-72 xl:w-80 shrink-0 lg:sticky lg:top-20 self-start space-y-4 max-h-full">
+            <div className="rounded-xl border border-[#bcd6fa]/80 bg-gradient-to-b from-canvas/90 via-white to-canvas/40 p-5 sm:p-6 shadow-xs space-y-6">
+              {/* Header & Progress */}
+              <div>
+                <h3 className="mt-2 text-base font-display font-bold text-slate-900">
+                  Candidate Onboarding
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Complete your intake dossier to unlock direct client requisitions.
+                </p>
+
+                {/* Intake Progress Bar */}
+                <div className="mt-4 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-enterprise">
+                    <span className="font-semibold text-slate-600">
+                      Step {currentStage} of 4
+                    </span>
+                    <span className="font-bold text-electric">
+                      {currentStage * 25}% Complete
+                    </span>
                   </div>
-                );
-              })}
-            </nav>
+                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-[#bcd6fa]/40">
+                    <div
+                      className="h-full bg-gradient-to-r from-electric to-[#0052cc] rounded-full transition-all duration-500"
+                      style={{ width: `${currentStage * 25}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Vertical Stepper */}
+              <nav className="space-y-2">
+                {[
+                  { n: 1, label: "Specialization", sub: "Track & Career Focus" },
+                  { n: 2, label: "CV & Resume", sub: "Upload & Deep Analysis" },
+                  { n: 3, label: "Assessment", sub: "Review & Refine Profile" },
+                  { n: 4, label: "Completion", sub: "Account & Verification" },
+                ].map(({ n, label, sub }) => {
+                  const isDone = currentStage > n;
+                  const isActive = currentStage === n;
+                  return (
+                    <div
+                      key={n}
+                      className={`relative flex items-center gap-3 rounded-2xl p-3 transition-all duration-200 border ${
+                        isActive
+                          ? "border-electric bg-white shadow-xs ring-2 ring-electric/15"
+                          : isDone
+                          ? "border-emerald-200/80 bg-emerald-50/40 text-slate-700"
+                          : "border-slate-200/70 bg-white/60 text-slate-400"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-all ${
+                          isActive
+                            ? "bg-gradient-to-r from-electric to-[#0052cc] text-white shadow-xs"
+                            : isDone
+                            ? "bg-emerald-600 text-white"
+                            : "border border-slate-200 bg-canvas text-slate-400"
+                        }`}
+                      >
+                        {isDone ? <CheckCircle size={15} /> : n}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className={`text-xs font-bold leading-tight ${
+                            isActive
+                              ? "text-slate-900"
+                              : isDone
+                              ? "text-slate-800"
+                              : "text-slate-500 font-medium"
+                          }`}
+                        >
+                          {label}
+                        </div>
+                        <div
+                          className={`text-[10px] leading-tight mt-0.5 ${
+                            isActive
+                              ? "text-electric font-semibold"
+                              : isDone
+                              ? "text-emerald-700 font-medium"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {sub}
+                        </div>
+                      </div>
+                      {isActive && (
+                        <div className="h-2 w-2 rounded-full bg-electric animate-pulse shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+
+              {/* Enterprise Guarantee & Talent Trust Card
+              <div className="pt-4 border-t border-[#bcd6fa]/50 space-y-2.5">
+                <div className="text-[10px] font-enterprise font-bold uppercase tracking-wider text-slate-400">
+                  Pepoltek Guarantee
+                </div>
+                <div className="space-y-2 text-[11px] text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-electric/10 text-electric shrink-0 font-bold text-[10px]">
+                      ⚡
+                    </span>
+                    <span>7-Day Rapid Placement SLA</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0 font-bold text-[10px]">
+                      🛡️
+                    </span>
+                    <span>PII Encrypted & Candidate Consent</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-purple-50 text-purple-700 shrink-0 font-bold text-[10px]">
+                      💼
+                    </span>
+                    <span>Transparent $85 - $150+/hr Rates</span>
+                  </div>
+                </div>
+              </div> */}
+            </div>
           </aside>
 
-          {/* MAIN CONTENT */}
-          <main className="flex-1 min-w-0">
+          {/* MAIN CONTENT: Independently scrollable */}
+          <main className="flex-1 min-w-0 pb-16">
 
             {/* Global Error */}
             {errorMessage && (
@@ -1118,10 +1213,7 @@ export function CandidateIntakeRegisterView() {
                     </div>
                     {/* Good to know */}
                     <div className="rounded-2xl border border-blue-100/90 bg-white p-6 space-y-4 relative overflow-hidden shadow-sm flex flex-col justify-between">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-85"
-                        style={{ backgroundImage: "url('/assets/register/card_bg.png')" }}
-                      />
+                  
                       <div className="relative z-10 space-y-4">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50/90 text-blue-600 shadow-xs border border-blue-100">
                           <FileText size={20} />
@@ -1166,12 +1258,12 @@ export function CandidateIntakeRegisterView() {
                           <div>
                             <div className="flex items-center justify-between text-xs mb-2">
                               <span className="text-slate-600">{parsingStepText}</span>
-                              <span className="font-mono font-bold text-slate-800">{parsingProgress}%</span>
+                              <span className="font-enterprise font-bold text-slate-800">{parsingProgress}%</span>
                             </div>
                             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                               <div className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out" style={{ width: `${parsingProgress}%` }} />
                             </div>
-                            <p className="text-[10.5px] text-slate-400 font-mono mt-2 flex items-center gap-1.5">
+                            <p className="text-[10.5px] text-slate-400 font-enterprise mt-2 flex items-center gap-1.5">
                               <Sparkles size={10} className="text-blue-400" />
                               Analyzing skills, experience, and domain taxonomy with AI...
                             </p>
@@ -1494,15 +1586,53 @@ export function CandidateIntakeRegisterView() {
                       </p>
                     </div>
 
-                    {/* Profile confirmation card */}
+                    {/* Profile confirmation card with inline email edit */}
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-base shadow-sm">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-base shadow-sm shrink-0">
                           {fullName ? fullName[0].toUpperCase() : "C"}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-sm font-bold text-slate-900">{fullName}</div>
-                          <div className="text-xs text-slate-500">{email} &bull; {selectedTrack.toUpperCase()}</div>
+                          {isEditingPreSubmitEmail ? (
+                            <form onSubmit={handleSavePreSubmitEmail} className="mt-1 flex items-center gap-2">
+                              <input
+                                type="email"
+                                value={preSubmitEmailInput}
+                                onChange={(e) => setPreSubmitEmailInput(e.target.value)}
+                                placeholder="Enter updated email"
+                                className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                                autoFocus
+                              />
+                              <button
+                                type="submit"
+                                className="rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-blue-700 cursor-pointer"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingPreSubmitEmail(false)}
+                                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                              >
+                                <X size={14} />
+                              </button>
+                            </form>
+                          ) : (
+                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                              <span className="truncate">{email} &bull; {selectedTrack.toUpperCase()}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPreSubmitEmailInput(email);
+                                  setIsEditingPreSubmitEmail(true);
+                                }}
+                                className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 cursor-pointer text-[11px]"
+                              >
+                                <Edit3 size={11} /> Change
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -1525,7 +1655,7 @@ export function CandidateIntakeRegisterView() {
 
                     <div className="relative flex items-center gap-3">
                       <div className="flex-1 border-t border-slate-200" />
-                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest shrink-0">Or set password &amp; create credentials</span>
+                      <span className="text-[10px] font-enterprise text-slate-400 uppercase tracking-widest shrink-0">Or set password &amp; create credentials</span>
                       <div className="flex-1 border-t border-slate-200" />
                     </div>
 
@@ -1612,7 +1742,7 @@ export function CandidateIntakeRegisterView() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-base">{fullName ? fullName[0].toUpperCase() : "C"}</div>
                         <div>
                           <div className="text-sm font-bold text-slate-900">{fullName}</div>
-                          <div className="text-xs text-slate-500 font-mono">{email} &bull; {domainOrSpecialty || selectedTrack.toUpperCase()}</div>
+                          <div className="text-xs text-slate-500 font-enterprise">{email} &bull; {domainOrSpecialty || selectedTrack.toUpperCase()}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1622,12 +1752,12 @@ export function CandidateIntakeRegisterView() {
                     </div>
 
                     {verificationStatus && (
-                      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-xs font-mono text-emerald-800 animate-in fade-in-0 duration-200">
+                      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-xs font-enterprise text-emerald-800 animate-in fade-in-0 duration-200">
                         <CheckCircle size={14} className="text-emerald-600 shrink-0" /> {verificationStatus}
                       </div>
                     )}
                     {verificationError && (
-                      <div className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-xs font-mono text-rose-800 animate-in fade-in-0 duration-200">
+                      <div className="flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-xs font-enterprise text-rose-800 animate-in fade-in-0 duration-200">
                         <AlertTriangle size={14} className="text-rose-600 shrink-0" /> {verificationError}
                       </div>
                     )}
@@ -1651,7 +1781,7 @@ export function CandidateIntakeRegisterView() {
 
                         <div className="px-6 py-3 flex items-center gap-3 bg-slate-50">
                           <div className="flex-1 border-t border-slate-200" />
-                          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest shrink-0">Or confirm with 6-digit email PIN</span>
+                          <span className="text-[10px] font-enterprise text-slate-400 uppercase tracking-widest shrink-0">Or confirm with 6-digit email PIN</span>
                           <div className="flex-1 border-t border-slate-200" />
                         </div>
 
@@ -1663,7 +1793,7 @@ export function CandidateIntakeRegisterView() {
                           </div>
 
                           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
-                            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+                            <div className="flex items-center justify-between text-[10px] font-enterprise uppercase tracking-wider text-slate-400 mb-1.5">
                               <span>Target Verification Email</span>
                               {!isEditingVerificationEmail && (
                                 <button type="button" onClick={() => { setNewEmailInput(email); setIsEditingVerificationEmail(true); }} className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 cursor-pointer">
@@ -1674,12 +1804,12 @@ export function CandidateIntakeRegisterView() {
                             {isEditingVerificationEmail ? (
                               <form onSubmit={handleSaveVerificationEmail} className="flex items-center gap-2">
                                 <input type="email" value={newEmailInput} onChange={(e) => setNewEmailInput(e.target.value)} placeholder="Enter updated email" autoFocus
-                                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none" />
+                                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-enterprise text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none" />
                                 <button type="submit" disabled={emailSaving} className="rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-bold text-white cursor-pointer disabled:opacity-50 shadow-xs">{emailSaving ? "Saving..." : "Save"}</button>
                                 <button type="button" onClick={() => { setNewEmailInput(email); setIsEditingVerificationEmail(false); }} className="rounded-lg border border-slate-300 p-1.5 text-slate-500 hover:text-slate-800 cursor-pointer"><X size={14} /></button>
                               </form>
                             ) : (
-                              <div className="font-mono text-sm font-bold text-blue-700 truncate">{email}</div>
+                              <div className="font-enterprise text-sm font-bold text-blue-700 truncate">{email}</div>
                             )}
                           </div>
 
@@ -1690,7 +1820,7 @@ export function CandidateIntakeRegisterView() {
                             </button>
                           ) : (
                             <div className="space-y-3 animate-in fade-in-0 duration-200">
-                              <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-mono text-blue-800">
+                              <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-enterprise text-blue-800">
                                 <span className="flex items-center gap-1.5"><Zap size={12} className="text-blue-500" /> Test Sandbox PIN: <strong className="text-slate-900">749201</strong></span>
                                 <button type="button" onClick={handleFillTestOtp} className="rounded bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-blue-700 cursor-pointer">Auto-Fill</button>
                               </div>
@@ -1699,14 +1829,14 @@ export function CandidateIntakeRegisterView() {
                                   {otpDigits.map((digit, idx) => (
                                     <input key={idx} ref={(el) => { otpInputRefs.current[idx] = el; }} type="text" inputMode="numeric" maxLength={1} value={digit}
                                       onPaste={handleOtpPaste} onChange={(e) => handleOtpChange(idx, e.target.value)} onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                                      className="h-12 w-11 rounded-xl border-2 border-slate-300 bg-white text-center font-mono text-lg font-bold text-slate-900 transition-all focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" />
+                                      className="h-12 w-11 rounded-xl border-2 border-slate-300 bg-white text-center font-enterprise text-lg font-bold text-slate-900 transition-all focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" />
                                   ))}
                                 </div>
                                 <button type="submit" disabled={verifyingOtp || otpDigits.join("").length < 6}
                                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-3 text-sm font-bold text-white transition-all active:scale-[0.99] disabled:opacity-40 cursor-pointer shadow-md shadow-blue-500/25">
                                   {verifyingOtp ? <><RefreshCw size={15} className="animate-spin" /> Verifying PIN...</> : <>Verify PIN &amp; Activate Dossier <ArrowRight size={15} /></>}
                                 </button>
-                                <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
+                                <div className="flex items-center justify-between text-xs text-slate-500 font-enterprise">
                                   <button type="button" onClick={handleDispatchOtp} disabled={otpTimer > 0 || dispatchingOtp}
                                     className={otpTimer > 0 ? "text-slate-400 cursor-not-allowed" : "text-blue-600 hover:underline cursor-pointer"}>
                                     {otpTimer > 0 ? `Resend PIN (${otpTimer}s)` : "Resend PIN"}

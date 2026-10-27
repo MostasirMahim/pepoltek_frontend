@@ -496,6 +496,11 @@ export interface CandidateInterviewItem {
   status: string;
   stage: string;
   sub_stage: string;
+  candidate_notes?: string;
+  scheduled_start?: string;
+  scheduled_end?: string;
+  round_number?: number;
+  title?: string;
 }
 
 /**

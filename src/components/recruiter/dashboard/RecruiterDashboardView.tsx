@@ -2,23 +2,29 @@
 
 import Link from "next/link";
 import { RecruiterPod, RecruiterShortlist } from "@/types/recruiter.types";
-import { RecruiterAnalyticsData } from "@/actions/recruiter.actions";
+import { RecruiterAnalyticsData, RecruiterReferralsData } from "@/actions/recruiter.actions";
 
 interface RecruiterDashboardViewProps {
   pods: RecruiterPod[];
   shortlists: RecruiterShortlist[];
   analytics?: RecruiterAnalyticsData;
+  referralsData?: RecruiterReferralsData | null;
 }
 
 export function RecruiterDashboardView({
   pods,
   shortlists,
   analytics,
+  referralsData,
 }: RecruiterDashboardViewProps) {
   const activePodsCount = analytics ? analytics.activePodsCount : pods.length;
   const avgTime = analytics ? analytics.avgDeploymentTime : "7.0";
   const passRate = analytics ? analytics.compliancePassRate : "100%";
   const savedHours = analytics ? analytics.reclaimedHiringHours : "0.0";
+
+  const activeReferralsCount = referralsData?.telemetry?.active_in_pipeline ?? 0;
+  const placedReferralsCount = referralsData?.telemetry?.placed_specialists ?? 0;
+  const totalBountiesUsd = referralsData?.telemetry?.total_bounties_usd ?? 0;
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -249,7 +255,9 @@ export function RecruiterDashboardView({
               <span className="font-mono text-mist uppercase text-[10px]">Active In Screening</span>
               <span className="rounded bg-blue-50 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-700">High Priority</span>
             </div>
-            <div className="font-display text-2xl font-bold text-ink mt-1">3 Specialists</div>
+            <div className="font-display text-2xl font-bold text-ink mt-1">
+              {activeReferralsCount} {activeReferralsCount === 1 ? "Specialist" : "Specialists"}
+            </div>
             <p className="text-[11px] text-ink-soft mt-1">Referred candidates awaiting recruiter sprint qualification.</p>
             <Link href="/recruiter/referrals" className="mt-3 block font-mono text-xs font-semibold text-electric hover:underline">
               Review Queue →
@@ -261,7 +269,9 @@ export function RecruiterDashboardView({
               <span className="font-mono text-mist uppercase text-[10px]">Placed &amp; Integrated</span>
               <span className="rounded bg-signal/15 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">90d Guarantee</span>
             </div>
-            <div className="font-display text-2xl font-bold text-signal mt-1">4 Placed</div>
+            <div className="font-display text-2xl font-bold text-signal mt-1">
+              {placedReferralsCount} Placed
+            </div>
             <p className="text-[11px] text-ink-soft mt-1">Successfully placed specialists in active enterprise requisitions.</p>
             <Link href="/recruiter/referrals" className="mt-3 block font-mono text-xs font-semibold text-electric hover:underline">
               View Placed Talent →
@@ -273,7 +283,9 @@ export function RecruiterDashboardView({
               <span className="font-mono text-cyan-300 uppercase text-[10px]">Community Bounties</span>
               <span className="rounded bg-signal/20 px-2 py-0.5 font-mono text-[9px] font-bold text-signal border border-signal/30">Escrow</span>
             </div>
-            <div className="font-display text-2xl font-bold text-white mt-1">$5,700 USD</div>
+            <div className="font-display text-2xl font-bold text-white mt-1">
+              ${totalBountiesUsd.toLocaleString()} USD
+            </div>
             <p className="text-[11px] text-gray-300 mt-1">Earned bounties reconciled through double-entry payout ledger.</p>
             <Link href="/recruiter/referrals" className="mt-3 block font-mono text-xs font-semibold text-electric-bright hover:underline">
               Manage Bounties &amp; Escrow →

@@ -3,11 +3,18 @@ import { RecruiterInterviewsView } from "@/components/recruiter/interviews/Recru
 import { getRecruiterInterviewsAction } from "@/actions/recruiter.actions";
 
 export const metadata: Metadata = {
-  title: "Sprint Technical Interviews | Pepoltek Recruiter",
-  description: "Live technical evaluations and panel assessments for pod candidates.",
+  title: "Candidate Interviews & Evaluations | Pepoltek Recruiter",
+  description: "Enterprise interview directory, panel briefing coordinates, and scorecard evaluations across all roles.",
 };
 
+
 export default async function RecruiterInterviewsPage() {
-  const interviews = await getRecruiterInterviewsAction();
-  return <RecruiterInterviewsView interviews={interviews} />;
+  const { interviews, metrics } = await getRecruiterInterviewsAction();
+  return (
+    <RecruiterInterviewsView
+      initialInterviews={interviews}
+      initialMetrics={metrics}
+      basePath="/recruiter/interviews"
+    />
+  );
 }

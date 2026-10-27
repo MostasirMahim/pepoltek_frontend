@@ -3,6 +3,7 @@
 @theme {
   --font-display: var(--font-sora), 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-enterprise: var(--font-jakarta), 'Plus Jakarta Sans', var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, monospace;
 
   /* Pepoltek design system tokens */

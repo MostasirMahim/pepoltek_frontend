@@ -44,6 +44,23 @@ export interface EngagementOption extends BaseOption {
   badge: string;
 }
 
+export interface AssessmentCategoryOption extends BaseOption {
+  sectorId: "technology" | "healthcare" | "both" | "all";
+  badge?: string;
+}
+
+export interface ValidatorSpecializationOption extends BaseOption {
+  sectorId: "technology" | "healthcare" | "both" | "all";
+  clearanceLevel?: string;
+  badge?: string;
+}
+
+export interface InterviewFormatOption extends BaseOption {
+  sectorId: "technology" | "healthcare" | "both" | "all";
+  badge?: string;
+  durationMinutes?: number;
+}
+
 export interface TaxonomyMatrix {
   sectors: SectorOption[];
   domains: DomainOption[];
@@ -51,4 +68,9 @@ export interface TaxonomyMatrix {
   seniorities: SeniorityOption[];
   workAuths: WorkAuthOption[];
   engagements: EngagementOption[];
+  assessmentCategories?: AssessmentCategoryOption[];
+  validatorSpecializations?: ValidatorSpecializationOption[];
+  interviewFormats?: InterviewFormatOption[];
 }
+
+

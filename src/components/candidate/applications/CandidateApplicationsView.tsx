@@ -15,9 +15,12 @@ import {
   Zap,
   Calendar,
   ExternalLink,
+  Lock,
+  Check,
 } from "@/components/ui/Icons";
 import { SprintPipelineItem } from "@/types/candidate.types";
 import { getCandidateApplicationsAction } from "@/actions/candidate.actions";
+import { authorizePitchAction } from "@/actions/matching.actions";
 
 import { useCandidatePersona } from "@/context/CandidatePersonaContext";
 
@@ -36,6 +39,50 @@ export function CandidateApplicationsView({
   const [selectedApp, setSelectedApp] = useState<SprintPipelineItem | null>(null);
   const [isVirtualRoomOpen, setIsVirtualRoomOpen] = useState(false);
   const [callActive, setCallActive] = useState(false);
+  const [pitchAuthorizingId, setPitchAuthorizingId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleAuthorizePitch = async (app: SprintPipelineItem, authorize: boolean) => {
+    const targetId = app.requisitionId || app.id;
+    setPitchAuthorizingId(app.id);
+
+    const res = await authorizePitchAction(targetId, authorize);
+    setPitchAuthorizingId(null);
+
+    if (res.success) {
+      setAppsList((prev) =>
+        prev.map((item) => {
+          if (item.id === app.id) {
+            return {
+              ...item,
+              subStage: authorize ? "Pitch Authorized" : "Pitch Declined",
+              pitchStatus: authorize ? "authorized" : "declined",
+              pitchAuthorized: authorize,
+            };
+          }
+          return item;
+        })
+      );
+      if (selectedApp && selectedApp.id === app.id) {
+        setSelectedApp((prev) =>
+          prev
+            ? {
+                ...prev,
+                subStage: authorize ? "Pitch Authorized" : "Pitch Declined",
+                pitchStatus: authorize ? "authorized" : "declined",
+                pitchAuthorized: authorize,
+              }
+            : null
+        );
+      }
+      setToastMessage(
+        authorize
+          ? `Pitch authorized for ${app.clientName}. Anonymized dossier queued for client review.`
+          : `Pitch authorization declined for ${app.clientName}.`
+      );
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
 
   const filteredApps = appsList.filter((app) => {
     if (filter === "All Stages") return true;
@@ -44,6 +91,23 @@ export function CandidateApplicationsView({
 
   return (
     <div className="space-y-6">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="rounded-2xl border border-electric/30 bg-electric/10 p-3.5 text-xs text-ink font-semibold flex items-center justify-between shadow-xs animate-in fade-in-0 duration-150">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={16} className="text-electric shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-ink-soft hover:text-ink cursor-pointer"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Header Banner - Enterprise Responsive Mobile & Desktop */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-electric/30 bg-gradient-to-r from-ink via-[#0e2142] to-ink p-4 sm:p-6 lg:p-7 text-white shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
@@ -169,6 +233,17 @@ export function CandidateApplicationsView({
                       Direct Application
                     </span>
                   )}
+                  {app.pitchAuthorized ? (
+                    <span className="rounded-full bg-signal/15 text-signal border border-signal/30 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
+                      <Check size={11} />
+                      <span>Pitch Authorized</span>
+                    </span>
+                  ) : app.source === "sourced" ? (
+                    <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-300 px-2.5 py-0.5 font-mono text-[10px] font-bold inline-flex items-center gap-1">
+                      <Lock size={11} />
+                      <span>Action Required: Authorize Pitch</span>
+                    </span>
+                  ) : null}
                 </div>
 
                 <h3 className="mt-2 font-display text-lg sm:text-xl font-bold text-ink group-hover:text-electric transition-colors">
@@ -432,7 +507,59 @@ export function CandidateApplicationsView({
                 </div>
               )}
 
-              {selectedApp.currentStage === "Market Mapping" && !selectedApp.interviewBrief && (
+              {/* Pitch Authorization Status Block (SRS AC-05) */}
+              {!selectedApp.pitchAuthorized && selectedApp.source === "sourced" ? (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                      <Lock size={14} className="text-amber-700" />
+                      Candidate Authorization Required (SRS AC-05)
+                    </span>
+                    <span className="rounded-full bg-amber-200/80 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-800">
+                      Pitch Pending
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    A talent recruiter sourced your profile for this requisition. To protect your privacy, your real name, GitHub, and full dossier are locked from client view until you authorize this pitch.
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={pitchAuthorizingId === selectedApp.id}
+                      onClick={() => handleAuthorizePitch(selectedApp, true)}
+                      className="rounded-xl bg-ink px-4 py-2 font-display text-xs font-bold text-white hover:bg-electric transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Check size={13} />
+                      <span>{pitchAuthorizingId === selectedApp.id ? "Authorizing..." : "Authorize 1-Click Pitch"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pitchAuthorizingId === selectedApp.id}
+                      onClick={() => handleAuthorizePitch(selectedApp, false)}
+                      className="rounded-xl border border-rose-200 bg-white px-3.5 py-2 font-display text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <span>Decline</span>
+                    </button>
+                  </div>
+                </div>
+              ) : selectedApp.pitchAuthorized ? (
+                <div className="rounded-2xl border border-signal/40 bg-signal/5 p-4 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-xs font-bold text-signal flex items-center gap-1.5">
+                      <Check size={14} />
+                      Pitch Authorized
+                    </span>
+                    <span className="rounded-full bg-signal/15 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">
+                      Consent Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-ink-soft leading-relaxed">
+                    You have authorized this pitch. Your verified technical profile and skill scorecard are queued for client evaluation.
+                  </p>
+                </div>
+              ) : null}
+
+              {selectedApp.currentStage === "Market Mapping" && !selectedApp.interviewBrief && selectedApp.pitchAuthorized && (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-1.5">
                   <span className="font-mono text-[10.5px] uppercase font-bold text-slate-500 tracking-wider block">
                     Recruiter Screening In Progress

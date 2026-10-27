@@ -7,7 +7,10 @@ import {
   RecruiterPod,
   RecruiterCandidate,
   RecruiterInterview,
+  RecruiterInterviewDetail,
+  AICandidateSearchResult,
 } from "@/types/recruiter.types";
+
 
 export interface RecruiterAnalyticsData {
   activePodsCount: number;
@@ -95,13 +98,23 @@ export interface PublicJobDetail {
 }
 
 export interface ScheduleInterviewInput {
-  candidate_name: string;
-  candidate_email: string;
-  role: string;
+  application_id?: string;
+  candidate_name?: string;
+  candidate_email?: string;
+  role?: string;
+  title?: string;
   interview_type?: string;
+  round_number?: number;
+  scheduled_start?: string;
+  scheduled_end?: string;
   scheduled_time?: string;
-  panel?: string;
+  timezone?: string;
   meeting_link?: string;
+  lead_interviewer_id?: string;
+  panel_member_ids?: string[];
+  panel?: string;
+  candidate_notes?: string;
+  internal_brief?: string;
 }
 
 /**
@@ -363,27 +376,29 @@ export async function getRecruiterCandidatesAction(
 
     const rawList = Array.isArray(response.data) ? response.data : [];
     return rawList.map((c: any) => ({
-      id: c.id || "CAND-001",
-      name: c.name || "Talent Candidate",
+      id: c.id ? String(c.id) : `CAND-${Math.random().toString(36).slice(2, 9)}`,
+      display_id: c.display_id || (c.id ? `CAND-${String(c.id).replace(/-/g, "").slice(-6).toUpperCase()}` : "CAND-LIVE"),
+      name: c.name || "Candidate",
       title: c.title || "Specialist",
       sector: c.sector === "Healthcare" ? "Healthcare" : "Software Tech",
-      skills: Array.isArray(c.skills) ? c.skills : ["Engineering"],
-      experience: c.experience || "Senior Specialist",
-      matchScore: c.matchScore || "95%",
-      profileStrength: typeof c.profileStrength === "number" ? c.profileStrength : (typeof c.profile_strength === "number" ? c.profile_strength : 88),
-      readinessIndex: typeof c.readinessIndex === "number" ? c.readinessIndex : (typeof c.profile_strength === "number" ? c.profile_strength : 88),
-      cvScore: typeof c.cvScore === "number" ? c.cvScore : (typeof c.cv_score === "number" ? c.cv_score : 90),
-      vettingScore: typeof c.vettingScore === "number" ? c.vettingScore : (typeof c.vetting_score === "number" ? c.vetting_score : 92),
-      readinessTier: c.readinessTier || c.readiness_tier || "ready",
-      rate: c.rate || "$95/hr",
+      skills: Array.isArray(c.skills) ? c.skills : [],
+      experience: c.experience || "Specialist",
+      matchScore: c.matchScore || (c.match_score ? `${c.match_score}%` : "80%"),
+      profileStrength: typeof c.profileStrength === "number" ? c.profileStrength : (typeof c.profile_strength === "number" ? c.profile_strength : 0),
+      readinessIndex: typeof c.readinessIndex === "number" ? c.readinessIndex : (typeof c.profile_strength === "number" ? c.profile_strength : 0),
+      cvScore: typeof c.cvScore === "number" ? c.cvScore : (typeof c.cv_score === "number" ? c.cv_score : 0),
+      vettingScore: typeof c.vettingScore === "number" ? c.vettingScore : (typeof c.vetting_score === "number" ? c.vetting_score : 0),
+      readinessTier: c.readinessTier || c.readiness_tier || "unrated",
+      rate: c.rate || "Negotiable",
       availability: c.availability || "Immediate",
-      verified: true,
-      email: c.email || `${(c.name || "specialist").toLowerCase().replace(/[^a-z0-9]/g, ".")}@talent.pepoltek.com`,
-      phone: c.phone || "+1 (555) 382-9104",
-      location: c.location || "100% Remote (US/EU)",
-      workAuth: c.workAuth || "US Citizen / Green Card",
-      engagement: c.engagement || "W2 / C2C / 1099",
-      summary: c.summary || `${c.title || "Specialist"} with enterprise deployment experience.`,
+      verified: Boolean(c.verified),
+      vetting_status: c.vetting_status || "not_started",
+      email: c.email || "",
+      phone: c.phone || "",
+      location: c.location || "Remote",
+      workAuth: c.workAuth || "Authorized",
+      engagement: c.engagement || "Direct / Contract",
+      summary: c.summary || "",
     }));
   } catch {
     return [];
@@ -391,28 +406,313 @@ export async function getRecruiterCandidatesAction(
 }
 
 /**
- * Fetch scheduled sprint interviews
+ * Natural-language semantic candidate search powered by DeepSeek AI API.
+ * Converts query into structured filter chips, computes composite vector match scores,
+ * and returns ranked candidate records with explainability factors.
  */
-export async function getRecruiterInterviewsAction(): Promise<RecruiterInterview[]> {
+export async function searchCandidatesWithAIAction(
+  query: string,
+  sector?: string,
+  requisitionId?: string
+): Promise<{ success: boolean; data?: AICandidateSearchResult; error?: string }> {
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
 
-    const response = await apiGet<any[]>("ats/interviews/", { cookieHeader });
-    const rawList = Array.isArray(response.data) ? response.data : [];
+    const response = await apiPost<any>("ai/candidate-search/", {
+      query,
+      sector: sector && sector !== "All" ? sector : undefined,
+      requisition_id: requisitionId,
+    }, {
+      cookieHeader,
+    });
 
-    return rawList.map((item: any, idx: number) => ({
-      id: item.id || `INT-2026-${String(idx + 1).padStart(3, "0")}`,
-      candidate: item.candidate || "Candidate",
-      role: item.role || "Specialist Role",
-      pod: item.pod || item.role || "Engineering Team",
-      time: item.time || "Scheduled This Sprint",
-      type: item.type || "Technical Panel Review",
-      panel: item.panel || "Lead Architect & Tech Validator",
-      status: (item.status as any) || "Confirmed",
-    }));
+    if (response.data && Array.isArray(response.data.results)) {
+      const rawList = response.data.results;
+      const candidates: RecruiterCandidate[] = rawList.map((c: any) => ({
+        id: c.id ? String(c.id) : `CAND-${Math.random().toString(36).slice(2, 9)}`,
+        display_id: c.display_id || (c.id ? `CAND-${String(c.id).replace(/-/g, "").slice(-6).toUpperCase()}` : "CAND-LIVE"),
+        name: c.name || "Candidate",
+        title: c.title || "Specialist",
+        sector: c.sector === "Healthcare" ? "Healthcare" : "Software Tech",
+        skills: Array.isArray(c.skills) ? c.skills : [],
+        experience: c.experience || "Specialist",
+        matchScore: c.matchScore || `${c.match_score || 80}%`,
+        profileStrength: typeof c.profileStrength === "number" ? c.profileStrength : (typeof c.profile_strength === "number" ? c.profile_strength : 0),
+        readinessIndex: typeof c.readinessIndex === "number" ? c.readinessIndex : (typeof c.profile_strength === "number" ? c.profile_strength : 0),
+        cvScore: typeof c.cvScore === "number" ? c.cvScore : (typeof c.cv_score === "number" ? c.cv_score : 0),
+        vettingScore: typeof c.vettingScore === "number" ? c.vettingScore : (typeof c.vetting_score === "number" ? c.vetting_score : 0),
+        readinessTier: c.readinessTier || c.readiness_tier || "unrated",
+        rate: c.rate || "Negotiable",
+        availability: c.availability || "Immediate",
+        verified: Boolean(c.verified),
+        vetting_status: c.vetting_status || "not_started",
+        email: c.email || "",
+        phone: c.phone || "",
+        location: c.location || "Remote",
+        workAuth: c.workAuth || "Authorized",
+        engagement: c.engagement || "Direct / Contract",
+        summary: c.summary || "",
+        positive_factors: c.positive_factors || [],
+        gap_factors: c.gap_factors || [],
+        semantic_score: c.semantic_score,
+        skill_score: c.skill_score,
+        level_score: c.level_score,
+        matched_skills: c.matched_skills || [],
+      }));
+
+      return {
+        success: true,
+        data: {
+          query: response.data.query || query,
+          extracted_filters: response.data.extracted_filters || {},
+          candidates,
+          total_evaluated: response.data.total_evaluated || candidates.length,
+          provider: response.data.provider || "deepseek:deepseek-chat",
+          latency_seconds: response.data.latency_seconds || 1.2,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: response.error?.message || "Failed to execute AI candidate search.",
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || "Network exception during AI search.",
+    };
+  }
+}
+
+/**
+ * Fetch scheduled sprint interviews with filters
+ */
+
+export async function getRecruiterInterviewsAction(params?: {
+  status?: string;
+  type?: string;
+  search?: string;
+}): Promise<{ interviews: RecruiterInterview[]; metrics?: { total: number; scheduled: number; completed: number } }> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<any>("ats/interviews/", {
+      cookieHeader,
+      params,
+    });
+
+    const resData = response.data;
+    const rawList: any[] = Array.isArray(resData?.data)
+      ? resData.data
+      : Array.isArray(resData)
+      ? resData
+      : [];
+
+    const metrics = resData?.metrics || {
+      total: rawList.length,
+      scheduled: rawList.filter((i: any) => i.status === "scheduled").length,
+      completed: rawList.filter((i: any) => i.status === "completed").length,
+    };
+
+    const interviews: RecruiterInterview[] = rawList.map((item: any) => {
+      const panelNames = (item.assignments || [])
+        .map((a: any) => a.staff_user_name)
+        .filter(Boolean);
+
+      const panelStr = panelNames.length > 0
+        ? panelNames.join(", ")
+        : (item.lead_interviewer_name || "Technical Panel");
+
+      // Format human-readable scheduled time
+      let formattedTime = "Scheduled This Sprint";
+      if (item.scheduled_start) {
+        try {
+          const d = new Date(item.scheduled_start);
+          formattedTime = d.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        } catch {
+          formattedTime = item.scheduled_start;
+        }
+      }
+
+      // Format status title
+      const statusTitle =
+        item.status === "scheduled"
+          ? "Scheduled"
+          : item.status === "confirmed"
+          ? "Confirmed"
+          : item.status === "completed"
+          ? "Completed"
+          : item.status === "rescheduled"
+          ? "Rescheduled"
+          : item.status === "cancelled"
+          ? "Cancelled"
+          : item.status || "Scheduled";
+
+      const typeTitle =
+        item.interview_type === "technical_coding"
+          ? "Technical Coding"
+          : item.interview_type === "system_design"
+          ? "System Design"
+          : item.interview_type === "clinical_board"
+          ? "Clinical Board"
+          : item.interview_type === "behavioral_leadership"
+          ? "Behavioral & Leadership"
+          : item.interview_type === "client_final"
+          ? "Client Final Round"
+          : item.interview_type || "Technical Panel";
+
+      return {
+        id: item.id,
+        application_id: item.application_id,
+        candidate: item.candidate_name || item.candidate || "Talent Candidate",
+        candidate_id: item.candidate_id,
+        candidate_email: item.candidate_email,
+        candidate_headline: item.candidate_headline,
+        role: item.requisition_title || item.role || "Specialist Role",
+        requisition_id: item.requisition_id,
+        requisition_title: item.requisition_title,
+        client_name: item.client_name || "Pepoltek Client Partner",
+        pod: item.requisition_title || "Engineering Squad",
+        title: item.title,
+        time: formattedTime,
+        scheduled_start: item.scheduled_start,
+        scheduled_end: item.scheduled_end,
+        timezone: item.timezone || "UTC",
+        meeting_link: item.meeting_link || "https://meet.google.com/pepoltek-sprint",
+        type: typeTitle,
+        interview_type: item.interview_type,
+        round_number: item.round_number || 1,
+        panel: panelStr,
+        lead_interviewer_id: item.lead_interviewer_id,
+        lead_interviewer_name: item.lead_interviewer_name,
+        assignments: item.assignments || [],
+        evaluations_count: item.evaluations_count || 0,
+        average_score: item.average_score,
+        reminder_24h_dispatched: item.reminder_24h_dispatched,
+        status: statusTitle,
+        raw_status: item.status,
+        created_at: item.created_at,
+      };
+    });
+
+    return { interviews, metrics };
   } catch {
-    return [];
+    return { interviews: [], metrics: { total: 0, scheduled: 0, completed: 0 } };
+  }
+}
+
+/**
+ * Fetch full interview details including panel members and evaluation scorecards
+ */
+export async function getInterviewDetailAction(id: string): Promise<RecruiterInterviewDetail | null> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<any>(`ats/interviews/${id}/`, { cookieHeader });
+    const item = response.data?.data || response.data;
+    if (!item || !item.id) {
+      return null;
+    }
+
+    const panelNames = (item.assignments || [])
+      .map((a: any) => a.staff_user_name)
+      .filter(Boolean);
+
+    const panelStr = panelNames.length > 0
+      ? panelNames.join(", ")
+      : (item.lead_interviewer_name || "Technical Panel");
+
+    let formattedTime = "Scheduled This Sprint";
+    if (item.scheduled_start) {
+      try {
+        const d = new Date(item.scheduled_start);
+        formattedTime = d.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch {
+        formattedTime = item.scheduled_start;
+      }
+    }
+
+    const statusTitle =
+      item.status === "scheduled"
+        ? "Scheduled"
+        : item.status === "confirmed"
+        ? "Confirmed"
+        : item.status === "completed"
+        ? "Completed"
+        : item.status === "rescheduled"
+        ? "Rescheduled"
+        : item.status === "cancelled"
+        ? "Cancelled"
+        : item.status || "Scheduled";
+
+    const typeTitle =
+      item.interview_type === "technical_coding"
+        ? "Technical Coding"
+        : item.interview_type === "system_design"
+        ? "System Design"
+        : item.interview_type === "clinical_board"
+        ? "Clinical Board"
+        : item.interview_type === "behavioral_leadership"
+        ? "Behavioral & Leadership"
+        : item.interview_type === "client_final"
+        ? "Client Final Round"
+        : item.interview_type || "Technical Panel";
+
+    return {
+      id: item.id,
+      application_id: item.application_id,
+      candidate: item.candidate_name || item.candidate || "Talent Candidate",
+      candidate_id: item.candidate_id,
+      candidate_email: item.candidate_email,
+      candidate_headline: item.candidate_headline,
+      role: item.requisition_title || item.role || "Specialist Role",
+      requisition_id: item.requisition_id,
+      requisition_title: item.requisition_title,
+      client_name: item.client_name || "Pepoltek Client Partner",
+      pod: item.requisition_title || "Engineering Squad",
+      title: item.title,
+      time: formattedTime,
+      scheduled_start: item.scheduled_start,
+      scheduled_end: item.scheduled_end,
+      timezone: item.timezone || "UTC",
+      meeting_link: item.meeting_link || "https://meet.google.com/pepoltek-sprint",
+      type: typeTitle,
+      interview_type: item.interview_type,
+      round_number: item.round_number || 1,
+      panel: panelStr,
+      lead_interviewer_id: item.lead_interviewer_id,
+      lead_interviewer_name: item.lead_interviewer_name,
+      assignments: item.assignments || [],
+      evaluations_count: item.evaluations_count || 0,
+      average_score: item.average_score,
+      reminder_24h_dispatched: item.reminder_24h_dispatched,
+      reminder_24h_dispatched_at: item.reminder_24h_dispatched_at,
+      status: statusTitle,
+      raw_status: item.status,
+      candidate_notes: item.candidate_notes || "",
+      internal_brief: item.internal_brief || "",
+      evaluations: item.evaluations || [],
+      created_at: item.created_at,
+    };
+  } catch (err) {
+    console.error("[getInterviewDetailAction] Error:", err);
+    return null;
   }
 }
 
@@ -429,9 +729,86 @@ export async function scheduleInterviewAction(input: ScheduleInterviewInput) {
       return { success: false, error: response.error.message };
     }
 
+    revalidatePath("/recruiter/interviews");
+    revalidatePath("/admin/interviews");
     return { success: true, data: response.data };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to schedule interview." };
+  }
+}
+
+/**
+ * Update or reschedule interview session
+ */
+export async function updateInterviewAction(id: string, input: any) {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPatch(`ats/interviews/${id}/`, input, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error.message };
+    }
+
+    revalidatePath(`/recruiter/interviews/${id}`);
+    revalidatePath("/recruiter/interviews");
+    revalidatePath(`/admin/interviews/${id}`);
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update interview." };
+  }
+}
+
+/**
+ * Submit or update interview evaluation scorecard
+ */
+export async function submitInterviewEvaluationAction(
+  interviewId: string,
+  input: {
+    score: number;
+    recommendation: string;
+    competency_scores?: any[];
+    feedback: string;
+  }
+) {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPost(`ats/interviews/${interviewId}/evaluations/`, input, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error.message };
+    }
+
+    revalidatePath(`/recruiter/interviews/${interviewId}`);
+    revalidatePath("/recruiter/interviews");
+    revalidatePath(`/admin/interviews/${interviewId}`);
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to submit evaluation." };
+  }
+}
+
+/**
+ * Add or remove interview panel assignment
+ */
+export async function updateInterviewPanelAction(
+  interviewId: string,
+  input: { staff_user_id: string; role?: string; action?: "add" | "remove" }
+) {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiPost(`ats/interviews/${interviewId}/panel/`, input, { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error.message };
+    }
+
+    revalidatePath(`/recruiter/interviews/${interviewId}`);
+    return { success: true, data: response.data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update panel assignment." };
   }
 }
 
@@ -1011,6 +1388,29 @@ export interface ApplicationEventItem {
   timestamp: string;
 }
 
+export interface ApplicationVettingSummary {
+  id: string;
+  template_id: string;
+  template_title: string;
+  template_category: string;
+  template_sector: string;
+  total_marks: number;
+  marks_distribution?: Array<{ criterion: string; max_points: number; description?: string }>;
+  instructions?: string;
+  status: string;
+  status_display: string;
+  primary_validator_id?: string | null;
+  primary_validator_name?: string | null;
+  primary_validator_email?: string | null;
+  deadline?: string | null;
+  scheduled_start?: string | null;
+  final_score?: number | null;
+  pass_threshold?: number;
+  decision_notes?: string;
+  recruiter_notes?: string;
+  created_at: string;
+}
+
 export interface ApplicationDetailData {
   id: string;
   stage: string;
@@ -1070,6 +1470,24 @@ export interface ApplicationDetailData {
   rate: string;
   match_score: string;
   events: ApplicationEventItem[];
+  placement?: {
+    start_date: string;
+    rate: string;
+    guarantee_until: string;
+    checkins?: Record<string, any>;
+  } | null;
+  vettings?: ApplicationVettingSummary[];
+  interviews?: Array<{
+    id: string;
+    title: string;
+    interview_type: string;
+    round_number: number;
+    scheduled_start: string;
+    scheduled_end: string;
+    meeting_link: string;
+    status: string;
+    lead_interviewer: string;
+  }>;
 }
 
 /**
@@ -1101,12 +1519,30 @@ export async function getRecruiterApplicationDetailAction(id: string): Promise<{
 }
 
 /**
- * Update application stage and log note
+ * Update application stage and log note with recruiter signature & stage work
  */
 export async function updateRecruiterApplicationStageAction(
   id: string,
-  payload: { stage: string; sub_stage?: string; note?: string }
+  payload: {
+    stage: string;
+    sub_stage?: string;
+    note?: string;
+    recruiter_signature?: string;
+    vetting_score?: number;
+    vetting_track?: string;
+    assessment_type?: string;
+    interview_format?: string;
+    interview_date?: string;
+    meeting_link?: string;
+    candidate_notes?: string;
+    candidate_rate?: string;
+    placement_rate?: string;
+    placement_start_date?: string;
+    rejection_reason?: string;
+    [key: string]: any;
+  }
 ): Promise<{
+
   success: boolean;
   data?: any;
   error?: string;
@@ -1156,4 +1592,181 @@ export async function addRecruiterApplicationNoteAction(
 }
 
 
+
+
+// =============================================================================
+// VETTING SYSTEM ACTIONS
+// =============================================================================
+
+export interface MarksDistributionItem {
+  criterion: string;
+  max_points: number;
+  description?: string;
+}
+
+export interface AssessmentTemplateInput {
+  title: string;
+  category: string;
+  sector: string;
+  description?: string;
+  instructions?: string;
+  marks_distribution: MarksDistributionItem[];
+  total_marks?: number;
+  prerequisites?: string[];
+  allowed_validator_roles?: string[];
+  is_active?: boolean;
+}
+
+export interface AssignVettingInput {
+  application: string;
+  template: string;
+  primary_validator: string;
+  secondary_validator_ids?: string[];
+  scheduled_start?: string;
+  deadline?: string;
+  recruiter_notes?: string;
+  pass_threshold?: number;
+}
+
+export interface CriterionScore {
+  criterion: string;
+  awarded_points: number;
+  max_points: number;
+  notes?: string;
+}
+
+export interface SubmitAnswerInput {
+  vetting: string;
+  criterion_scores: CriterionScore[];
+  notes?: string;
+  attachments?: { label: string; key: string; content_type?: string }[];
+  candidate_submission_url?: string;
+  candidate_notes?: string;
+  is_final_submission?: boolean;
+}
+
+export interface SubmitScoreInput {
+  score: number;
+  verdict: "pass" | "fail";
+  feedback?: string;
+}
+
+export interface ValidatorItem {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string;
+  roles: string[];
+  sector: string;
+  specialization: string;
+  clearance_level: string;
+  active_assignments: number;
+}
+
+export async function getStaffValidatorsAction(): Promise<{
+  success: boolean;
+  data?: ValidatorItem[];
+  error?: string;
+}> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+    const res = await apiGet<{ data: ValidatorItem[] }>("vetting/validators/", { cookieHeader });
+    if (res.error) {
+      return { success: false, error: res.error.message };
+    }
+    const list = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
+    return { success: true, data: list };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to fetch staff validators." };
+  }
+}
+
+export async function listAssessmentTemplates(params?: { sector?: string; category?: string }) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiGet("vetting/templates/", { cookieHeader, params: params as Record<string, string> });
+}
+
+export async function getAssessmentTemplate(id: string) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiGet(`vetting/templates/${id}/`, { cookieHeader });
+}
+
+export async function createAssessmentTemplate(data: AssessmentTemplateInput) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const result = await apiPost("vetting/templates/", data, { cookieHeader });
+  revalidatePath("/recruiter/assessments");
+  return result;
+}
+
+export async function updateAssessmentTemplate(id: string, data: Partial<AssessmentTemplateInput>) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const result = await apiPatch(`vetting/templates/${id}/`, data, { cookieHeader });
+  revalidatePath("/recruiter/assessments");
+  return result;
+}
+
+export async function archiveAssessmentTemplate(id: string) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const result = await apiPost(`vetting/templates/${id}/archive/`, {}, { cookieHeader });
+  revalidatePath("/recruiter/assessments");
+  return result;
+}
+
+export async function listApplicationVettings(params?: { application?: string; template?: string }) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiGet("vetting/vettings/", { cookieHeader, params: params as Record<string, string> });
+}
+
+export async function getApplicationVetting(id: string) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiGet(`vetting/vettings/${id}/`, { cookieHeader });
+}
+
+export async function assignVetting(data: AssignVettingInput) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const result = await apiPost("vetting/vettings/", data, { cookieHeader });
+  revalidatePath("/recruiter/assessments");
+  return result;
+}
+
+export async function updateVetting(id: string, data: Partial<AssignVettingInput>) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiPatch(`vetting/vettings/${id}/`, data, { cookieHeader });
+}
+
+export async function getVettingAnswers(vettingId: string) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiGet(`vetting/vettings/${vettingId}/answers/`, { cookieHeader });
+}
+
+export async function submitVettingAnswer(vettingId: string, data: SubmitAnswerInput) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiPost(`vetting/vettings/${vettingId}/answers/`, data, { cookieHeader });
+}
+
+export async function getVettingScore(vettingId: string) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  return apiGet(`vetting/vettings/${vettingId}/score/`, { cookieHeader });
+}
+
+export async function submitFinalScore(vettingId: string, data: SubmitScoreInput) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  const result = await apiPost(`vetting/vettings/${vettingId}/score/`, data, { cookieHeader });
+  revalidatePath("/recruiter/assessments");
+  return result;
+}
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PublicJobDetail, applyPublicJobAction } from "@/actions/recruiter.actions";
 import {
   Briefcase,
@@ -30,14 +31,11 @@ interface PublicJobDetailViewProps {
 }
 
 export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
+  const router = useRouter();
   const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Application form state
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [portfolioUrl, setPortfolioUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applyResult, setApplyResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -59,8 +57,6 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
             role: user.role || "CANDIDATE",
             email: user.email,
           });
-          setFullName(user.fullName || "");
-          setEmail(user.email || "");
         }
       } catch {
         // Guest user
@@ -85,10 +81,19 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
     }
   };
 
+  const handleApplyClick = () => {
+    if (!currentUser) {
+      router.push(`/login?callbackUrl=/jobs/${job.id}`);
+      return;
+    }
+    setIsApplyDrawerOpen(true);
+    setApplyResult(null);
+  };
+
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !email.trim()) {
-      setApplyResult({ type: "error", text: "Please enter your Full Name and Email." });
+    if (!currentUser) {
+      router.push(`/login?callbackUrl=/jobs/${job.id}`);
       return;
     }
 
@@ -96,10 +101,8 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
     setApplyResult(null);
 
     const res = await applyPublicJobAction(job.id, {
-      full_name: fullName.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      portfolio_url: portfolioUrl.trim(),
+      full_name: currentUser.fullName || "Verified Candidate",
+      email: currentUser.email || "",
       notes: notes.trim(),
     });
 
@@ -110,10 +113,6 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
         type: "success",
         text: `Application submitted successfully! Your application reference is REF-${shortId}. Our technical team will review your profile within 24 hours under our 7-day sprint SLA.`,
       });
-      setFullName("");
-      setEmail("");
-      setPhone("");
-      setPortfolioUrl("");
       setNotes("");
     } else {
       setApplyResult({
@@ -130,7 +129,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 space-y-8">
         {/* Top Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 font-mono text-[11px] text-ink-soft">
+        <nav className="flex items-center gap-2 font-enterprise text-[11px] text-ink-soft">
           <Link href="/" className="hover:text-electric transition-colors">
             Home
           </Link>
@@ -151,7 +150,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
               {/* Badges Ribbon */}
               <div className="flex flex-wrap items-center gap-2">
                 <span
-                  className={`rounded-full px-3 py-1 font-mono text-[10.5px] font-bold ${
+                  className={`rounded-full px-3 py-1 font-enterprise text-[10.5px] font-bold ${
                     isHealth
                       ? "bg-teal-50 text-teal-700 border border-teal-200"
                       : "bg-electric/10 text-electric border border-electric/30"
@@ -160,33 +159,33 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                   {isHealth ? "Healthcare Rota" : "Software Tech"}
                 </span>
 
-                <span className="rounded-full bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 font-mono text-[10.5px] font-bold">
+                <span className="rounded-full bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 font-enterprise text-[10.5px] font-bold">
                   {job.level || "Senior Tier"} (Single Hire)
                 </span>
 
                 {isGig ? (
-                  <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5">
+                  <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 font-enterprise text-[10.5px] font-bold inline-flex items-center gap-1.5">
                     <Zap size={12} />
                     <span>Contract Sprint</span>
                   </span>
                 ) : isBounty ? (
-                  <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5 shadow-2xs">
+                  <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 font-enterprise text-[10.5px] font-bold inline-flex items-center gap-1.5 shadow-2xs">
                     <DollarSign size={12} className="text-amber-600" />
                     <span>Referral Bounty: ${bountyVal.toLocaleString()}</span>
                   </span>
                 ) : (
-                  <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/60 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5">
+                  <span className="rounded-full bg-canvas text-ink-soft border border-[#bcd6fa]/60 px-3 py-1 font-enterprise text-[10.5px] font-bold inline-flex items-center gap-1.5">
                     <Briefcase size={12} />
                     <span>Specialist Role</span>
                   </span>
                 )}
 
-                <span className="rounded-full bg-signal/10 text-signal border border-signal/30 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5">
+                <span className="rounded-full bg-signal/10 text-signal border border-signal/30 px-3 py-1 font-enterprise text-[10.5px] font-bold inline-flex items-center gap-1.5">
                   <ShieldCheck size={12} />
                   <span>Verified Requisition</span>
                 </span>
 
-                <span className="rounded-full bg-sky-50 text-sky-700 border border-sky-200 px-3 py-1 font-mono text-[10.5px] font-bold inline-flex items-center gap-1.5">
+                <span className="rounded-full bg-sky-50 text-sky-700 border border-sky-200 px-3 py-1 font-enterprise text-[10.5px] font-bold inline-flex items-center gap-1.5">
                   <Clock size={12} />
                   <span>7-Day Deployment SLA</span>
                 </span>
@@ -197,7 +196,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                 <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0a1428] tracking-tight leading-tight">
                   {cleanJobTitle(job.title)}
                 </h1>
-                <div className="mt-2.5 flex flex-wrap items-center gap-y-2 gap-x-4 font-mono text-xs text-ink-soft">
+                <div className="mt-2.5 flex flex-wrap items-center gap-y-2 gap-x-4 font-enterprise text-xs text-ink-soft">
                   <span className="inline-flex items-center gap-1 text-ink font-semibold">
                     <Building size={14} className="text-electric" />
                     <span>{job.client_name || "Enterprise Workspace Partner"}</span>
@@ -216,7 +215,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                 {(job.skills || []).map((skill) => (
                   <span
                     key={skill}
-                    className="rounded-lg bg-canvas border border-[#bcd6fa]/70 px-3 py-1 font-mono text-xs font-semibold text-ink"
+                    className="rounded-lg bg-canvas border border-[#bcd6fa]/70 px-3 py-1 font-enterprise text-xs font-semibold text-ink"
                   >
                     {skill}
                   </span>
@@ -228,18 +227,18 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
             <div className="flex flex-col justify-between rounded-2xl border border-[#bcd6fa]/80 bg-[#f8fbff] p-6 lg:min-w-[320px] shrink-0 space-y-6">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-mist">
+                  <span className="font-enterprise text-[11px] font-bold uppercase tracking-wider text-mist">
                     Compensation Rate
                   </span>
-                  <span className="rounded bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">
+                  <span className="rounded bg-signal/10 px-2 py-0.5 font-enterprise text-[10px] font-bold text-signal">
                     FDIC Escrow
                   </span>
                 </div>
                 <div className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-[#0a1428]">
                   ${job.budget_min || 95} - ${job.budget_max || 135}
-                  <span className="text-sm font-mono font-normal text-mist"> /hr</span>
+                  <span className="text-sm font-enterprise font-normal text-mist"> /hr</span>
                 </div>
-                <div className="mt-1 font-mono text-xs font-semibold text-signal">
+                <div className="mt-1 font-enterprise text-xs font-semibold text-signal">
                   {job.engagement || (isGig ? "Contract Sprint" : "Direct Hire Specialist")}
                 </div>
                 <p className="mt-2 text-[11.5px] leading-relaxed text-ink-soft">
@@ -250,7 +249,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
               <div className="space-y-2.5">
                 <button
                   type="button"
-                  onClick={() => setIsApplyDrawerOpen(true)}
+                  onClick={handleApplyClick}
                   className="w-full rounded-xl bg-electric px-6 py-3.5 font-display text-sm font-bold text-white shadow-[0_6px_20px_-4px_rgba(10,132,255,0.4)] hover:bg-electric-bright hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span>Apply for Position</span>
@@ -332,7 +331,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     key={idx}
                     className="flex items-start gap-3 rounded-2xl border border-[#bcd6fa]/50 bg-canvas/60 p-4 transition-all hover:bg-white hover:border-electric/50"
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-signal/10 text-signal font-mono text-xs font-bold mt-0.5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-signal/10 text-signal font-enterprise text-xs font-bold mt-0.5">
                       ✓
                     </span>
                     <p className="text-xs sm:text-sm leading-relaxed text-[#3d4c68]">
@@ -367,7 +366,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     key={idx}
                     className="flex items-start gap-3 rounded-2xl border border-[#bcd6fa]/50 bg-canvas/60 p-4 transition-all hover:bg-white hover:border-electric/50"
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-electric/10 text-electric font-mono text-xs font-bold mt-0.5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-electric/10 text-electric font-enterprise text-xs font-bold mt-0.5">
                       {idx + 1}
                     </span>
                     <p className="text-xs sm:text-sm leading-relaxed text-[#3d4c68]">
@@ -421,7 +420,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     7-Day Sprint Hiring Roadmap
                   </h2>
                 </div>
-                <span className="rounded-full bg-electric/10 px-3 py-1 font-mono text-[10px] font-bold text-electric">
+                <span className="rounded-full bg-electric/10 px-3 py-1 font-enterprise text-[10px] font-bold text-electric">
                   Guaranteed SLA
                 </span>
               </div>
@@ -461,10 +460,10 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/50 p-4 space-y-2 relative"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-electric text-white font-mono text-xs font-bold">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-electric text-white font-enterprise text-xs font-bold">
                         {step.step}
                       </span>
-                      <span className="font-mono text-[10.5px] font-bold text-electric">
+                      <span className="font-enterprise text-[10.5px] font-bold text-electric">
                         {step.duration}
                       </span>
                     </div>
@@ -489,52 +488,52 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                 Requisition Snapshot
               </h3>
 
-              <div className="space-y-3.5 text-xs">
+              <div className="space-y-3.5 text-xs font-enterprise">
                 <div className="flex items-center justify-between py-1 border-b border-[#bcd6fa]/30">
                   <span className="text-ink-soft">Compensation</span>
-                  <span className="font-mono font-bold text-ink">
+                  <span className="font-enterprise font-bold text-ink">
                     ${job.budget_min || 95} - ${job.budget_max || 135} /hr
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-1 border-b border-[#bcd6fa]/30">
                   <span className="text-ink-soft">Headcount</span>
-                  <span className="font-mono font-bold text-ink">
+                  <span className="font-enterprise font-bold text-ink">
                     1 Specialist (Strict Single Role)
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-1 border-b border-[#bcd6fa]/30">
                   <span className="text-ink-soft">Engagement Model</span>
-                  <span className="font-mono font-semibold text-ink">
+                  <span className="font-enterprise font-semibold text-ink">
                     {job.engagement || "Direct Hire Specialist"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-1 border-b border-[#bcd6fa]/30">
                   <span className="text-ink-soft">Workplace Location</span>
-                  <span className="font-mono font-semibold text-ink">
+                  <span className="font-enterprise font-semibold text-ink">
                     {job.location || "100% Remote"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-1 border-b border-[#bcd6fa]/30">
                   <span className="text-ink-soft">Live Timezone Overlap</span>
-                  <span className="font-mono font-semibold text-ink">
+                  <span className="font-enterprise font-semibold text-ink">
                     4 to 8 Hours (US/EU)
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-1 border-b border-[#bcd6fa]/30">
                   <span className="text-ink-soft">Client Escrow</span>
-                  <span className="font-mono font-bold text-signal">
+                  <span className="font-enterprise font-bold text-signal">
                     Verified FDIC Insured
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-1">
                   <span className="text-ink-soft">Deployment SLA</span>
-                  <span className="font-mono font-bold text-electric">
+                  <span className="font-enterprise font-bold text-electric">
                     7 Days Guaranteed
                   </span>
                 </div>
@@ -542,7 +541,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
 
               <button
                 type="button"
-                onClick={() => setIsApplyDrawerOpen(true)}
+                onClick={handleApplyClick}
                 className="w-full rounded-xl bg-ink py-3 font-display text-xs font-bold text-white hover:bg-electric transition-colors cursor-pointer text-center"
               >
                 Apply for Position Now →
@@ -557,7 +556,7 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     $
                   </span>
                   <div>
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                    <span className="font-enterprise text-[10px] font-bold uppercase tracking-wider text-amber-800">
                       Referral Network Bounty
                     </span>
                     <h4 className="font-display text-sm font-bold text-amber-950">
@@ -610,13 +609,13 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
             {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-[#bcd6fa]/50 p-6 bg-canvas/40">
               <div>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-electric">
+                <span className="font-enterprise text-[10px] font-bold uppercase tracking-wider text-electric">
                   Candidate Application
                 </span>
                 <h2 className="font-display text-lg font-bold text-[#0a1428] truncate max-w-sm sm:max-w-md">
                   {cleanJobTitle(job.title)}
                 </h2>
-                <p className="font-mono text-xs text-ink-soft">
+                <p className="font-enterprise text-xs text-ink-soft">
                   REQ-{shortId} · ${job.budget_min || 95} - ${job.budget_max || 135}/hr
                 </p>
               </div>
@@ -661,114 +660,46 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                     </div>
                   )}
                 </div>
-              ) : (
-                <form id="public-job-apply-form" onSubmit={handleApply} className="space-y-4">
+              ) : currentUser ? (
+                <form id="public-job-apply-form" onSubmit={handleApply} className="space-y-4 text-xs font-enterprise">
                   {/* Authenticated Candidate Card */}
-                  {currentUser ? (
-                    <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#0066FF] to-[#00D4FF] text-white font-bold flex items-center justify-center font-display text-sm shadow-xs">
-                          {currentUser.fullName.slice(0, 2).toUpperCase()}
+                  <div className="rounded-2xl border border-electric/30 bg-electric/5 p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#0066FF] to-[#00D4FF] text-white font-bold flex items-center justify-center font-display text-sm shadow-xs">
+                        {currentUser.fullName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-display font-bold text-ink text-sm">{currentUser.fullName}</h4>
+                          <span className="rounded bg-signal/10 px-2 py-0.5 font-enterprise text-[10px] font-bold text-signal">Verified Dossier</span>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-display font-bold text-ink text-sm">{currentUser.fullName}</h4>
-                            <span className="rounded bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal">Verified Dossier</span>
-                          </div>
-                          <p className="font-mono text-xs text-ink-soft">{currentUser.email}</p>
-                        </div>
-                      </div>
-                      <Link href="/candidate/profile" target="_blank" className="text-xs font-mono text-electric hover:underline font-semibold">
-                        View Profile ↗
-                      </Link>
-                    </div>
-                  ) : (
-                    /* Guest Sign-in or Register Prompt */
-                    <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10.5px] font-bold uppercase tracking-wider text-amber-900">
-                          Have a Candidate Profile?
-                        </span>
-                        <Link
-                          href={`/login?redirect=/jobs/${job.id}`}
-                          className="rounded-lg bg-amber-600 px-3 py-1 font-display text-xs font-bold text-white hover:bg-amber-700 transition-colors"
-                        >
-                          Sign In to Quick Apply →
-                        </Link>
-                      </div>
-                      <p className="text-[11.5px] text-amber-900 leading-relaxed">
-                        Applying with a verified candidate profile gives your CV direct priority in our client review pipeline.
-                      </p>
-                      <div className="pt-0.5">
-                        <Link
-                          href={`/register?redirect=/jobs/${job.id}`}
-                          className="inline-block text-xs font-mono font-semibold text-amber-950 underline hover:text-electric"
-                        >
-                          Or Create Profile &amp; Upload CV →
-                        </Link>
+                        <p className="font-enterprise text-xs text-ink-soft">{currentUser.email}</p>
                       </div>
                     </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <label className="font-mono text-xs font-bold text-ink">
-                      Full Legal Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Alex Morgan"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
-                    />
+                    <Link href="/candidate/profile" target="_blank" className="text-xs font-enterprise text-electric hover:underline font-semibold">
+                      View Profile ↗
+                    </Link>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-mono text-xs font-bold text-ink">
-                        Email Address <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="alex@domain.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
-                      />
+                  {/* Requisition Card */}
+                  <div className="rounded-2xl border border-[#bcd6fa]/60 bg-canvas/40 p-3.5 space-y-1">
+                    <div className="text-[10px] uppercase font-bold text-mist tracking-wider">
+                      Position Overview
                     </div>
-
-                    <div className="space-y-1">
-                      <label className="font-mono text-xs font-bold text-ink">
-                        Phone / WhatsApp
-                      </label>
-                      <input
-                        type="tel"
-                        placeholder="+1 (555) 000-0000"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
-                      />
+                    <div className="font-bold text-sm text-ink">{cleanJobTitle(job.title)}</div>
+                    <div className="text-xs text-ink-soft flex items-center gap-2 flex-wrap">
+                      <span>{job.client_name || "Enterprise Partner"}</span>
+                      <span>·</span>
+                      <span>${job.budget_min || 95} - ${job.budget_max || 135}/hr</span>
+                      <span>·</span>
+                      <span>{job.location || "100% Remote"}</span>
                     </div>
                   </div>
 
+                  {/* Candidate Note / Pitch */}
                   <div className="space-y-1">
-                    <label className="font-mono text-xs font-bold text-ink">
-                      Portfolio / GitHub / LinkedIn URL
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://github.com/alex or https://linkedin.com/in/alex"
-                      value={portfolioUrl}
-                      onChange={(e) => setPortfolioUrl(e.target.value)}
-                      className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-mono text-xs font-bold text-ink">
-                      Candidate Notes &amp; Core Strengths
+                    <label className="font-enterprise text-xs font-bold text-ink">
+                      Candidate Notes &amp; Core Strengths (Optional)
                     </label>
                     <textarea
                       rows={4}
@@ -778,29 +709,30 @@ export function PublicJobDetailView({ job }: PublicJobDetailViewProps) {
                       className="w-full rounded-xl border border-[#bcd6fa] bg-canvas/30 px-3.5 py-2.5 text-xs text-ink focus:border-electric focus:bg-white focus:outline-none"
                     />
                   </div>
-
-                  <div className="rounded-xl border border-[#bcd6fa]/50 bg-canvas/50 p-3.5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <FileText size={16} className="text-electric" />
-                      <span className="font-mono text-[11px] text-ink-soft">
-                        Need CV parsing? Use the intake builder
-                      </span>
-                    </div>
-                    <Link
-                      href="/career/upload_cv"
-                      target="_blank"
-                      className="font-mono text-[11px] font-bold text-electric hover:underline inline-flex items-center gap-1"
-                    >
-                      <span>Upload CV</span>
-                      <ExternalLink size={11} />
-                    </Link>
-                  </div>
                 </form>
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 space-y-3 font-enterprise">
+                  <div className="font-display font-bold text-sm text-amber-900">
+                    Authentication Required
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    Please sign in with your verified candidate profile to submit an application with your dossier.
+                  </p>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/login?callbackUrl=/jobs/${job.id}`)}
+                      className="rounded-xl bg-ink px-4 py-2 font-display text-xs font-bold text-white hover:bg-electric transition-colors"
+                    >
+                      Sign In to Apply →
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
             {/* Drawer Footer Actions */}
-            {!applyResult && (
+            {!applyResult && currentUser && (
               <div className="border-t border-[#bcd6fa]/50 p-6 bg-canvas/40 flex items-center justify-between gap-3">
                 <button
                   type="button"

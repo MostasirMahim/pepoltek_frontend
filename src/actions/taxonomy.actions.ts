@@ -10,6 +10,9 @@ import {
   SeniorityOption,
   WorkAuthOption,
   EngagementOption,
+  AssessmentCategoryOption,
+  ValidatorSpecializationOption,
+  InterviewFormatOption,
 } from "@/types/taxonomy.types";
 
 export type {
@@ -20,7 +23,11 @@ export type {
   SeniorityOption,
   WorkAuthOption,
   EngagementOption,
+  AssessmentCategoryOption,
+  ValidatorSpecializationOption,
+  InterviewFormatOption,
 };
+
 
 export interface TaxonomyResponse {
   version: number;

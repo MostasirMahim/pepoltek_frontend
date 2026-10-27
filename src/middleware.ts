@@ -50,6 +50,7 @@ export function middleware(request: NextRequest) {
   }
 
   const ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN"];
+  const VALIDATOR_ROLES = ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"];
   const STAFF_ROLES = [
     "SUPER_ADMIN",
     "ADMIN",
@@ -60,11 +61,14 @@ export function middleware(request: NextRequest) {
   ];
 
   // 1. Root Homepage Rule
-  // If user logged in as admin on / -> navigate to /admin/dashboard
-  // If user logged in as staff (recruiter/validator/ba) on / -> navigate to /recruiter/dashboard
-  // Candidates and guests remain on /
   if (pathname === "/") {
     if (isAuthenticated) {
+      if (VALIDATOR_ROLES.includes(userRole || "")) {
+        return NextResponse.redirect(new URL("/validator/dashboard", request.url));
+      }
+      if (userRole === "REFERRER") {
+        return NextResponse.redirect(new URL("/referrals/dashboard", request.url));
+      }
       if (ADMIN_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       }
@@ -77,9 +81,14 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Auth Pages (/login, /register, /recruiter/login, /staff/login)
-  // If already logged in, redirect to their role-specific dashboard
   if (pathname === "/login" || pathname === "/register" || pathname === "/recruiter/login" || pathname === "/staff/login") {
     if (isAuthenticated) {
+      if (VALIDATOR_ROLES.includes(userRole || "")) {
+        return NextResponse.redirect(new URL("/validator/dashboard", request.url));
+      }
+      if (userRole === "REFERRER") {
+        return NextResponse.redirect(new URL("/referrals/dashboard", request.url));
+      }
       if (ADMIN_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       }
@@ -99,6 +108,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (!ADMIN_ROLES.includes(userRole || "")) {
+      if (VALIDATOR_ROLES.includes(userRole || "")) {
+        return NextResponse.redirect(new URL("/validator/dashboard", request.url));
+      }
       if (STAFF_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
       }
@@ -107,7 +119,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. Recruiter and Staff Protected Routes (/recruiter/*)
+  // 4. Validator Protected Routes (/validator/*)
+  if (pathname.startsWith("/validator")) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (!VALIDATOR_ROLES.includes(userRole || "") && !ADMIN_ROLES.includes(userRole || "")) {
+      return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // 5. Recruiter and Staff Protected Routes (/recruiter/*)
   if (pathname.startsWith("/recruiter") && pathname !== "/recruiter/login") {
     if (!isAuthenticated) {
       const loginUrl = new URL("/recruiter/login", request.url);
@@ -120,7 +145,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 5. Candidate Protected Routes (/candidate/*)
+  // 6. Candidate Protected Routes (/candidate/*)
   if (pathname.startsWith("/candidate")) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", request.url);
@@ -130,7 +155,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 6. Client Protected Routes (/client/*)
+  // 7. Client Protected Routes (/client/*)
   if (pathname.startsWith("/client")) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", request.url);
@@ -140,8 +165,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 7. Community Referrals Protected Routes (/referrals/*)
-  if (pathname.startsWith("/referrals")) {
+  // 8. Community Referrals Protected Routes (/referrals/* and /referrer/*)
+  if (pathname.startsWith("/referrals") || pathname.startsWith("/referrer")) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
@@ -159,9 +184,11 @@ export const config = {
     "/login",
     "/register",
     "/admin/:path*",
+    "/validator/:path*",
     "/recruiter/:path*",
     "/candidate/:path*",
     "/client/:path*",
     "/referrals/:path*",
+    "/referrer/:path*",
   ],
 };

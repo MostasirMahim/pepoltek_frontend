@@ -150,6 +150,8 @@ export async function publishContentBlockAction(
         revalidatePath("/case-studies", "page");
       } else if (key === "about_page") {
         revalidatePath("/about", "page");
+      } else if (key === "site_navigation") {
+        revalidatePath("/", "layout");
       }
       revalidatePath("/(main)", "layout");
       revalidatePath(`/admin/content/${key}`, "page");

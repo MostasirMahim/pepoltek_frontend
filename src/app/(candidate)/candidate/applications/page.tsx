@@ -74,6 +74,9 @@ export default async function CandidateApplicationsPage() {
           podLeadName: "Alex Morgan",
           stageHistory,
           interviewBrief,
+          requisitionId: item.requisition_id,
+          pitchStatus: item.pitch_status || (item.sub_stage === "Pitch Authorized" ? "authorized" : (item.source === "sourced" ? "requested" : "authorized")),
+          pitchAuthorized: item.pitch_authorized ?? (item.sub_stage === "Pitch Authorized" || item.source !== "sourced"),
         };
       });
     }

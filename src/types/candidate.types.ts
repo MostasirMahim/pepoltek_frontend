@@ -83,6 +83,9 @@ export interface SprintPipelineItem {
   stageHistory?: PipelineStageHistory[];
   interviewBrief?: PipelineInterviewBrief;
   contractDetails?: PipelineContractDetails;
+  requisitionId?: string;
+  pitchStatus?: "requested" | "authorized" | "declined" | "revoked";
+  pitchAuthorized?: boolean;
 }
 
 export interface UpcomingInterview {
@@ -109,18 +112,22 @@ export interface AnonymizedPitchPreview {
 
 export interface ReverseSearchMatch {
   id: string;
+  requisition_id?: string;
   clientOrgAnonymized: string;
   sector: "Enterprise IT" | "Healthcare & Med-Tech";
   role: string;
+  level?: string;
+  location?: string;
   matchScore: number;
   skillOverlap: string[];
   timezoneOverlap: string;
   compensation: string;
-  engagement: "C2C" | "W2 Contract" | "Direct Hire";
+  engagement: "C2C" | "W2 Contract" | "Direct Hire" | string;
   sprintVelocity: string;
   authorized: boolean;
   authorizedAt?: string;
   description: string;
+  pitch_status?: "not_requested" | "requested" | "authorized" | "declined" | "revoked";
   anonymizedPreview?: AnonymizedPitchPreview;
 }
 
