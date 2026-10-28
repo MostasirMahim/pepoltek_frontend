@@ -22,17 +22,17 @@ import {
 } from "lucide-react";
 
 interface AdminLeadsViewProps {
-  initialLeads: any[];
-  leadsMetrics: any;
-  initialContacts: any[];
-  contactsMetrics: any;
+  initialLeads?: any[];
+  leadsMetrics?: any;
+  initialContacts?: any[];
+  contactsMetrics?: any;
 }
 
 export default function AdminLeadsView({
-  initialLeads,
-  leadsMetrics,
-  initialContacts,
-  contactsMetrics,
+  initialLeads = [],
+  leadsMetrics = {},
+  initialContacts = [],
+  contactsMetrics = {},
 }: AdminLeadsViewProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"leads" | "contacts">("leads");
@@ -49,7 +49,7 @@ export default function AdminLeadsView({
 
   // Filtered Leads
   const filteredLeads = useMemo(() => {
-    return initialLeads.filter((lead) => {
+    return (initialLeads || []).filter((lead) => {
       const matchesSearch =
         !leadSearch ||
         lead.company?.toLowerCase().includes(leadSearch.toLowerCase()) ||
@@ -68,7 +68,7 @@ export default function AdminLeadsView({
 
   // Filtered Contacts
   const filteredContacts = useMemo(() => {
-    return initialContacts.filter((item) => {
+    return (initialContacts || []).filter((item) => {
       const matchesSearch =
         !contactSearch ||
         item.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||

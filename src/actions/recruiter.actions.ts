@@ -1558,6 +1558,9 @@ export async function updateRecruiterApplicationStageAction(
 
     revalidatePath("/recruiter/applications");
     revalidatePath(`/recruiter/applications/${id}`);
+    revalidatePath("/candidate/applications");
+    revalidatePath("/candidate/assessments");
+    revalidatePath("/candidate/dashboard");
     return { success: true, data: (res.data as any)?.data || res.data };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to update application stage." };

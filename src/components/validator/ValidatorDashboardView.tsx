@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ShieldCheck,
   CheckCircle,
@@ -28,10 +29,24 @@ interface ValidatorDashboardViewProps {
 }
 
 export function ValidatorDashboardView({ initialData }: ValidatorDashboardViewProps) {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
   const [data, setData] = useState<ValidatorDashboardPayload>(initialData);
   const [activeTab, setActiveTab] = useState<"technical" | "credentials" | "history">(
-    initialData.profile.sector === "healthcare" ? "credentials" : "technical"
+    tabParam === "technical" || tabParam === "credentials" || tabParam === "history"
+      ? tabParam
+      : initialData.profile.sector === "healthcare"
+      ? "credentials"
+      : "technical"
   );
+
+  useEffect(() => {
+    if (tabParam === "technical" || tabParam === "credentials" || tabParam === "history") {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 

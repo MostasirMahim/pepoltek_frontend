@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   DollarSign,
   Users,
@@ -294,6 +295,41 @@ export function ReferralDashboardView({
         </div>
       </div>
 
+      {/* Quick Navigation Pills to Dedicated Section Pages */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-canvas border border-[#bcd6fa]/50 flex-wrap">
+        <Link
+          href="/referrals/network"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-[#bcd6fa]/60 text-xs font-bold text-ink hover:text-electric hover:border-electric transition-all shadow-2xs"
+        >
+          <Users className="h-3.5 w-3.5 text-electric" />
+          <span>Candidate Network ({referrals.length})</span>
+          <ChevronRight className="h-3 w-3 text-mist" />
+        </Link>
+        <Link
+          href="/referrals/bounties"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-[#bcd6fa]/60 text-xs font-bold text-ink hover:text-amber-700 hover:border-amber-300 transition-all shadow-2xs"
+        >
+          <Zap className="h-3.5 w-3.5 text-amber-500" />
+          <span>Active Bounties ({activeBounties.length})</span>
+          <ChevronRight className="h-3 w-3 text-mist" />
+        </Link>
+        <Link
+          href="/referrals/payouts"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-[#bcd6fa]/60 text-xs font-bold text-ink hover:text-emerald-700 hover:border-emerald-300 transition-all shadow-2xs"
+        >
+          <CreditCard className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Escrow &amp; Payouts Ledger</span>
+          <ChevronRight className="h-3 w-3 text-mist" />
+        </Link>
+        <Link
+          href="/jobs"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-[#bcd6fa]/60 text-xs font-bold text-ink hover:text-blue-700 hover:border-blue-300 transition-all shadow-2xs"
+        >
+          <Briefcase className="h-3.5 w-3.5 text-blue-600" />
+          <span>Browse Bounty Sprint Roles</span>
+        </Link>
+      </div>
+
       {/* Referral Link & Attribution Box */}
       <div className="rounded-2xl border border-electric/30 bg-gradient-to-r from-canvas via-white to-canvas p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -330,15 +366,20 @@ export function ReferralDashboardView({
 
       {/* Active Bounty Opportunities Catalog */}
       {activeBounties.length > 0 && (
-        <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 sm:p-6 shadow-xs">
+        <div id="bounties" className="rounded-2xl border border-[#bcd6fa] bg-white p-5 sm:p-6 shadow-xs scroll-mt-20">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-display text-base font-bold text-ink">Active Bounty Opportunities</h2>
               <p className="text-xs text-ink-soft">Direct bounties available for high-demand engineering and clinical profiles</p>
             </div>
-            <span className="text-xs font-mono font-semibold text-ink-soft">
-              {activeBounties.length} Tiers Open
-            </span>
+            <div className="flex items-center gap-3">
+              <Link href="/referrals/bounties" className="text-xs font-bold text-electric hover:underline hidden sm:inline">
+                View All Bounties →
+              </Link>
+              <span className="text-xs font-mono font-semibold text-ink-soft">
+                {activeBounties.length} Tiers Open
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -386,15 +427,20 @@ export function ReferralDashboardView({
       )}
 
       {/* Referrals Pipeline Table */}
-      <div className="rounded-2xl border border-[#bcd6fa] bg-white p-5 sm:p-6 shadow-xs">
+      <div id="network" className="rounded-2xl border border-[#bcd6fa] bg-white p-5 sm:p-6 shadow-xs scroll-mt-20">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-display text-base font-bold text-ink">Referred Talent Pipeline</h2>
             <p className="text-xs text-ink-soft">Live tracking of your candidates through the 5-stage recruitment process</p>
           </div>
-          <span className="text-xs font-mono font-semibold text-ink-soft">
-            {referrals.length} Candidates Tracked
-          </span>
+          <div className="flex items-center gap-3">
+            <Link href="/referrals/network" className="text-xs font-bold text-electric hover:underline hidden sm:inline">
+              View Candidate Network →
+            </Link>
+            <span className="text-xs font-mono font-semibold text-ink-soft">
+              {referrals.length} Candidates Tracked
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

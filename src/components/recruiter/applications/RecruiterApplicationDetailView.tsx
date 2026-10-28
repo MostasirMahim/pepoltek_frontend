@@ -365,6 +365,7 @@ export function RecruiterApplicationDetailView({
           ],
         };
       });
+      router.refresh();
     } else {
       showToast(res.error || "Failed to advance stage.", "error");
     }
@@ -435,6 +436,7 @@ export function RecruiterApplicationDetailView({
         ],
       }));
       setDirectNote("");
+      router.refresh();
     } else {
       showToast(res.error || "Failed to update stage.", "error");
     }

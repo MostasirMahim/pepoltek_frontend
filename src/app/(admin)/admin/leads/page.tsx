@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Manage inbound employer hiring requests, consultation schedules, client conversion, and general inquiries.",
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminLeadsPage() {
   const [leadsRes, contactsRes] = await Promise.all([
     getAdminLeadsAction(),

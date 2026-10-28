@@ -527,3 +527,103 @@ export async function getCandidateInterviewsAction(): Promise<CandidateActionRes
   }
 }
 
+export interface CandidateVettingItem {
+  id: string;
+  application_id: string;
+  candidate_name: string;
+  job_title: string;
+  template_id: string;
+  template_title: string;
+  template_category: string;
+  template_sector?: string;
+  total_marks?: number;
+  marks_distribution?: Array<{ criterion: string; max_points: number; description?: string }>;
+  instructions?: string;
+  status: string;
+  final_score?: number | null;
+  pass_threshold?: number;
+  scheduled_start?: string | null;
+  deadline?: string | null;
+  target_due_date?: string | null;
+  primary_validator?: {
+    id: string;
+    full_name: string;
+    email: string;
+    sector?: string;
+  } | null;
+  is_overdue?: boolean;
+  created_at?: string;
+}
+
+export interface CandidateTemplateItem {
+  id: string;
+  title: string;
+  category: string;
+  sector: string;
+  description: string;
+  instructions: string;
+  total_marks: number;
+  marks_distribution: Array<{ criterion: string; max_points: number; description?: string }>;
+  prerequisites: string[];
+}
+
+/**
+ * Fetch candidate assigned technical and clinical vettings (SRS VET-01, CAN-07).
+ */
+export async function getCandidateVettingsAction(): Promise<CandidateActionResult<CandidateVettingItem[]>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<any>("vetting/vettings/", { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    const rawData = response.data;
+    const items: CandidateVettingItem[] = Array.isArray(rawData)
+      ? rawData
+      : Array.isArray(rawData?.results)
+      ? rawData.results
+      : [];
+    return { success: true, data: items };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to load assigned vettings.",
+      },
+    };
+  }
+}
+
+/**
+ * Fetch available assessment templates for candidate sector benchmark catalog.
+ */
+export async function getCandidateAssessmentTemplatesAction(): Promise<CandidateActionResult<CandidateTemplateItem[]>> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+
+    const response = await apiGet<any>("vetting/templates/", { cookieHeader });
+    if (response.error) {
+      return { success: false, error: response.error };
+    }
+    const rawData = response.data;
+    const items: CandidateTemplateItem[] = Array.isArray(rawData)
+      ? rawData
+      : Array.isArray(rawData?.results)
+      ? rawData.results
+      : [];
+    return { success: true, data: items };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: {
+        code: "SERVER_EXCEPTION",
+        message: err.message || "Failed to load assessment templates.",
+      },
+    };
+  }
+}
+

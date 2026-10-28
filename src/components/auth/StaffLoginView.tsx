@@ -41,14 +41,20 @@ export function StaffLoginView({ initialWorkspace = "recruiter" }: StaffLoginVie
   const getTargetDestination = (roles?: string[]): string => {
     const roleList = (roles || []).map((r) => r.toUpperCase());
     const isAdmin = roleList.includes("ADMIN") || roleList.includes("SUPER_ADMIN");
-    const isStaff = roleList.some((r) =>
-      ["RECRUITER", "TECH_VALIDATOR", "BUSINESS_ANALYST", "CREDENTIAL_OFFICER"].includes(r)
+    const isValidator = roleList.some((r) =>
+      ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"].includes(r)
+    );
+    const isRecruiter = roleList.some((r) =>
+      ["RECRUITER", "BUSINESS_ANALYST"].includes(r)
     );
 
     if (isAdmin) {
       return targetWorkspace === "recruiter" ? "/recruiter/dashboard" : "/admin/dashboard";
     }
-    if (isStaff) {
+    if (isValidator) {
+      return "/validator/dashboard";
+    }
+    if (isRecruiter) {
       return "/recruiter/dashboard";
     }
     return targetWorkspace === "admin" ? "/admin/dashboard" : "/recruiter/dashboard";
@@ -79,9 +85,12 @@ export function StaffLoginView({ initialWorkspace = "recruiter" }: StaffLoginVie
 
       // MFA is not enabled (standard for invited staff): launch workspace immediately
       const dest = getTargetDestination(res.user?.roles);
+      const isValidatorDest = dest.includes("validator");
       const isRecruiterDest = dest.includes("recruiter");
       setSuccessMsg(
-        isRecruiterDest
+        isValidatorDest
+          ? "Validator credentials authorized. Initializing Evaluation Cockpit..."
+          : isRecruiterDest
           ? "Recruiter credentials authorized. Initializing ATS Requisition and Candidate Cockpit..."
           : "Executive credentials authorized. Initializing Administrative Command Console..."
       );

@@ -24,13 +24,27 @@ export interface AuthActionResult {
   };
 }
 
+function resolvePrimaryRole(u: any): string {
+  const roles: string[] = (u?.roles || (u?.role ? [u.role] : [])).map((r: any) => String(r).toUpperCase());
+  if (roles.includes("SUPER_ADMIN")) return "SUPER_ADMIN";
+  if (roles.includes("ADMIN")) return "ADMIN";
+  if (roles.includes("TECH_VALIDATOR")) return "TECH_VALIDATOR";
+  if (roles.includes("CREDENTIAL_OFFICER")) return "CREDENTIAL_OFFICER";
+  if (roles.includes("RECRUITER")) return "RECRUITER";
+  if (roles.includes("BUSINESS_ANALYST")) return "BUSINESS_ANALYST";
+  if (roles.includes("CANDIDATE")) return "CANDIDATE";
+  if (roles.includes("REFERRER")) return "REFERRER";
+  if (roles.includes("LEARNER")) return "LEARNER";
+  return (u?.role || roles[0] || "CANDIDATE").toUpperCase();
+}
+
 function formatAuthUser(u: any): AuthUser {
   const roles = Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : ["CANDIDATE"]);
   return {
     id: u?.id || "",
     email: u?.email || "",
     fullName: u?.full_name || u?.fullName || u?.email?.split("@")[0] || "Candidate",
-    role: roles[0] || "CANDIDATE",
+    role: resolvePrimaryRole(u),
     roles: roles,
     referralCode: u?.referral_code,
     mfaEnabled: u?.mfa_enabled,
@@ -85,11 +99,7 @@ export async function loginAction(formData: FormData | Record<string, any>): Pro
         });
       }
 
-      const roleStr = (
-        data.user?.roles?.[0] ||
-        data.user?.role ||
-        "CANDIDATE"
-      ).toUpperCase();
+      const roleStr = resolvePrimaryRole(data.user);
 
       cookieStore.set("user_role", roleStr, {
         httpOnly: true,
@@ -148,11 +158,7 @@ export async function registerAction(payload: Record<string, any>): Promise<Auth
         });
       }
 
-      const roleStr = (
-        data.user?.roles?.[0] ||
-        data.user?.role ||
-        "CANDIDATE"
-      ).toUpperCase();
+      const roleStr = resolvePrimaryRole(data.user);
 
       cookieStore.set("user_role", roleStr, {
         httpOnly: true,
@@ -278,7 +284,9 @@ export async function verifyOtpAction(payload: { email: string; otp: string }): 
         });
       }
 
-      cookieStore.set("user_role", "CANDIDATE", {
+      const roleStr = resolvePrimaryRole(data.user);
+
+      cookieStore.set("user_role", roleStr, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",

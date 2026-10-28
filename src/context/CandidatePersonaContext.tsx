@@ -105,6 +105,32 @@ export function CandidatePersonaProvider({ children }: { children: React.ReactNo
       ]);
 
       if (user) {
+        const roles = (user.roles || [user.role || ""]).map((r) => r.toUpperCase());
+        const role = (user.role || roles[0] || "").toUpperCase();
+
+        if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN") || role === "SUPER_ADMIN" || role === "ADMIN") {
+          window.location.href = "/admin/dashboard";
+          return;
+        }
+        if (
+          roles.some((r) => ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"].includes(r)) ||
+          ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"].includes(role)
+        ) {
+          window.location.href = "/validator/dashboard";
+          return;
+        }
+        if (
+          roles.some((r) => ["RECRUITER", "BUSINESS_ANALYST"].includes(r)) ||
+          ["RECRUITER", "BUSINESS_ANALYST"].includes(role)
+        ) {
+          window.location.href = "/recruiter/dashboard";
+          return;
+        }
+        if (role === "REFERRER" && !roles.includes("CANDIDATE")) {
+          window.location.href = "/referrals/dashboard";
+          return;
+        }
+
         setCurrentProfile((prev) => ({
           ...prev,
           fullName: user.fullName || prev.fullName,

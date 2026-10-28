@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   createAssessmentTemplate,
   updateAssessmentTemplate,
@@ -515,16 +515,34 @@ export default function AssessmentsView({
   basePath = "/recruiter/assessments",
 }: AssessmentsViewProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const trackParam = searchParams?.get("track");
+
+  const initialSector =
+    trackParam === "healthcare"
+      ? "healthcare"
+      : trackParam === "technology" || trackParam === "tech"
+      ? "technology"
+      : "all";
+
   const effectiveCategories =
     categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<AssessmentTemplate | null>(null);
   const [search, setSearch] = useState("");
-  const [sectorFilter, setSectorFilter] = useState("all");
+  const [sectorFilter, setSectorFilter] = useState(initialSector);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [archiving, setArchiving] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (trackParam === "healthcare") {
+      setSectorFilter("healthcare");
+    } else if (trackParam === "technology" || trackParam === "tech") {
+      setSectorFilter("technology");
+    }
+  }, [trackParam]);
 
   const handleArchive = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -616,6 +634,133 @@ export default function AssessmentsView({
           </button>
         </div>
       </div>
+
+      {/* Sector Track Selector & Validator Desk Quick Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#bcd6fa]/50 pb-4">
+        {/* Track Pills */}
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-canvas border border-[#bcd6fa]/60">
+          <button
+            type="button"
+            onClick={() => setSectorFilter("all")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              sectorFilter === "all"
+                ? "bg-white text-ink shadow-2xs font-bold"
+                : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            All Tracks ({totalTemplates})
+          </button>
+          <button
+            type="button"
+            onClick={() => setSectorFilter("technology")}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              sectorFilter === "technology"
+                ? "bg-electric text-white shadow-2xs font-bold"
+                : "text-ink-soft hover:text-electric"
+            }`}
+          >
+            <ShieldCheck size={13} />
+            <span>Technical Vetting Desk</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSectorFilter("healthcare")}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              sectorFilter === "healthcare"
+                ? "bg-emerald-600 text-white shadow-2xs font-bold"
+                : "text-ink-soft hover:text-emerald-700"
+            }`}
+          >
+            <Award size={13} />
+            <span>Healthcare Licensure &amp; Validators</span>
+          </button>
+        </div>
+
+        {/* Validator Cockpit Quick Jump */}
+        <div className="flex items-center gap-2">
+          <Link
+            href={
+              sectorFilter === "healthcare"
+                ? "/validator/dashboard?tab=credentials"
+                : "/validator/dashboard?tab=technical"
+            }
+            className="inline-flex items-center gap-1.5 rounded-xl border border-electric/30 bg-electric/10 px-3 py-1.5 text-xs font-bold text-electric hover:bg-electric hover:text-white transition-colors"
+          >
+            <Zap size={13} />
+            <span>
+              {sectorFilter === "healthcare"
+                ? "Open Licensure Auditor Desk"
+                : "Open Technical Assessor Desk"}
+            </span>
+            <ChevronRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      {/* Sector Specialized Callout Banner */}
+      {sectorFilter === "healthcare" && (
+        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/50 p-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-emerald-100 p-2 text-emerald-700 shrink-0 mt-0.5">
+                <Award size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-sm font-bold text-emerald-950">
+                    Clinical Credential &amp; Licensure Validators
+                  </span>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[9.5px] font-bold text-emerald-800">
+                    NURSYS &amp; Primary Source Live
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-emerald-800 leading-relaxed">
+                  Healthcare track validates clinical licenses (Compact Multi-State RN, NP, PA), state board certifications, and mandatory compliance credentials before candidate deployment.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/validator/dashboard?tab=credentials"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-emerald-800 transition-colors shrink-0"
+            >
+              <span>Healthcare Validator Queue</span>
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {sectorFilter === "technology" && (
+        <div className="rounded-2xl border border-electric/25 bg-gradient-to-r from-electric/5 via-white to-electric/5 p-4 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-electric/15 p-2 text-electric shrink-0 mt-0.5">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-sm font-bold text-ink">
+                    Technical Assessment &amp; Take-Home Grading Desk
+                  </span>
+                  <span className="rounded-full bg-electric/15 px-2 py-0.5 font-mono text-[9.5px] font-bold text-electric">
+                    Double-Blind Peer Review
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-ink-soft leading-relaxed">
+                  Technology track grades take-home repositories, algorithmic problem-solving, and architecture scorecards with automated due dates and level-calibrated rubrics.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/validator/dashboard?tab=technical"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-ink px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-electric transition-colors shrink-0"
+            >
+              <span>Technical Assessor Queue</span>
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Metric KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">

@@ -158,12 +158,25 @@ export async function getAdminLeadsAction(params?: {
     const response = await apiGet<any>("leads/", {
       cookieHeader,
       params,
+      cache: "no-store",
     });
 
-    if (response.data) {
+    if (response && !response.error) {
+      const rawData = response.data;
+      const leadsList = Array.isArray(rawData)
+        ? rawData
+        : Array.isArray((rawData as any)?.data)
+        ? (rawData as any).data
+        : [];
+
+      const metrics =
+        (response as any).metrics ||
+        (rawData as any)?.metrics ||
+        {};
+
       return {
-        data: Array.isArray(response.data.data) ? response.data.data : [],
-        metrics: response.data.metrics || {},
+        data: leadsList,
+        metrics,
       };
     }
     return { data: [], metrics: {} };
@@ -180,8 +193,13 @@ export async function getAdminLeadDetailAction(id: string): Promise<any | null> 
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
 
-    const response = await apiGet<any>(`leads/${id}/`, { cookieHeader });
-    return response.data?.data || null;
+    const response = await apiGet<any>(`leads/${id}/`, {
+      cookieHeader,
+      cache: "no-store",
+    });
+    if (!response || response.error) return null;
+    const raw = response.data;
+    return (raw as any)?.data || raw || null;
   } catch {
     return null;
   }
@@ -206,7 +224,8 @@ export async function updateAdminLeadAction(
 
     revalidatePath("/admin/leads");
     revalidatePath(`/admin/leads/${id}`);
-    return { success: true, data: response.data?.data };
+    const raw = response.data;
+    return { success: true, data: (raw as any)?.data || raw };
   } catch (err: any) {
     return {
       success: false,
@@ -233,7 +252,8 @@ export async function addAdminLeadNoteAction(id: string, note: string): Promise<
     }
 
     revalidatePath(`/admin/leads/${id}`);
-    return { success: true, data: response.data?.data };
+    const raw = response.data;
+    return { success: true, data: (raw as any)?.data || raw };
   } catch (err: any) {
     return {
       success: false,
@@ -272,7 +292,8 @@ export async function convertAdminLeadAction(
     revalidatePath("/admin/leads");
     revalidatePath(`/admin/leads/${id}`);
     revalidatePath("/recruiter/jobs");
-    return { success: true, data: response.data?.data };
+    const raw = response.data;
+    return { success: true, data: (raw as any)?.data || raw };
   } catch (err: any) {
     return {
       success: false,
@@ -299,12 +320,25 @@ export async function getAdminContactInquiriesAction(params?: {
     const response = await apiGet<any>("leads/contacts/admin/", {
       cookieHeader,
       params,
+      cache: "no-store",
     });
 
-    if (response.data) {
+    if (response && !response.error) {
+      const rawData = response.data;
+      const contactsList = Array.isArray(rawData)
+        ? rawData
+        : Array.isArray((rawData as any)?.data)
+        ? (rawData as any).data
+        : [];
+
+      const metrics =
+        (response as any).metrics ||
+        (rawData as any)?.metrics ||
+        {};
+
       return {
-        data: Array.isArray(response.data.data) ? response.data.data : [],
-        metrics: response.data.metrics || {},
+        data: contactsList,
+        metrics,
       };
     }
     return { data: [], metrics: {} };
@@ -321,8 +355,13 @@ export async function getAdminContactInquiryDetailAction(id: string): Promise<an
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
 
-    const response = await apiGet<any>(`leads/contacts/admin/${id}/`, { cookieHeader });
-    return response.data?.data || null;
+    const response = await apiGet<any>(`leads/contacts/admin/${id}/`, {
+      cookieHeader,
+      cache: "no-store",
+    });
+    if (!response || response.error) return null;
+    const raw = response.data;
+    return (raw as any)?.data || raw || null;
   } catch {
     return null;
   }
@@ -347,7 +386,8 @@ export async function updateAdminContactInquiryAction(
 
     revalidatePath("/admin/leads");
     revalidatePath(`/admin/contacts/${id}`);
-    return { success: true, data: response.data?.data };
+    const raw = response.data;
+    return { success: true, data: (raw as any)?.data || raw };
   } catch (err: any) {
     return {
       success: false,

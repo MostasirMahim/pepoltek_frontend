@@ -33,11 +33,23 @@ export function LoginView() {
     setLoading(false);
 
     if (res.success) {
-      const role = (res.user?.role || "").toUpperCase();
-      if (role === "SUPER_ADMIN" || role === "ADMIN") {
+      const roleList = (res.user?.roles || (res.user?.role ? [res.user.role] : [])).map((r) => r.toUpperCase());
+      const role = (res.user?.role || roleList[0] || "").toUpperCase();
+
+      if (roleList.includes("SUPER_ADMIN") || roleList.includes("ADMIN") || role === "SUPER_ADMIN" || role === "ADMIN") {
         router.push("/admin/dashboard");
-      } else if (role === "RECRUITER") {
+      } else if (
+        roleList.some((r) => ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"].includes(r)) ||
+        ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"].includes(role)
+      ) {
+        router.push("/validator/dashboard");
+      } else if (
+        roleList.some((r) => ["RECRUITER", "BUSINESS_ANALYST"].includes(r)) ||
+        ["RECRUITER", "BUSINESS_ANALYST"].includes(role)
+      ) {
         router.push("/recruiter/dashboard");
+      } else if (role === "REFERRER" && !roleList.includes("CANDIDATE")) {
+        router.push("/referrals/dashboard");
       } else {
         router.push("/candidate/dashboard");
       }

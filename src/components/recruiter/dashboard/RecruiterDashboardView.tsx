@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { RecruiterPod, RecruiterShortlist } from "@/types/recruiter.types";
 import { RecruiterAnalyticsData, RecruiterReferralsData } from "@/actions/recruiter.actions";
+import {
+  ShieldCheck,
+  Award,
+  Zap,
+  ChevronRight,
+} from "@/components/ui/Icons";
 
 interface RecruiterDashboardViewProps {
   pods: RecruiterPod[];
@@ -222,6 +228,148 @@ export function RecruiterDashboardView({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Assessment Validation & Credential Auditing Hub Section */}
+      <div className="rounded-3xl border border-[#bcd6fa] bg-gradient-to-r from-white via-canvas/40 to-white p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#bcd6fa]/40 pb-5">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-electric/30 bg-electric/10 px-3 py-0.5 text-[10px] font-mono font-bold text-electric uppercase tracking-widest">
+              <ShieldCheck size={12} />
+              <span>ASSESSMENT &amp; CREDENTIAL AUDITING DESK</span>
+            </div>
+            <h2 className="mt-1 font-display text-xl font-bold text-ink">
+              Validation &amp; Verification Operations
+            </h2>
+            <p className="text-xs text-ink-soft mt-0.5">
+              Track candidate technical take-home grading, code architecture scorecards, and healthcare primary-source licensure audits.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
+            <Link
+              href="/recruiter/assessments"
+              className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 font-display text-xs font-bold text-white shadow-xs hover:bg-electric transition-colors"
+            >
+              <span>Vetting Templates Hub</span>
+              <span className="text-electric-bright">→</span>
+            </Link>
+            <Link
+              href="/validator/dashboard"
+              className="inline-flex items-center gap-2 rounded-xl border border-electric/30 bg-electric/5 px-4 py-2 font-display text-xs font-bold text-electric shadow-xs hover:bg-electric hover:text-white transition-colors"
+            >
+              <Zap size={13} />
+              <span>Assessor Cockpit</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Two Domain Cards: Technical Assessment & Healthcare Credential Desk */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Track 1: Technical Assessment Validation */}
+          <div className="rounded-2xl border border-electric/25 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-electric transition-colors">
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-xl bg-electric/10 p-2 text-electric">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-ink">
+                      Technical Assessment Validation
+                    </h3>
+                    <span className="font-mono text-[10px] text-electric font-semibold uppercase tracking-wider">
+                      Technology Sector Track
+                    </span>
+                  </div>
+                </div>
+                <span className="rounded-full bg-electric/10 px-2 py-0.5 font-mono text-[10px] font-bold text-electric">
+                  Code &amp; Architecture
+                </span>
+              </div>
+
+              <p className="mt-3 text-xs text-ink-soft leading-relaxed">
+                Manages algorithmic take-homes, distributed system architecture scorecards, and candidate GitHub repository reviews graded by verified staff validators.
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl bg-canvas p-2.5 border border-[#bcd6fa]/40">
+                  <div className="font-mono text-[10px] text-mist uppercase">Grading SLA</div>
+                  <div className="mt-0.5 font-display text-sm font-bold text-ink">12 Hours</div>
+                  <div className="text-[10px] text-signal font-semibold">Fast-turnaround benchmark</div>
+                </div>
+                <div className="rounded-xl bg-canvas p-2.5 border border-[#bcd6fa]/40">
+                  <div className="font-mono text-[10px] text-mist uppercase">Grading Protocol</div>
+                  <div className="mt-0.5 font-display text-sm font-bold text-ink">Double-Blind</div>
+                  <div className="text-[10px] text-ink-soft">Criterion-calibrated marks</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-[#bcd6fa]/40 flex items-center justify-between">
+              <span className="text-[11px] text-mist font-mono">Assigned to Technical Validators</span>
+              <Link
+                href="/recruiter/assessments?track=technology"
+                className="inline-flex items-center gap-1 font-mono text-xs font-bold text-electric hover:underline"
+              >
+                <span>Open Tech Queue</span>
+                <ChevronRight size={13} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Track 2: Healthcare Credential Validators */}
+          <div className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-emerald-500 transition-colors">
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-xl bg-emerald-50 p-2 text-emerald-700">
+                    <Award size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-sm font-bold text-ink">
+                      Healthcare Credential Validators
+                    </h3>
+                    <span className="font-mono text-[10px] text-emerald-700 font-semibold uppercase tracking-wider">
+                      Healthcare &amp; Clinical Track
+                    </span>
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                  Primary Source Audit
+                </span>
+              </div>
+
+              <p className="mt-3 text-xs text-ink-soft leading-relaxed">
+                Authenticates state nursing licenses (Compact State RN, NP, PA), DEA registrations, BLS/ACLS/PALS certifications, and clinical compliance records via primary source lookup.
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl bg-canvas p-2.5 border border-[#bcd6fa]/40">
+                  <div className="font-mono text-[10px] text-mist uppercase">Verification DB</div>
+                  <div className="mt-0.5 font-display text-sm font-bold text-ink">NURSYS Live</div>
+                  <div className="text-[10px] text-signal font-semibold">Primary source verification</div>
+                </div>
+                <div className="rounded-xl bg-canvas p-2.5 border border-[#bcd6fa]/40">
+                  <div className="font-mono text-[10px] text-mist uppercase">Compliance Gate</div>
+                  <div className="mt-0.5 font-display text-sm font-bold text-ink">100% Verified</div>
+                  <div className="text-[10px] text-ink-soft">Before sprint deployment</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-3 border-t border-[#bcd6fa]/40 flex items-center justify-between">
+              <span className="text-[11px] text-mist font-mono">Assigned to Credential Officers</span>
+              <Link
+                href="/recruiter/assessments?track=healthcare"
+                className="inline-flex items-center gap-1 font-mono text-xs font-bold text-emerald-700 hover:underline"
+              >
+                <span>Open Clinical Queue</span>
+                <ChevronRight size={13} />
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Community Referral & Bounty Pipeline Section */}

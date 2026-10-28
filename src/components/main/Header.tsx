@@ -536,20 +536,29 @@ export default function Header() {
   };
 
   const getDashboardHref = (role?: string) => {
-    if (role === "SUPER_ADMIN" || role === "ADMIN") return "/admin/dashboard";
-    if (role === "RECRUITER") return "/recruiter/dashboard";
+    const r = (role || "").toUpperCase();
+    if (r === "SUPER_ADMIN" || r === "ADMIN") return "/admin/dashboard";
+    if (r === "TECH_VALIDATOR" || r === "CREDENTIAL_OFFICER") return "/validator/dashboard";
+    if (r === "RECRUITER" || r === "BUSINESS_ANALYST") return "/recruiter/dashboard";
+    if (r === "REFERRER") return "/referrals/dashboard";
     return "/candidate/dashboard";
   };
 
   const getRoleLabel = (role?: string) => {
-    if (role === "SUPER_ADMIN") return "Super Admin";
-    if (role === "ADMIN") return "Administrator";
-    if (role === "RECRUITER") return "Senior Recruiter";
+    const r = (role || "").toUpperCase();
+    if (r === "SUPER_ADMIN") return "Super Admin";
+    if (r === "ADMIN") return "Administrator";
+    if (r === "TECH_VALIDATOR") return "Technical Validator";
+    if (r === "CREDENTIAL_OFFICER") return "Credential Officer";
+    if (r === "RECRUITER") return "Senior Recruiter";
+    if (r === "BUSINESS_ANALYST") return "Business Analyst";
+    if (r === "REFERRER") return "Referral Partner";
     return "Verified Candidate";
   };
 
   const getNavOptions = (role?: string) => {
-    if (role === "SUPER_ADMIN" || role === "ADMIN") {
+    const r = (role || "").toUpperCase();
+    if (r === "SUPER_ADMIN" || r === "ADMIN") {
       return [
         {
           label: "Admin Workspace",
@@ -571,7 +580,29 @@ export default function Header() {
         },
       ];
     }
-    if (role === "RECRUITER") {
+    if (r === "TECH_VALIDATOR" || r === "CREDENTIAL_OFFICER") {
+      return [
+        {
+          label: "Evaluation Cockpit",
+          href: "/validator/dashboard",
+          desc: "Grading rubrics & verification queue",
+          icon: LayoutDashboard,
+        },
+        {
+          label: "Recruiter Pipeline",
+          href: "/recruiter/dashboard",
+          desc: "Review open mandates & submissions",
+          icon: Briefcase,
+        },
+        {
+          label: "Assessments Library",
+          href: "/recruiter/assessments",
+          desc: "Standardized evaluation rubrics",
+          icon: Zap,
+        },
+      ];
+    }
+    if (r === "RECRUITER" || r === "BUSINESS_ANALYST") {
       return [
         {
           label: "Recruiter Workspace",
@@ -590,6 +621,22 @@ export default function Header() {
           href: "/recruiter/requisitions",
           desc: "Open positions",
           icon: Briefcase,
+        },
+      ];
+    }
+    if (r === "REFERRER") {
+      return [
+        {
+          label: "Referral Partner Portal",
+          href: "/referrals/dashboard",
+          desc: "Track links, candidates & escrow bounties",
+          icon: LayoutDashboard,
+        },
+        {
+          label: "Bounty Payout Ledger",
+          href: "/referrals/payouts",
+          desc: "Reconcile escrowed earnings",
+          icon: DollarSign,
         },
       ];
     }

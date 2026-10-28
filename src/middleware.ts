@@ -43,14 +43,27 @@ export function middleware(request: NextRequest) {
       isAuthenticated = false;
     } else {
       isAuthenticated = true;
-      if (!userRole && payload) {
-        userRole = (payload.role || payload.roles?.[0] || "CANDIDATE").toUpperCase();
+      const payloadRoles = Array.isArray(payload?.roles)
+        ? payload.roles
+        : payload?.role
+        ? [payload.role]
+        : [];
+      const primaryPayloadRole = (payload?.role || payloadRoles[0] || "").toUpperCase();
+
+      if (!userRole || userRole === "CANDIDATE") {
+        if (primaryPayloadRole && primaryPayloadRole !== "CANDIDATE") {
+          userRole = primaryPayloadRole;
+        }
+      } else if (primaryPayloadRole && primaryPayloadRole !== userRole) {
+        userRole = primaryPayloadRole;
       }
     }
   }
 
   const ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN"];
   const VALIDATOR_ROLES = ["TECH_VALIDATOR", "CREDENTIAL_OFFICER"];
+  const RECRUITER_ROLES = ["RECRUITER", "BUSINESS_ANALYST"];
+  const REFERRER_ROLES = ["REFERRER"];
   const STAFF_ROLES = [
     "SUPER_ADMIN",
     "ADMIN",
@@ -60,19 +73,28 @@ export function middleware(request: NextRequest) {
     "CREDENTIAL_OFFICER",
   ];
 
+  const getDashboardForRole = (role?: string) => {
+    const r = (role || "").toUpperCase();
+    if (ADMIN_ROLES.includes(r)) return "/admin/dashboard";
+    if (VALIDATOR_ROLES.includes(r)) return "/validator/dashboard";
+    if (RECRUITER_ROLES.includes(r)) return "/recruiter/dashboard";
+    if (REFERRER_ROLES.includes(r)) return "/referrals/dashboard";
+    return "/candidate/dashboard";
+  };
+
   // 1. Root Homepage Rule
   if (pathname === "/") {
     if (isAuthenticated) {
       if (VALIDATOR_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/validator/dashboard", request.url));
       }
-      if (userRole === "REFERRER") {
+      if (REFERRER_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/referrals/dashboard", request.url));
       }
       if (ADMIN_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       }
-      if (STAFF_ROLES.includes(userRole || "")) {
+      if (RECRUITER_ROLES.includes(userRole || "")) {
         return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
       }
       // Candidate remains on /
@@ -81,21 +103,14 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Auth Pages (/login, /register, /recruiter/login, /staff/login)
-  if (pathname === "/login" || pathname === "/register" || pathname === "/recruiter/login" || pathname === "/staff/login") {
+  if (
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/recruiter/login" ||
+    pathname === "/staff/login"
+  ) {
     if (isAuthenticated) {
-      if (VALIDATOR_ROLES.includes(userRole || "")) {
-        return NextResponse.redirect(new URL("/validator/dashboard", request.url));
-      }
-      if (userRole === "REFERRER") {
-        return NextResponse.redirect(new URL("/referrals/dashboard", request.url));
-      }
-      if (ADMIN_ROLES.includes(userRole || "")) {
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-      }
-      if (STAFF_ROLES.includes(userRole || "")) {
-        return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
-      }
-      return NextResponse.redirect(new URL("/candidate/dashboard", request.url));
+      return NextResponse.redirect(new URL(getDashboardForRole(userRole), request.url));
     }
     return NextResponse.next();
   }
@@ -108,13 +123,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (!ADMIN_ROLES.includes(userRole || "")) {
-      if (VALIDATOR_ROLES.includes(userRole || "")) {
-        return NextResponse.redirect(new URL("/validator/dashboard", request.url));
-      }
-      if (STAFF_ROLES.includes(userRole || "")) {
-        return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
-      }
-      return NextResponse.redirect(new URL("/candidate/dashboard", request.url));
+      return NextResponse.redirect(new URL(getDashboardForRole(userRole), request.url));
     }
     return NextResponse.next();
   }
@@ -127,7 +136,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (!VALIDATOR_ROLES.includes(userRole || "") && !ADMIN_ROLES.includes(userRole || "")) {
-      return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
+      return NextResponse.redirect(new URL(getDashboardForRole(userRole), request.url));
     }
     return NextResponse.next();
   }
@@ -151,6 +160,19 @@ export function middleware(request: NextRequest) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+    // Strict Role Guard: Staff, Validators, Admins, and Referrers MUST NOT land on candidate workspace
+    if (VALIDATOR_ROLES.includes(userRole || "")) {
+      return NextResponse.redirect(new URL("/validator/dashboard", request.url));
+    }
+    if (ADMIN_ROLES.includes(userRole || "")) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+    if (RECRUITER_ROLES.includes(userRole || "")) {
+      return NextResponse.redirect(new URL("/recruiter/dashboard", request.url));
+    }
+    if (REFERRER_ROLES.includes(userRole || "")) {
+      return NextResponse.redirect(new URL("/referrals/dashboard", request.url));
     }
     return NextResponse.next();
   }
@@ -183,6 +205,7 @@ export const config = {
     "/",
     "/login",
     "/register",
+    "/staff/:path*",
     "/admin/:path*",
     "/validator/:path*",
     "/recruiter/:path*",

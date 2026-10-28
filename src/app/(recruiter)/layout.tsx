@@ -19,67 +19,105 @@ import {
   Building2,
   Kanban,
   ShieldCheck,
+  Award,
 } from "@/components/ui/Icons";
 
 interface NavItem {
   label: string;
   href: string;
   badge?: string;
+  badgeColor?: string;
   icon: React.ReactNode;
 }
 
-const RECRUITER_NAV: NavItem[] = [
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const RECRUITER_NAV_SECTIONS: NavSection[] = [
   {
-    label: "Hiring Cockpit",
-    href: "/recruiter/dashboard",
-    icon: <Layout size={18} />,
+    title: "ATS Pipeline",
+    items: [
+      {
+        label: "Hiring Cockpit",
+        href: "/recruiter/dashboard",
+        icon: <Layout size={17} />,
+      },
+      {
+        label: "Requisitions & Jobs",
+        href: "/recruiter/requisitions",
+        icon: <Briefcase size={17} />,
+      },
+      {
+        label: "Candidate Applications & Kanban",
+        href: "/recruiter/applications",
+        badge: "KANBAN",
+        badgeColor: "bg-electric text-white",
+        icon: <Kanban size={17} />,
+      },
+      {
+        label: "Client Organizations",
+        href: "/recruiter/clients",
+        icon: <Building2 size={17} />,
+      },
+      {
+        label: "Talent Pool (Candidates)",
+        href: "/recruiter/candidates",
+        icon: <Users size={17} />,
+      },
+      {
+        label: "Sprint Interviews",
+        href: "/recruiter/interviews",
+        icon: <Clock size={17} />,
+      },
+    ],
   },
   {
-    label: "AI-HRMS Search & Audits",
-    href: "/recruiter/ai-search",
-    icon: <Zap size={18} />,
+    title: "Validation & Auditing Desk",
+    items: [
+      {
+        label: "Technical Vetting Desk",
+        href: "/recruiter/assessments",
+        badge: "Tech Vetting",
+        badgeColor: "bg-electric/15 text-electric border-electric/30",
+        icon: <ShieldCheck size={17} />,
+      },
+      {
+        label: "Clinical & Credential Audits",
+        href: "/recruiter/assessments?track=healthcare",
+        badge: "Healthcare",
+        badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        icon: <Award size={17} />,
+      },
+      {
+        label: "Validator Auditing Cockpit",
+        href: "/validator/dashboard",
+        badge: "Assessor Desk",
+        badgeColor: "bg-ink/5 text-ink border-ink/20",
+        icon: <Zap size={17} />,
+      },
+    ],
   },
   {
-    label: "Requisitions & Jobs",
-    href: "/recruiter/requisitions",
-    icon: <Briefcase size={18} />,
-  },
-  {
-    label: "Candidate Applications & Kanban",
-    href: "/recruiter/applications",
-    badge: "KANBAN",
-    icon: <Kanban size={18} />,
-  },
-  {
-    label: "Client Organizations",
-    href: "/recruiter/clients",
-    icon: <Building2 size={18} />,
-  },
-  {
-    label: "Talent Pool (Candidates)",
-    href: "/recruiter/candidates",
-    icon: <Users size={18} />,
-  },
-  {
-    label: "Sprint Interviews",
-    href: "/recruiter/interviews",
-    icon: <Clock size={18} />,
-  },
-  {
-    label: "Assessments & Vetting",
-    href: "/recruiter/assessments",
-    badge: "NEW",
-    icon: <ShieldCheck size={18} />,
-  },
-  {
-    label: "Referral Network",
-    href: "/recruiter/referrals",
-    icon: <DollarSign size={18} />,
-  },
-  {
-    label: "Hiring Analytics",
-    href: "/recruiter/analytics",
-    icon: <BarChart2 size={18} />,
+    title: "Intelligence & Network",
+    items: [
+      {
+        label: "AI-HRMS Search & Audits",
+        href: "/recruiter/ai-search",
+        icon: <Search size={17} />,
+      },
+      {
+        label: "Referral Network & Escrow",
+        href: "/recruiter/referrals",
+        icon: <DollarSign size={17} />,
+      },
+      {
+        label: "Hiring Analytics",
+        href: "/recruiter/analytics",
+        icon: <BarChart2 size={17} />,
+      },
+    ],
   },
 ];
 
@@ -307,44 +345,58 @@ export default function RecruiterDashboardLayout({
             </div>
           </div>
 
-          {/* Middle Nav Items: Only this container scrolls if menu is long */}
-          <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1 thin-scrollbar">
-            {RECRUITER_NAV.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all select-none cursor-pointer ${
-                    active
-                      ? "bg-ink text-white shadow-xs"
-                      : "text-ink-soft hover:bg-canvas hover:text-ink"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={`shrink-0 transition-colors ${
-                        active ? "text-electric-bright" : "text-mist group-hover:text-electric"
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
-                    <span className="whitespace-nowrap truncate">{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-enterprise font-bold ${
+          {/* Middle Nav Items: Structured by Sections */}
+          <nav className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 thin-scrollbar">
+            {RECRUITER_NAV_SECTIONS.map((section, sIdx) => (
+              <div key={section.title || sIdx} className="space-y-1">
+                <div className="px-3 pt-1 pb-1 text-[9.5px] font-mono font-bold tracking-wider text-mist uppercase">
+                  {section.title}
+                </div>
+                {section.items.map((item) => {
+                  const itemPath = item.href.split("?")[0];
+                  const active =
+                    pathname === item.href ||
+                    (itemPath !== "/recruiter/dashboard" && pathname === itemPath);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all select-none cursor-pointer ${
                         active
-                          ? "bg-electric text-white"
-                          : "bg-canvas text-ink-soft border border-[#bcd6fa]/50"
+                          ? "bg-ink text-white shadow-xs font-bold"
+                          : "text-ink-soft hover:bg-canvas hover:text-ink"
                       }`}
                     >
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className={`shrink-0 transition-colors ${
+                            active
+                              ? "text-electric-bright"
+                              : "text-mist group-hover:text-electric"
+                          }`}
+                        >
+                          {item.icon}
+                        </span>
+                        <span className="whitespace-nowrap truncate">{item.label}</span>
+                      </div>
+                      {item.badge && (
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-mono font-bold ${
+                            active
+                              ? "bg-white/20 text-white"
+                              : item.badgeColor ||
+                                "bg-canvas text-ink-soft border border-[#bcd6fa]/50"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
           {/* Bottom Enterprise Talent Engine Card (Small Height, Sleek & Relatable) */}
@@ -405,29 +457,52 @@ export default function RecruiterDashboardLayout({
               onClick={() => setMobileMenuOpen(false)}
             />
             <aside className="fixed inset-y-0 left-0 top-16 z-50 w-72 border-r border-[#bcd6fa]/50 bg-white p-4 flex flex-col justify-between overflow-hidden lg:hidden shadow-xl animate-in slide-in-from-left duration-200">
-              <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 thin-scrollbar">
-                {RECRUITER_NAV.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
-                        active
-                          ? "bg-ink text-white shadow-xs"
-                          : "text-ink-soft hover:bg-canvas hover:text-ink"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className={active ? "text-electric-bright" : "text-mist"}>
-                          {item.icon}
-                        </span>
-                        <span>{item.label}</span>
-                      </div>
-                    </Link>
-                  );
-                })}
+              <nav className="flex-1 min-h-0 overflow-y-auto space-y-4 thin-scrollbar">
+                {RECRUITER_NAV_SECTIONS.map((section, sIdx) => (
+                  <div key={section.title || sIdx} className="space-y-1">
+                    <div className="px-3 pt-1 pb-1 text-[9.5px] font-mono font-bold tracking-wider text-mist uppercase">
+                      {section.title}
+                    </div>
+                    {section.items.map((item) => {
+                      const itemPath = item.href.split("?")[0];
+                      const active =
+                        pathname === item.href ||
+                        (itemPath !== "/recruiter/dashboard" && pathname === itemPath);
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                            active
+                              ? "bg-ink text-white shadow-xs font-bold"
+                              : "text-ink-soft hover:bg-canvas hover:text-ink"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className={active ? "text-electric-bright" : "text-mist"}>
+                              {item.icon}
+                            </span>
+                            <span>{item.label}</span>
+                          </div>
+                          {item.badge && (
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold ${
+                                active
+                                  ? "bg-white/20 text-white"
+                                  : item.badgeColor ||
+                                    "bg-canvas text-ink-soft border border-[#bcd6fa]/50"
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))}
               </nav>
 
               <div className="pt-3 border-t border-[#bcd6fa]/40">

@@ -48,19 +48,7 @@ export default async function ReferralsDashboardPage() {
     submittedDate: r.created_at,
   }));
 
-  // Fallback to ledger rows if referrals list empty
-  const records = candidateRecords.length > 0 ? candidateRecords : (summaryRes?.ledger || []).map((l: any) => ({
-    id: l.id,
-    candidateName: l.candidate,
-    role: l.track,
-    sector: "Technology" as const,
-    stage: (l.status === "Placed" ? "Placed & Deployed" : "Submitted") as ReferralRecord["stage"],
-    stageIndex: l.status === "Placed" ? 4 : 1,
-    bountyAmount: l.bountyEarned,
-    payoutStatus: (l.payoutStatus === "Paid" ? "Cleared for Payout" : "Pending Placement") as ReferralRecord["payoutStatus"],
-    submittedDate: l.date,
-    payoutDate: l.paidReference ? l.date : undefined,
-  }));
+  const records = candidateRecords;
 
   return (
     <ReferralDashboardView

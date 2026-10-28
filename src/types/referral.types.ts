@@ -7,14 +7,18 @@
 export interface ReferralRecord {
   id: string;
   candidateName: string;
+  candidateEmail?: string;
   role: string;
   sector: "Technology" | "Healthcare";
-  stage: "Submitted" | "Screened" | "Interviewed" | "Placed & Deployed";
+  stage: "Submitted" | "Screened" | "Interviewed" | "Placed & Deployed" | string;
   stageIndex: number; // 1 to 4
   bountyAmount: string;
-  payoutStatus: "Cleared for Payout" | "Escrow Locked" | "Pending Placement";
+  payoutStatus: "Cleared for Payout" | "Escrow Locked" | "Pending Placement" | "Paid" | string;
   submittedDate: string;
   payoutDate?: string;
+  referralType?: string;
+  paidReference?: string;
+  notes?: string;
 }
 
 export interface BountySummary {
