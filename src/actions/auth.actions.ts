@@ -4,6 +4,12 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { apiGet, apiPost } from "@/lib/api";
 
+const isSecureCookie =
+  process.env.COOKIE_SECURE === "true" ||
+  (process.env.NODE_ENV === "production" &&
+    process.env.COOKIE_SECURE !== "false" &&
+    Boolean(process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://")));
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -83,7 +89,7 @@ export async function loginAction(formData: FormData | Record<string, any>): Pro
       const cookieStore = await cookies();
       cookieStore.set("access_token", data.access_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -92,7 +98,7 @@ export async function loginAction(formData: FormData | Record<string, any>): Pro
       if (data.refresh_token) {
         cookieStore.set("refresh_token", data.refresh_token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: isSecureCookie,
           sameSite: "lax",
           path: "/",
           maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -103,7 +109,7 @@ export async function loginAction(formData: FormData | Record<string, any>): Pro
 
       cookieStore.set("user_role", roleStr, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
@@ -142,7 +148,7 @@ export async function registerAction(payload: Record<string, any>): Promise<Auth
       const cookieStore = await cookies();
       cookieStore.set("access_token", data.access_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
@@ -151,7 +157,7 @@ export async function registerAction(payload: Record<string, any>): Promise<Auth
       if (data.refresh_token) {
         cookieStore.set("refresh_token", data.refresh_token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: isSecureCookie,
           sameSite: "lax",
           path: "/",
           maxAge: 60 * 60 * 24 * 30,
@@ -162,7 +168,7 @@ export async function registerAction(payload: Record<string, any>): Promise<Auth
 
       cookieStore.set("user_role", roleStr, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
@@ -268,7 +274,7 @@ export async function verifyOtpAction(payload: { email: string; otp: string }): 
     if (data?.access_token) {
       cookieStore.set("access_token", data.access_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
@@ -277,7 +283,7 @@ export async function verifyOtpAction(payload: { email: string; otp: string }): 
       if (data.refresh_token) {
         cookieStore.set("refresh_token", data.refresh_token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: isSecureCookie,
           sameSite: "lax",
           path: "/",
           maxAge: 60 * 60 * 24 * 30,
@@ -288,7 +294,7 @@ export async function verifyOtpAction(payload: { email: string; otp: string }): 
 
       cookieStore.set("user_role", roleStr, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
@@ -354,7 +360,7 @@ export async function refreshTokenAction(): Promise<{ success: boolean; access_t
     const { access_token, refresh_token } = response.data;
     cookieStore.set("access_token", access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecureCookie,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -363,7 +369,7 @@ export async function refreshTokenAction(): Promise<{ success: boolean; access_t
     if (refresh_token) {
       cookieStore.set("refresh_token", refresh_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isSecureCookie,
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24 * 30, // 30 days
